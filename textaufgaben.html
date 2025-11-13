@@ -6,11 +6,46 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    margin: 24px;
+    margin: 80px 24px 24px 24px; /* Platz fürs Menü */
     max-width: 1000px;
     background: #111;
     color: #eee;
   }
+
+  /* Top-Menü */
+  .top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #000;
+    border-bottom: 2px solid #d4af37;
+    z-index: 1000;
+  }
+  .top-nav-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .top-nav-title {
+    font-weight: bold;
+    color: #d4af37;
+    margin-right: 16px;
+  }
+  .top-nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95em;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .top-nav-link:hover {
+    background: #222;
+  }
+
   h1 {
     text-align: center;
     color: #d4af37;
@@ -86,18 +121,22 @@
     background: #000;
     color: #eee;
   }
-  a.back-link {
-    color: #ff7f00;
-    text-decoration: none;
-    font-size: 0.9em;
-  }
 </style>
 </head>
 <body>
+
+<!-- Panthers-Menü -->
+<div class="top-nav">
+  <div class="top-nav-inner">
+    <span class="top-nav-title">SV Tillmitsch</span>
+    <a class="top-nav-link" href="index.html">Mathe-Trainer</a>
+    <a class="top-nav-link" href="textaufgaben.html">Textaufgaben</a>
+    <a class="top-nav-link" href="sa-generator.html">Schularbeit</a>
+  </div>
+</div>
+
 <h1>SV Tillmitsch – Textaufgaben Trainer</h1>
 <img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
-
-<p><a class="back-link" href="index.html">← Zurück zum Mathe-Trainer</a></p>
 
 <div class="level-bar">
   <strong>Schwierigkeitsgrad:</strong>
@@ -121,117 +160,29 @@
   let currentLevel = "standard";
 
   const textTasksStandard = [
-    {
-      q: "Bei einem Turnier schießt eine Mannschaft in fünf Spielen 3, 2, 4, 1 und 3 Tore. Wie viele Tore sind das insgesamt?",
-      a: "3 + 2 + 4 + 1 + 3 = 13 Tore"
-    },
-    {
-      q: "18 Spieler bekommen je 2 Trinkflaschen mit 0,5 Litern. Wie viele Liter Wasser sind das insgesamt?",
-      a: "18 · 2 · 0,5 = 18 Liter"
-    },
-    {
-      q: "Zwei Busse haben je 48 Plätze. 67 Kinder fahren mit. Wie viele Plätze bleiben frei?",
-      a: "2 · 48 = 96 Plätze, 96 − 67 = 29 freie Plätze"
-    },
-    {
-      q: "Kevin hat 125 Sticker. Er verschenkt 37 und kauft 24 neue dazu. Wie viele Sticker hat er danach?",
-      a: "125 − 37 + 24 = 112 Sticker"
-    },
-    {
-      q: "Ein Training dauert 90 Minuten. Die Mannschaft trainiert an 4 Tagen. Wie viele Stunden Training sind das insgesamt?",
-      a: "4 · 90 = 360 Minuten = 6 Stunden"
-    },
-    {
-      q: "Um ein Spielfeld werden 6 Linien mit je 35 Metern gezogen. Wie viele Meter Linie sind das insgesamt?",
-      a: "6 · 35 = 210 m"
-    },
-    {
-      q: "Eine Laufstrecke ist 400 m lang. Ein Spieler läuft 6 Runden. Wie viele Kilometer läuft er?",
-      a: "6 · 400 = 2400 m = 2,4 km"
-    },
-    {
-      q: "Beim Turnier gibt es 3 Punkte für einen Sieg und 1 Punkt für ein Unentschieden. Eine Mannschaft hat 3 Siege, 2 Unentschieden und 1 Niederlage. Wie viele Punkte hat sie?",
-      a: "3 · 3 + 2 · 1 = 11 Punkte"
-    },
-    {
-      q: "Eine Tribüne hat 18 Reihen mit je 25 Plätzen. Wie viele Zuschauer passen maximal auf diese Tribüne?",
-      a: "18 · 25 = 450 Zuschauer"
-    },
-    {
-      q: "In 4 Kisten liegen je 12 Äpfel, in 3 Kisten je 10 Birnen. Wie viele Früchte sind das insgesamt?",
-      a: "4 · 12 + 3 · 10 = 48 + 30 = 78 Früchte"
-    },
-    {
-      q: "26 Kinder zahlen je 3 € in die Klassenkasse ein. Wie viel Geld kommt zusammen?",
-      a: "26 · 3 = 78 €"
-    },
-    {
-      q: "Eine Schule bestellt 5 Pakete mit je 12 Heften und zusätzlich 7 einzelne Hefte. Wie viele Hefte sind das insgesamt?",
-      a: "5 · 12 + 7 = 60 + 7 = 67 Hefte"
-    },
-    {
-      q: "Für einen Ausflug zahlen 24 Kinder je 9 € und 2 Begleitpersonen je 4 €. Wie viel Geld wird insgesamt eingesammelt?",
-      a: "24 · 9 + 2 · 4 = 216 + 8 = 224 €"
-    },
-    {
-      q: "Im Kiosk werden in der Pause 37 Brezen und 26 Semmeln verkauft. Jede Breze kostet 1,50 €, jede Semmel 1,20 €. Wie viel Geld nimmt der Kiosk ein?",
-      a: "37 · 1,5 + 26 · 1,2 = 55,5 + 31,2 = 86,7 €"
-    }
+    {q:"Bei einem Turnier schießt eine Mannschaft in fünf Spielen 3, 2, 4, 1 und 3 Tore. Wie viele Tore sind das insgesamt?", a:"3 + 2 + 4 + 1 + 3 = 13 Tore"},
+    {q:"18 Spieler bekommen je 2 Trinkflaschen mit 0,5 Litern. Wie viele Liter Wasser sind das insgesamt?", a:"18 · 2 · 0,5 = 18 Liter"},
+    {q:"Zwei Busse haben je 48 Plätze. 67 Kinder fahren mit. Wie viele Plätze bleiben frei?", a:"2 · 48 = 96 Plätze, 96 − 67 = 29 freie Plätze"},
+    {q:"Kevin hat 125 Sticker. Er verschenkt 37 und kauft 24 neue dazu. Wie viele Sticker hat er danach?", a:"125 − 37 + 24 = 112 Sticker"},
+    {q:"Ein Training dauert 90 Minuten. Die Mannschaft trainiert an 4 Tagen. Wie viele Stunden Training sind das insgesamt?", a:"4 · 90 = 360 Minuten = 6 Stunden"},
+    {q:"Um ein Spielfeld werden 6 Linien mit je 35 Metern gezogen. Wie viele Meter Linie sind das insgesamt?", a:"6 · 35 = 210 m"},
+    {q:"Eine Laufstrecke ist 400 m lang. Ein Spieler läuft 6 Runden. Wie viele Kilometer läuft er?", a:"6 · 400 = 2400 m = 2,4 km"},
+    {q:"Beim Turnier gibt es 3 Punkte für einen Sieg und 1 Punkt für ein Unentschieden. Eine Mannschaft hat 3 Siege, 2 Unentschieden und 1 Niederlage. Wie viele Punkte hat sie?", a:"3 · 3 + 2 · 1 = 11 Punkte"},
+    {q:"Eine Tribüne hat 18 Reihen mit je 25 Plätzen. Wie viele Zuschauer passen maximal auf diese Tribüne?", a:"18 · 25 = 450 Zuschauer"},
+    {q:"In 4 Kisten liegen je 12 Äpfel, in 3 Kisten je 10 Birnen. Wie viele Früchte sind das insgesamt?", a:"4 · 12 + 3 · 10 = 48 + 30 = 78 Früchte"},
+    {q:"26 Kinder zahlen je 3 € in die Klassenkasse ein. Wie viel Geld kommt zusammen?", a:"26 · 3 = 78 €"}
   ];
 
   const textTasksAdvanced = [
-    {
-      q: "Bei einem Trainingslager trainiert die Mannschaft 5 Tage lang. Jeden Tag gibt es am Vormittag 90 Minuten und am Nachmittag 75 Minuten Training. Wie viele Minuten Training sind das insgesamt?",
-      a: "(90 + 75) · 5 = 165 · 5 = 825 Minuten"
-    },
-    {
-      q: "Eine Klasse sammelt für neue Bälle. 24 Kinder zahlen je 7 €, 5 Kinder zahlen je 10 €. Wie viel Geld wird gesammelt?",
-      a: "24 · 7 + 5 · 10 = 168 + 50 = 218 €"
-    },
-    {
-      q: "Für neue Dressen werden 18 Trikots um je 29 € und 18 Hosen um je 19 € gekauft. Wie viel kostet das insgesamt?",
-      a: "18 · 29 + 18 · 19 = 18 · 48 = 864 €"
-    },
-    {
-      q: "Eine Mannschaft bestellt 32 Trainingsleibchen und 32 Paar Stutzen. Jedes Leibchen kostet 15 €, jedes Paar Stutzen 8 €. Wie hoch ist die Gesamtrechnung?",
-      a: "32 · 15 + 32 · 8 = 32 · 23 = 736 €"
-    },
-    {
-      q: "Ein Spielfeld ist 105 m lang und 68 m breit. Wie viele Meter läuft ein Linienrichter, wenn er einmal komplett rund um das Feld geht?",
-      a: "2 · (105 + 68) = 2 · 173 = 346 m"
-    },
-    {
-      q: "Beim Turnier hat jede der 6 Mannschaften genau 4 Spiele. Wie viele Spiele finden insgesamt statt? (Jedes Spiel hat zwei Mannschaften.)",
-      a: "6 · 4 ÷ 2 = 24 ÷ 2 = 12 Spiele"
-    },
-    {
-      q: "Für ein Camp werden 5 Tage lang je 84 Semmeln geliefert. Wie viele Semmeln sind das insgesamt?",
-      a: "5 · 84 = 420 Semmeln"
-    },
-    {
-      q: "Ein Verein verkauft 125 Fanschals um je 18 € und 80 Hauben um je 12 €. Wie viel Geld nimmt der Verein ein?",
-      a: "125 · 18 + 80 · 12 = 2250 + 960 = 3210 €"
-    },
-    {
-      q: "Auf einer Tribüne sind 27 Reihen mit je 32 Sitzen. Bei einem Spiel sind 718 Plätze besetzt. Wie viele Plätze bleiben frei?",
-      a: "27 · 32 = 864 Plätze, 864 − 718 = 146 freie Plätze"
-    },
-    {
-      q: "Beim Laufevent läuft jede der 48 Personen 2,5 km. Wie viele Kilometer werden insgesamt gelaufen?",
-      a: "48 · 2,5 = 120 km"
-    },
-    {
-      q: "Für ein Turnier werden 15 Kisten Mineralwasser mit je 12 Flaschen gekauft. Jede Flasche enthält 0,75 Liter. Wie viele Liter sind das insgesamt?",
-      a: "15 · 12 · 0,75 = 180 · 0,75 = 135 Liter"
-    },
-    {
-      q: "In einer Woche verkauft der Fanshop an drei Tagen 18, 25 und 31 Kappen und an den anderen vier Tagen je 12 Kappen. Wie viele Kappen werden insgesamt verkauft?",
-      a: "18 + 25 + 31 + 4 · 12 = 74 + 48 = 122 Kappen"
-    },
-    {
-      q: "Ein Spielfest dauert 6 Stunden. Jede Stunde finden 4 Spiele statt, und jedes Spiel dauert 12 Minuten. Wie viele Minuten der 6 Stunden sind tatsächlich mit Spielen gefüllt?",
-      a: "6 · 4 · 12 = 24 · 12 = 288 Minuten"
-    }
+    {q:"Bei einem Trainingslager trainiert die Mannschaft 5 Tage lang. Jeden Tag gibt es am Vormittag 90 Minuten und am Nachmittag 75 Minuten Training. Wie viele Minuten Training sind das insgesamt?", a:"(90 + 75) · 5 = 165 · 5 = 825 Minuten"},
+    {q:"Eine Klasse sammelt für neue Bälle. 24 Kinder zahlen je 7 €, 5 Kinder zahlen je 10 €. Wie viel Geld wird gesammelt?", a:"24 · 7 + 5 · 10 = 168 + 50 = 218 €"},
+    {q:"Für neue Dressen werden 18 Trikots um je 29 € und 18 Hosen um je 19 € gekauft. Wie viel kostet das insgesamt?", a:"18 · 29 + 18 · 19 = 18 · 48 = 864 €"},
+    {q:"Eine Mannschaft bestellt 32 Trainingsleibchen und 32 Paar Stutzen. Jedes Leibchen kostet 15 €, jedes Paar Stutzen 8 €. Wie hoch ist die Gesamtrechnung?", a:"32 · 15 + 32 · 8 = 32 · 23 = 736 €"},
+    {q:"Ein Spielfeld ist 105 m lang und 68 m breit. Wie viele Meter läuft ein Linienrichter, wenn er einmal komplett rund um das Feld geht?", a:"2 · (105 + 68) = 2 · 173 = 346 m"},
+    {q:"Beim Turnier hat jede der 6 Mannschaften genau 4 Spiele. Wie viele Spiele finden insgesamt statt? (Jedes Spiel hat zwei Mannschaften.)", a:"6 · 4 ÷ 2 = 24 ÷ 2 = 12 Spiele"},
+    {q:"Ein Verein verkauft 125 Fanschals um je 18 € und 80 Hauben um je 12 €. Wie viel Geld nimmt der Verein ein?", a:"125 · 18 + 80 · 12 = 2250 + 960 = 3210 €"},
+    {q:"Auf einer Tribüne sind 27 Reihen mit je 32 Sitzen. Bei einem Spiel sind 718 Plätze besetzt. Wie viele Plätze bleiben frei?", a:"27 · 32 = 864 Plätze, 864 − 718 = 146 freie Plätze"},
+    {q:"Beim Laufevent läuft jede der 48 Personen 2,5 km. Wie viele Kilometer werden insgesamt gelaufen?", a:"48 · 2,5 = 120 km"}
   ];
 
   function shuffle(arr) {
@@ -299,7 +250,6 @@
     renderTasks();
   });
 
-  // initial laden
   renderTasks();
 </script>
 </body>
