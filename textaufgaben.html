@@ -45,6 +45,10 @@
   .top-nav-link:hover {
     background: #222;
   }
+  .top-nav-link.active {
+    background: #d4af37;
+    color: #000;
+  }
 
   h1 {
     text-align: center;
@@ -130,7 +134,7 @@
   <div class="top-nav-inner">
     <span class="top-nav-title">SV Tillmitsch</span>
     <a class="top-nav-link" href="index.html">Mathe-Trainer</a>
-    <a class="top-nav-link" href="textaufgaben.html">Textaufgaben</a>
+    <a class="top-nav-link active" href="textaufgaben.html">Textaufgaben</a>
     <a class="top-nav-link" href="sa-generator.html">Schularbeit</a>
   </div>
 </div>
@@ -149,7 +153,8 @@
   </div>
 </div>
 
-<p>Nur Textaufgaben – ideal zur Schularbeitsvorbereitung. Schreibe zuerst die Rechnung und Lösung ins Feld, dann klicke auf „Lösung anzeigen“ zur Kontrolle.</p>
+<p>Nur Textaufgaben – ideal zur Schularbeitsvorbereitung.  
+Rechnung und Antwort zuerst ins Feld schreiben, dann zur Kontrolle „Lösung anzeigen“ anklicken.</p>
 
 <h2>Textaufgaben</h2>
 <button id="newTasksBtn">Neue Textaufgaben</button>
@@ -158,6 +163,20 @@
 <script>
   const TEXT_TASKS_PER_SET = 10;
   let currentLevel = "standard";
+
+  // Level aus localStorage übernehmen (gleicher Key wie Trainer)
+  const savedTrainerLevel2 = localStorage.getItem("trainerLevel");
+  if (savedTrainerLevel2) {
+    currentLevel = savedTrainerLevel2;
+  }
+
+  const levelSelectTA = document.getElementById("levelSelect");
+  levelSelectTA.value = currentLevel;
+  levelSelectTA.addEventListener("change", function () {
+    currentLevel = this.value;
+    localStorage.setItem("trainerLevel", currentLevel);
+    renderTasks();
+  });
 
   const textTasksStandard = [
     {q:"Bei einem Turnier schießt eine Mannschaft in fünf Spielen 3, 2, 4, 1 und 3 Tore. Wie viele Tore sind das insgesamt?", a:"3 + 2 + 4 + 1 + 3 = 13 Tore"},
@@ -240,11 +259,6 @@
       container.appendChild(card);
     });
   }
-
-  document.getElementById("levelSelect").addEventListener("change", function () {
-    currentLevel = this.value;
-    renderTasks();
-  });
 
   document.getElementById("newTasksBtn").addEventListener("click", function () {
     renderTasks();
