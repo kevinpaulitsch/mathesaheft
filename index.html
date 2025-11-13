@@ -82,6 +82,22 @@
     display: block;
     margin: 10px auto 25px auto;
   }
+
+  /* ✔ Navigation-Button */
+  a.nav-button {
+    display: inline-block;
+    background: #ff7f00;
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-decoration: none;
+    margin: 10px 0 18px 0;
+  }
+  a.nav-button:active {
+    transform: scale(0.97);
+  }
+
   .level-bar {
     margin: 12px 0 20px 0;
     padding: 10px;
@@ -102,6 +118,13 @@
 <h1>SV Tillmitsch – Mathe-Trainer</h1>
 <img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
 
+<!-- ✔ LINK ZUR TEXTAUFGABEN-SEITE -->
+<p>
+  <a class="nav-button" href="textaufgaben.html">
+    Nur Textaufgaben (Schularbeitsvorbereitung)
+  </a>
+</p>
+
 <div class="level-bar">
   <strong>Schwierigkeitsgrad:</strong>
   <select id="levelSelect">
@@ -113,14 +136,12 @@
   </div>
 </div>
 
-<p>Für 1. Klasse Gymnasium. Pro Kapitel werden <b>zufällige Aufgaben</b> erzeugt. Schreibe zuerst deine Lösung, dann klicke bei Bedarf auf „Lösung anzeigen“ oder „Neue Aufgaben für dieses Kapitel“.</p>
+<p>Für 1. Klasse Gymnasium. Pro Kapitel werden <b>20 zufällige Aufgaben</b> erzeugt.</p>
 
 <div id="sections"></div>
 
 <script>
   const TASKS_PER_SECTION = 20;
-  const TEXT_TASKS_PER_SECTION = 10;
-
   let currentLevel = "standard";
 
   document.getElementById("levelSelect").addEventListener("change", function () {
@@ -128,368 +149,201 @@
     renderAllSections();
   });
 
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
   function intToRoman(num) {
-    const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
-    const syms = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
-    let res = "";
-    for (let i = 0; i < vals.length; i++) {
-      while (num >= vals[i]) {
-        num -= vals[i];
-        res += syms[i];
-      }
-    }
+    const vals=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+    const syms=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
+    let res=""; for(let i=0;i<vals.length;i++){while(num>=vals[i]){num-=vals[i];res+=syms[i];}}
     return res;
   }
+  function divisors(n){let r=[];for(let i=1;i<=n;i++){if(n%i===0)r.push(i);}return r;}
+  function multiples(b,c){let r=[];for(let i=1;i<=c;i++)r.push(b*i);return r;}
 
-  function divisors(n) {
-    const res = [];
-    for (let i = 1; i <= n; i++) {
-      if (n % i === 0) res.push(i);
-    }
-    return res;
-  }
-
-  function multiples(base, count) {
-    const res = [];
-    for (let i = 1; i <= count; i++) res.push(base * i);
-    return res;
-  }
-
-  function shuffle(a) {
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-  }
-
-  // Textaufgaben-Pools
-  const textTasksStandard = [
-    {q:"Bei einem Turnier schießt eine Mannschaft in fünf Spielen 3, 2, 4, 1 und 3 Tore. Wie viele Tore sind das insgesamt?", a:"3+2+4+1+3 = 13 Tore"},
-    {q:"18 Spieler bekommen je 2 Trinkflaschen mit 0,5 Litern. Wie viele Liter Wasser sind das insgesamt?", a:"18 · 2 · 0,5 = 18 Liter"},
-    {q:"Zwei Busse haben je 48 Plätze. 67 Kinder fahren mit. Wie viele Plätze bleiben frei?", a:"2·48 = 96 Plätze, 96−67 = 29 freie Plätze"},
-    {q:"Kevin hat 125 Sticker. Er verschenkt 37 und kauft 24 neue dazu. Wie viele Sticker hat er dann?", a:"125−37+24 = 112 Sticker"},
-    {q:"Ein Training dauert 90 Minuten. Die Mannschaft trainiert an 4 Tagen. Wie viele Stunden Training sind das insgesamt?", a:"4·90 = 360 Minuten = 6 Stunden"},
-    {q:"Um ein Spielfeld werden 6 Linien mit je 35 Metern gezogen. Wie viele Meter Linie sind das insgesamt?", a:"6·35 = 210 m"},
-    {q:"Eine Laufstrecke ist 400 m lang. Ein Spieler läuft 6 Runden. Wie viele Kilometer läuft er?", a:"6·400 = 2400 m = 2,4 km"},
-    {q:"Beim Turnier gibt es 3 Punkte für einen Sieg und 1 Punkt für ein Unentschieden. Eine Mannschaft hat 3 Siege, 2 Unentschieden und 1 Niederlage. Wie viele Punkte hat sie?", a:"3·3 + 2·1 = 11 Punkte"},
-    {q:"Eine Tribüne hat 18 Reihen mit je 25 Plätzen. Wie viele Zuschauer passen maximal auf diese Tribüne?", a:"18·25 = 450 Zuschauer"},
-    {q:"In 4 Kisten liegen je 12 Äpfel, in 3 Kisten je 10 Birnen. Wie viele Früchte sind das insgesamt?", a:"4·12 + 3·10 = 48+30 = 78 Früchte"},
-    {q:"26 Kinder zahlen je 3 € in die Klassenkasse ein. Wie viel Geld kommt zusammen?", a:"26·3 = 78 €"},
-    {q:"Eine Schule bestellt 5 Pakete mit je 12 Heften und zusätzlich 7 einzelne Hefte. Wie viele Hefte sind das insgesamt?", a:"5·12 + 7 = 60+7 = 67 Hefte"}
-  ];
-
-  const textTasksAdvanced = [
-    {q:"Bei einem Trainingslager trainiert die Mannschaft 5 Tage lang. Jeden Tag gibt es am Vormittag 90 Minuten und am Nachmittag 75 Minuten Training. Wie viele Minuten Training sind das insgesamt?", a:"(90+75)·5 = 165·5 = 825 Minuten"},
-    {q:"Eine Klasse sammelt für neue Bälle. 24 Kinder zahlen je 7 €, 5 Kinder zahlen je 10 €. Wie viel Geld wird gesammelt?", a:"24·7 + 5·10 = 168+50 = 218 €"},
-    {q:"Für neue Dressen werden 18 Trikots um je 29 € und 18 Hosen um je 19 € gekauft. Wie viel kostet das insgesamt?", a:"18·29 + 18·19 = 18·48 = 864 €"},
-    {q:"Eine Mannschaft bestellt 32 Trainingsleibchen und 32 Paar Stutzen. Jedes Leibchen kostet 15 €, jedes Paar Stutzen 8 €. Wie hoch ist die Gesamtrechnung?", a:"32·15 + 32·8 = 32·23 = 736 €"},
-    {q:"Ein Spielfeld ist 105 m lang und 68 m breit. Wie viele Meter läuft ein Linienrichter, wenn er einmal komplett rund um das Feld geht?", a:"2·(105+68) = 2·173 = 346 m"},
-    {q:"Beim Turnier hat jede der 6 Mannschaften genau 4 Spiele. Wie viele Spiele finden insgesamt statt?", a:"6·4÷2 = 12 Spiele (jedes Spiel mit 2 Teams)"},
-    {q:"Eine Turnhalle soll mit neuen Matten ausgelegt werden. In jede Reihe passen 14 Matten und es werden 9 Reihen gelegt. Wie viele Matten werden benötigt?", a:"14·9 = 126 Matten"},
-    {q:"Für ein Camp werden 5 Tage lang je 84 Semmeln geliefert. Wie viele Semmeln sind das insgesamt?", a:"5·84 = 420 Semmeln"},
-    {q:"Ein Verein verkauft 125 Fanschals um je 18 € und 80 Hauben um je 12 €. Wie viel Geld nimmt der Verein ein?", a:"125·18 + 80·12 = 2250 + 960 = 3210 €"},
-    {q:"Auf einer Tribüne sind 27 Reihen mit je 32 Sitzen. Bei einem Spiel sind 718 Plätze besetzt. Wie viele Plätze bleiben frei?", a:"27·32 = 864 Plätze, 864−718 = 146 freie Plätze"},
-    {q:"Beim Laufevent läuft jede der 48 Personen 2,5 km. Wie viele Kilometer werden insgesamt gelaufen?", a:"48·2,5 = 120 km"},
-    {q:"Bei einem Stickerturnier bekommen die ersten 5 Plätze 40, 30, 20, 10 und 5 Sticker. Wie viele Sticker werden insgesamt an die ersten 5 verteilt?", a:"40+30+20+10+5 = 105 Sticker"}
-  ];
-
-  // Generatoren pro Kapitel + Level
   const generators = {
-    "1.1": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const n = (level === "advanced") ? randInt(1000, 999999) : randInt(100, 99999);
-        tasks.push({
-          q: "Vorgänger und Nachfolger von " + n,
-          a: (n - 1) + " / " + (n + 1)
-        });
-      }
-      return tasks;
+    "1.1": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const n = (lvl==="advanced"?randInt(1000,999999):randInt(100,99999));
+        t.push({q:"Vorgänger und Nachfolger von "+n, a:(n-1)+" / "+(n+1)});
+      } return t;
     },
-
-    "1.2": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const typ = randInt(1,3);
-        if (typ === 1) {
-          // Arabisch -> römisch
-          const max = (level === "advanced") ? 3999 : 2000;
-          const n = randInt(10, max);
-          tasks.push({ q: n + " in römischen Zahlen", a: intToRoman(n) });
-        } else if (typ === 2) {
-          // Römisch -> arabisch
-          const max = (level === "advanced") ? 3999 : 2000;
-          const n = randInt(10, max);
-          const r = intToRoman(n);
-          tasks.push({ q: r + " als Zahl", a: ""+n });
+    "1.2": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const typ=randInt(1,3);
+        if(typ===1){
+          const max=lvl==="advanced"?3999:2000;
+          const n=randInt(10,max);
+          t.push({q:n+" in römischen Zahlen",a:intToRoman(n)});
+        } else if(typ===2){
+          const max=lvl==="advanced"?3999:2000;
+          const n=randInt(10,max), r=intToRoman(n);
+          t.push({q:r+" als Zahl",a:""+n});
         } else {
-          // Stellenwerte
-          const n = (level === "advanced") ? randInt(100000, 9999999) : randInt(1000, 999999);
-          const s = n.toString();
-          const len = s.length;
-          let textQ, textA;
-          if (level === "advanced") {
-            // gezielte Stelle
-            const posNames = ["Einer","Zehner","Hunderter","Tausender","Zehntausender","Hunderttausender","Millionen"];
-            const pos = randInt(0, len-1);
-            const stelle = posNames[pos];
-            textQ = "Welche Ziffer steht an der " + stelle + "-Stelle von " + n + "?";
-            textA = s[len-1-pos];
+          const n=lvl==="advanced"?randInt(100000,9999999):randInt(1000,999999);
+          const s=n.toString(), len=s.length;
+          if(lvl==="advanced"){
+            const posNames=["Einer","Zehner","Hunderter","Tausender","Zehntausender","Hunderttausender","Millionen"];
+            const pos=randInt(0,len-1), stelle=posNames[pos];
+            t.push({q:"Welche Ziffer steht an der "+stelle+"-Stelle von "+n+"?",a:s[len-1-pos]});
           } else {
-            const t = Math.floor(n/1000);
-            const rest = n % 1000;
-            const h = Math.floor(rest/100);
-            const z = Math.floor((rest%100)/10);
-            const e = rest%10;
-            textQ = n + " in Tausender/Hunderter/Zehner/Einer zerlegen";
-            textA = t + " T, " + h + " H, " + z + " Z, " + e + " E";
-          }
-          tasks.push({q:textQ, a:textA});
-        }
-      }
-      return tasks;
-    },
-
-    "1.3": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const typ = randInt(1,2);
-        if (typ === 1) {
-          const a = (level === "advanced") ? randInt(10000,9999999) : randInt(1000,99999);
-          const b = (level === "advanced") ? randInt(10000,9999999) : randInt(1000,99999);
-          let sign = "=";
-          if (a > b) sign = ">";
-          else if (a < b) sign = "<";
-          tasks.push({ q: a + " __ " + b, a: sign });
-        } else {
-          const count = (level === "advanced") ? 7 : 5;
-          const arr = [];
-          const min = (level === "advanced") ? 10000 : 1000;
-          const max = (level === "advanced") ? 9999999 : 99999;
-          for (let k=0;k<count;k++) arr.push(randInt(min,max));
-          const sorted = arr.slice().sort((x,y)=>x-y);
-          tasks.push({
-            q: "Sortiere: " + arr.join(", "),
-            a: sorted.join(", ")
-          });
-        }
-      }
-      return tasks;
-    },
-
-    "1.4": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const mode = randInt(1, (level === "advanced") ? 4 : 3);
-        let n, q, a;
-        if (mode === 1) { // Zehner
-          n = (level === "advanced") ? randInt(100,99999) : randInt(0,9999);
-          a = Math.round(n/10)*10;
-          q = "Runde " + n + " auf Zehner";
-        } else if (mode === 2) { // Hunderter
-          n = (level === "advanced") ? randInt(1000,999999) : randInt(0,99999);
-          a = Math.round(n/100)*100;
-          q = "Runde " + n + " auf Hunderter";
-        } else if (mode === 3) { // Tausender
-          n = (level === "advanced") ? randInt(5000,999999) : randInt(0,999999);
-          a = Math.round(n/1000)*1000;
-          q = "Runde " + n + " auf Tausender";
-        } else {
-          // Zehntausender (nur advanced)
-          n = randInt(10000,9999999);
-          a = Math.round(n/10000)*10000;
-          q = "Runde " + n + " auf Zehntausender";
-        }
-        tasks.push({q, a: ""+a});
-      }
-      return tasks;
-    },
-
-    "2.1": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const typ = randInt(1,3);
-        let q, res;
-        if (typ === 1) {
-          const a = randInt(100,5000);
-          const b = randInt(100,5000);
-          q = a + " + " + b;
-          res = a + b;
-        } else if (typ === 2) {
-          const a = (level === "advanced") ? randInt(1000,9000) : randInt(500,5000);
-          const b = randInt(100, a-100);
-          const c = randInt(10,200);
-          q = "(" + a + " - " + b + ") + " + c;
-          res = (a - b) + c;
-        } else {
-          const a = randInt(500,10000);
-          const b = randInt(100, a-100);
-          const c = randInt(50, b);
-          q = a + " - (" + b + " - " + c + ")";
-          res = a - (b - c);
-        }
-        tasks.push({q, a: ""+res});
-      }
-      return tasks;
-    },
-
-    "2.2": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const typ = randInt(1,3);
-        if (typ === 1) {
-          const n = (level === "advanced") ? randInt(50,200) : randInt(20,120);
-          tasks.push({
-            q: "Alle Teiler von " + n,
-            a: divisors(n).join(", ")
-          });
-        } else if (typ === 2) {
-          const b = (level === "advanced") ? randInt(7,20) : randInt(3,12);
-          tasks.push({
-            q: "Erste 8 Vielfache von " + b,
-            a: multiples(b,8).join(", ")
-          });
-        } else {
-          const a = (level === "advanced") ? randInt(20,200) : randInt(10,99);
-          const b = (level === "advanced") ? randInt(10,30) : randInt(2,12);
-          if (Math.random() < 0.5) {
-            tasks.push({ q: a + "×" + b, a: ""+(a*b) });
-          } else {
-            const prod = a*b;
-            tasks.push({ q: prod + "÷" + a, a: ""+b });
+            const t1=Math.floor(n/1000), h=Math.floor((n%1000)/100), z=Math.floor((n%100)/10), e=n%10;
+            t.push({q:n+" zerlegen (T/H/Z/E)",a:t1+" T, "+h+" H, "+z+" Z, "+e+" E"});
           }
         }
-      }
-      return tasks;
+      } return t;
     },
-
-    "2.3": function(level) {
-      const tasks = [];
-      for (let i = 0; i < TASKS_PER_SECTION; i++) {
-        const typ = randInt(1,3);
-        let q, res;
-        if (typ === 1) {
-          const a = randInt(50,400);
-          const b = randInt(5,20);
-          const c = randInt(10,50);
-          q = a + " + " + b + "×" + c;
-          res = a + b*c;
-        } else if (typ === 2) {
-          const a = randInt(200,900);
-          const b = randInt(2,9);
-          const c = randInt(10,50);
-          q = "(" + a + "÷" + b + ") + " + c;
-          res = Math.floor(a/b) + c;
+    "1.3": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        if(randInt(1,2)===1){
+          const a=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
+          const b=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
+          const sign=a>b?">":a<b?"<":"=";
+          t.push({q:a+" __ "+b,a:sign});
         } else {
-          const a = randInt(20,80);
-          const b = randInt(5,15);
-          const c = randInt(10,100);
-          q = "(" + a + "×" + b + ") - " + c;
-          res = a*b - c;
+          const count=lvl==="advanced"?7:5;
+          let arr=[]; const min=lvl==="advanced"?10000:1000, max=lvl==="advanced"?9999999:99999;
+          for(let k=0;k<count;k++) arr.push(randInt(min,max));
+          const sorted=arr.slice().sort((x,y)=>x-y);
+          t.push({q:"Sortiere: "+arr.join(", "),a:sorted.join(", ")});
         }
-        tasks.push({q, a: ""+res});
-      }
-      return tasks;
+      } return t;
     },
-
-    "T": function(level) {
-      const pool = (level === "advanced") ? textTasksAdvanced.slice() : textTasksStandard.slice();
-      shuffle(pool);
-      const count = Math.min(TEXT_TASKS_PER_SECTION, pool.length);
-      return pool.slice(0, count);
+    "1.4": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const mode=randInt(1,lvl==="advanced"?4:3); let n,a,q;
+        if(mode===1){n=lvl==="advanced"?randInt(100,99999):randInt(0,9999);a=Math.round(n/10)*10;q="Runde "+n+" auf Zehner";}
+        else if(mode===2){n=lvl==="advanced"?randInt(1000,999999):randInt(0,99999);a=Math.round(n/100)*100;q="Runde "+n+" auf Hunderter";}
+        else if(mode===3){n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);a=Math.round(n/1000)*1000;q="Runde "+n+" auf Tausender";}
+        else {n=randInt(10000,9999999);a=Math.round(n/10000)*10000;q="Runde "+n+" auf Zehntausender";}
+        t.push({q,a:""+a});
+      } return t;
+    },
+    "2.1": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const typ=randInt(1,3); let q,res;
+        if(typ===1){const a=randInt(100,5000),b=randInt(100,5000);q=a+" + "+b;res=a+b;}
+        else if(typ===2){const a=lvl==="advanced"?randInt(1000,9000):randInt(500,5000),b=randInt(100,a-100),c=randInt(10,200);q="("+a+" - "+b+") + "+c;res=(a-b)+c;}
+        else {const a=randInt(500,10000),b=randInt(100,a-100),c=randInt(50,b);q=a+" - ("+b+" - "+c+")";res=a-(b-c);}
+        t.push({q,a:""+res});
+      } return t;
+    },
+    "2.2": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const typ=randInt(1,3);
+        if(typ===1){
+          const n=lvl==="advanced"?randInt(50,200):randInt(20,120);
+          t.push({q:"Alle Teiler von "+n,a:divisors(n).join(", ")});
+        } else if(typ===2){
+          const b=lvl==="advanced"?randInt(7,20):randInt(3,12);
+          t.push({q:"Erste 8 Vielfache von "+b,a:multiples(b,8).join(", ")});
+        } else {
+          const a=lvl==="advanced"?randInt(20,200):randInt(10,99);
+          const b=lvl==="advanced"?randInt(10,30):randInt(2,12);
+          if(Math.random()<0.5) t.push({q:a+"×"+b,a:""+(a*b)});
+          else {
+            const prod=a*b; t.push({q:prod+"÷"+a,a:""+b});
+          }
+        }
+      } return t;
+    },
+    "2.3": lvl=>{
+      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+        const typ=randInt(1,3); let q,res;
+        if(typ===1){
+          const a=randInt(50,400),b=randInt(5,20),c=randInt(10,50);
+          q=a+" + "+b+"×"+c;res=a+b*c;
+        } else if(typ===2){
+          const a=randInt(200,900),b=randInt(2,9),c=randInt(10,50);
+          q="("+a+"÷"+b+") + "+c;res=Math.floor(a/b)+c;
+        } else {
+          const a=randInt(20,80),b=randInt(5,15),c=randInt(10,100);
+          q="("+a+"×"+b+") - "+c;res=a*b-c;
+        }
+        t.push({q,a:""+res});
+      } return t;
     }
   };
 
   const sectionDefs = [
-    { key: "1.1", title: "1.1 Zahlen & Zählen", note: "Vorgänger und Nachfolger größerer Zahlen." },
-    { key: "1.2", title: "1.2 Zahlensysteme", note: "Römische Zahlen und Stellenwerte bis in den Millionenbereich." },
-    { key: "1.3", title: "1.3 Zahlen ordnen", note: "Vergleichen und Sortieren großer Zahlen." },
-    { key: "1.4", title: "1.4 Runden", note: "Runden auf Zehner, Hunderter, Tausender und (bei schwer) Zehntausender." },
-    { key: "2.1", title: "2.1 Addieren & Subtrahieren", note: "Größere Zahlen mit Klammern." },
-    { key: "2.2", title: "2.2 Multiplizieren & Dividieren", note: "Größere Produkte, Divisionen ohne Rest, Teiler & Vielfache." },
-    { key: "2.3", title: "2.3 Verbundene Aufgaben", note: "Gemischte Rechnungen mit ×, ÷, + und −." },
-    { key: "T",   title: "3. Textaufgaben", note: "Sachaufgaben passend zum Stoff (Standard/Schwer je nach Level)." }
+    { key:"1.1", title:"1.1 Zahlen & Zählen", note:"Vorgänger und Nachfolger großer Zahlen." },
+    { key:"1.2", title:"1.2 Zahlensysteme", note:"Römische Zahlen & Stellenwerte." },
+    { key:"1.3", title:"1.3 Zahlen ordnen", note:"Sortieren & Vergleichen." },
+    { key:"1.4", title:"1.4 Runden", note:"Runden bis Zehntausender." },
+    { key:"2.1", title:"2.1 Addieren & Subtrahieren", note:"Größere Zahlen & Klammern." },
+    { key:"2.2", title:"2.2 Multiplizieren & Dividieren", note:"Produkte, Divisionen, Teiler, Vielfache." },
+    { key:"2.3", title:"2.3 Verbundene Aufgaben", note:"Gemischte Rechnungen." }
   ];
 
-  function renderAllSections() {
-    const container = document.getElementById("sections");
-    container.innerHTML = "";
+  function renderAllSections(){
+    const container=document.getElementById("sections");
+    container.innerHTML="";
 
-    sectionDefs.forEach(sec => {
-      const box = document.createElement("div");
-      box.className = "section-box";
+    sectionDefs.forEach(sec=>{
+      const box=document.createElement("div");
+      box.className="section-box";
 
-      const h2 = document.createElement("h2");
-      h2.textContent = sec.title;
+      const h2=document.createElement("h2");
+      h2.textContent=sec.title;
       box.appendChild(h2);
 
-      const note = document.createElement("div");
-      note.className = "section-note";
-      note.textContent = sec.note;
+      const note=document.createElement("div");
+      note.className="section-note";
+      note.textContent=sec.note;
       box.appendChild(note);
 
-      const btnNew = document.createElement("button");
-      btnNew.textContent = "Neue Aufgaben für dieses Kapitel";
-      const tasksContainer = document.createElement("div");
-      tasksContainer.className = "tasks-container";
+      const btnNew=document.createElement("button");
+      btnNew.textContent="Neue Aufgaben für dieses Kapitel";
 
-      btnNew.onclick = function () {
-        renderTasksInto(sec.key, tasksContainer);
-      };
+      const tasksContainer=document.createElement("div");
+      tasksContainer.className="tasks-container";
+
+      btnNew.onclick=function(){renderTasksInto(sec.key,tasksContainer);};
 
       box.appendChild(btnNew);
       box.appendChild(tasksContainer);
       container.appendChild(box);
 
-      // initiale Aufgaben
-      renderTasksInto(sec.key, tasksContainer);
+      renderTasksInto(sec.key,tasksContainer);
     });
   }
 
-  function renderTasksInto(sectionKey, container) {
-    container.innerHTML = "";
-    const gen = generators[sectionKey];
-    if (!gen) return;
-    const tasks = gen(currentLevel);
+  function renderTasksInto(sectionKey, container){
+    container.innerHTML="";
+    const gen=generators[sectionKey];
+    const tasks=gen(currentLevel);
 
-    tasks.forEach(t => {
-      const card = document.createElement("div");
-      card.className = "card";
+    tasks.forEach(t=>{
+      const card=document.createElement("div");
+      card.className="card";
 
-      const head = document.createElement("div");
-      head.className = "card-header";
-      head.textContent = t.q;
+      const head=document.createElement("div");
+      head.className="card-header";
+      head.textContent=t.q;
       card.appendChild(head);
 
-      const body = document.createElement("div");
-      body.className = "card-body";
+      const body=document.createElement("div");
+      body.className="card-body";
 
-      const label = document.createElement("div");
-      label.textContent = "Deine Lösung:";
+      const label=document.createElement("div");
+      label.textContent="Deine Lösung:";
       body.appendChild(label);
 
-      const ta = document.createElement("textarea");
+      const ta=document.createElement("textarea");
       body.appendChild(ta);
 
-      const solDiv = document.createElement("div");
-      solDiv.className = "solution";
-      solDiv.textContent = t.a;
+      const solDiv=document.createElement("div");
+      solDiv.className="solution";
+      solDiv.textContent=t.a;
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = "Lösung anzeigen";
-      btn.onclick = function () {
-        solDiv.style.display = solDiv.style.display === "block" ? "none" : "block";
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.textContent="Lösung anzeigen";
+      btn.onclick=function(){
+        solDiv.style.display=solDiv.style.display==="block"?"none":"block";
       };
 
       body.appendChild(btn);
       body.appendChild(solDiv);
       card.appendChild(body);
-
       container.appendChild(card);
     });
   }
