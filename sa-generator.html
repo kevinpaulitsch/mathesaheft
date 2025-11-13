@@ -45,6 +45,10 @@
   .top-nav-link:hover {
     background: #222;
   }
+  .top-nav-link.active {
+    background: #d4af37;
+    color: #000;
+  }
 
   h1 {
     text-align: center;
@@ -69,6 +73,18 @@
     border: 1px solid #444;
     border-radius: 6px;
     background: #1b1b1b;
+  }
+  .controls-row {
+    margin-bottom: 8px;
+  }
+  .topic-select {
+    margin-top: 8px;
+    font-size: 0.9em;
+  }
+  .topic-select label {
+    display: inline-block;
+    margin-right: 10px;
+    margin-top: 4px;
   }
   select {
     padding: 4px 8px;
@@ -121,7 +137,7 @@
   .hint {
     font-size: 0.9em;
     color: #ccc;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   @media print {
@@ -150,7 +166,7 @@
     <span class="top-nav-title">SV Tillmitsch</span>
     <a class="top-nav-link" href="index.html">Mathe-Trainer</a>
     <a class="top-nav-link" href="textaufgaben.html">Textaufgaben</a>
-    <a class="top-nav-link" href="sa-generator.html">Schularbeit</a>
+    <a class="top-nav-link active" href="sa-generator.html">Schularbeit</a>
   </div>
 </div>
 
@@ -158,16 +174,29 @@
 <img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
 
 <div class="controls">
-  <div>
+  <div class="controls-row">
     <strong>Schwierigkeitsgrad:</strong>
     <select id="levelSelect">
       <option value="standard">Standard (1. Klasse Gym)</option>
       <option value="advanced">Schwer</option>
     </select>
   </div>
+
+  <div class="topic-select">
+    <strong>Themen auswählen:</strong><br>
+    <label><input type="checkbox" class="topic-checkbox" data-key="1.1" checked> Zahlen &amp; Zählen</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="1.2" checked> Zahlensysteme</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="1.3" checked> Zahlen ordnen</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="1.4" checked> Runden</label><br>
+    <label><input type="checkbox" class="topic-checkbox" data-key="2.1" checked> Addieren &amp; Subtrahieren</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="2.2" checked> Multiplizieren &amp; Dividieren</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="2.3" checked> Verbundene Aufgaben</label>
+    <label><input type="checkbox" class="topic-checkbox" data-key="T" checked> Textaufgaben</label>
+  </div>
+
   <div class="hint">
-    Erzeugt eine komplette Schularbeit mit Aufgaben aus allen Kapiteln + Textaufgaben.
-    Für PDF-Export: „Als PDF drucken“ klicken und im Browser „Als PDF speichern“ wählen.
+    Erzeugt eine komplette Schularbeit mit den gewählten Themen.  
+    Für PDF-Export: „Als PDF drucken“ → im Browser „Als PDF speichern“.
   </div>
   <button id="generateBtn">Neue Schularbeit erstellen</button>
   <button id="printBtn">Als PDF drucken</button>
@@ -356,11 +385,23 @@
     {key:"T",   title:"8. Textaufgaben"}
   ];
 
+  function getActiveTopics() {
+    return Array.from(document.querySelectorAll(".topic-checkbox"))
+      .filter(cb => cb.checked)
+      .map(cb => cb.dataset.key);
+  }
+
   function generateExam() {
     const saDiv = document.getElementById("saSheet");
     const solDiv = document.getElementById("solutionSheet");
     saDiv.innerHTML = "";
     solDiv.innerHTML = "";
+
+    const activeKeys = getActiveTopics();
+    if (activeKeys.length === 0) {
+      alert("Bitte mindestens ein Thema auswählen.");
+      return;
+    }
 
     saDiv.innerHTML += `
       <table class="header-table">
@@ -379,6 +420,8 @@
     let taskNumber = 1;
 
     sectionOrder.forEach(sec => {
+      if (!activeKeys.includes(sec.key)) return;
+
       const tasks = generators[sec.key](currentLevel);
       if (!tasks || tasks.length === 0) return;
 
@@ -408,6 +451,7 @@
     });
   }
 
+  // Start: einmal SA erzeugen
   generateExam();
 </script>
 </body>
