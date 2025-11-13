@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>SV Tillmitsch – Schularbeits-Generator (1. Klasse Gym)</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 24px;
+    max-width: 900px;
+    background: #111;
+    color: #eee;
+  }
+  h1 {
+    text-align: center;
+    color: #d4af37;
+    text-shadow: 1px 1px #000;
+    margin-bottom: 5px;
+  }
+  h2 {
+    margin-top: 24px;
+    color: #ff7f00;
+    border-bottom: 3px solid #d4af37;
+    padding-bottom: 4px;
+  }
+  img.logo {
+    width: 150px;
+    display: block;
+    margin: 10px auto 20px auto;
+  }
+  .controls {
+    margin: 12px 0 18px 0;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #1b1b1b;
+  }
+  select {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #d4af37;
+    background: #000;
+    color: #eee;
+  }
+  button {
+    background: #ff7f00;
+    color: #000;
+    padding: 6px 12px;
+    border: none;
+    margin: 6px 6px 6px 0;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:active {
+    transform: scale(0.97);
+  }
+  a.nav-link {
+    color: #ff7f00;
+    text-decoration: none;
+    font-size: 0.9em;
+  }
+  .sheet {
+    background: #fff;
+    color: #000;
+    padding: 16px 18px;
+    margin-top: 10px;
+    border-radius: 4px;
+  }
+  .header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+  }
+  .header-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+  }
+  .task {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  .task-number {
+    font-weight: bold;
+  }
+  .solution-block {
+    margin-top: 4px;
+    padding-left: 10px;
+  }
+  .hint {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 8px;
+  }
+
+  /* Druckansicht: weißer Hintergrund, Buttons ausblenden */
+  @media print {
+    body {
+      background: #fff;
+      color: #000;
+      margin: 0;
+      max-width: 100%;
+    }
+    .controls, .nav-link, .hint-on-screen {
+      display: none !important;
+    }
+    .sheet {
+      border-radius: 0;
+      margin: 0;
+      padding: 10mm 12mm;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>SV Tillmitsch – Schularbeits-Generator</h1>
+<img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
+
+<p class="hint-on-screen">
+  <a class="nav-link" href="index.html">← Zurück zum Mathe-Trainer</a>
+</p>
+
+<div class="controls">
+  <div>
+    <strong>Schwierigkeitsgrad:</strong>
+    <select id="levelSelect">
+      <option value="standard">Standard (1. Klasse Gym)</option>
+      <option value="advanced">Schwer</option>
+    </select>
+  </div>
+  <div class="hint">
+    Erzeugt eine komplette Schularbeit mit Aufgaben aus allen Kapiteln + Textaufgaben.
+    Für PDF-Export einfach „Als PDF drucken“ klicken und im Browser „Als PDF speichern“ wählen.
+  </div>
+  <button id="generateBtn">Neue Schularbeit erstellen</button>
+  <button id="printBtn">Als PDF drucken</button>
+</div>
+
+<h2>Schularbeit – Aufgabenblatt</h2>
+<div id="saSheet" class="sheet"></div>
+
+<h2>Lösungsblatt</h2>
+<div id="solutionSheet" class="sheet"></div>
+
+<script>
+  // Konfiguration: wie viele Aufgaben pro Bereich
+  const SA_CONFIG = {
+    "1.1": 2,
+    "1.2": 2,
+    "1.3": 2,
+    "1.4": 2,
+    "2.1": 2,
+    "2.2": 2,
+    "2.3": 2,
+    "T": 4   // Textaufgaben
+  };
+
+  let currentLevel = "standard";
+
+  document.getElementById("levelSelect").addEventListener("change", function () {
+    currentLevel = this.value;
+  });
+
+  document.getElementById("generateBtn").addEventListener("click", generateExam);
+  document.getElementById("printBtn").addEventListener("click", function () {
+    window.print();
+  });
+
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} }
+
+  function intToRoman(num) {
+    const vals=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+    const syms=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
+    let res=""; for(let i=0;i<vals.length;i++){while(num>=vals[i]){num-=vals[i];res+=syms[i];}}
+    return res;
+  }
+  function divisors(n){let r=[];for(let i=1;i<=n;i++){if(n%i===0)r.push(i);}return r;}
+  function multiples(b,c){let r=[];for(let i=1;i<=c;i++)r.push(b*i);return r;}
+
+  // Textaufgaben-Pools (gleich/ähnlich wie bei textaufgaben.html)
+  const textTasksStandard = [
+    {q:"Bei einem Turnier schießt eine Mannschaft in fünf Spielen 3, 2, 4, 1 und 3 Tore. Wie viele Tore sind das insgesamt?", a:"3 + 2 + 4 + 1 + 3 = 13 Tore"},
+    {q:"18 Spieler bekommen je 2 Trinkflaschen mit 0,5 Litern. Wie viele Liter Wasser sind das insgesamt?", a:"18 · 2 · 0,5 = 18 Liter"},
+    {q:"Zwei Busse haben je 48 Plätze. 67 Kinder fahren mit. Wie viele Plätze bleiben frei?", a:"2 · 48 = 96 Plätze, 96 − 67 = 29 freie Plätze"},
+    {q:"Kevin hat 125 Sticker. Er verschenkt 37 und kauft 24 neue dazu. Wie viele Sticker hat er danach?", a:"125 − 37 + 24 = 112 Sticker"},
+    {q:"Ein Training dauert 90 Minuten. Die Mannschaft trainiert an 4 Tagen. Wie viele Stunden Training sind das insgesamt?", a:"4 · 90 = 360 Minuten = 6 Stunden"},
+    {q:"Eine Laufstrecke ist 400 m lang. Ein Spieler läuft 6 Runden. Wie viele Kilometer läuft er?", a:"6 · 400 = 2400 m = 2,4 km"},
+    {q:"Beim Turnier gibt es 3 Punkte für einen Sieg und 1 Punkt für ein Unentschieden. Eine Mannschaft hat 3 Siege, 2 Unentschieden und 1 Niederlage. Wie viele Punkte hat sie?", a:"3 · 3 + 2 · 1 = 11 Punkte"},
+    {q:"Eine Tribüne hat 18 Reihen mit je 25 Plätzen. Wie viele Zuschauer passen maximal auf diese Tribüne?", a:"18 · 25 = 450 Zuschauer"},
+    {q:"In 4 Kisten liegen je 12 Äpfel, in 3 Kisten je 10 Birnen. Wie viele Früchte sind das insgesamt?", a:"4 · 12 + 3 · 10 = 48 + 30 = 78 Früchte"},
+    {q:"26 Kinder zahlen je 3 € in die Klassenkasse ein. Wie viel Geld kommt zusammen?", a:"26 · 3 = 78 €"}
+  ];
+
+  const textTasksAdvanced = [
+    {q:"Bei einem Trainingslager trainiert die Mannschaft 5 Tage lang. Jeden Tag gibt es am Vormittag 90 Minuten und am Nachmittag 75 Minuten Training. Wie viele Minuten Training sind das insgesamt?", a:"(90 + 75) · 5 = 165 · 5 = 825 Minuten"},
+    {q:"Eine Klasse sammelt für neue Bälle. 24 Kinder zahlen je 7 €, 5 Kinder zahlen je 10 €. Wie viel Geld wird gesammelt?", a:"24 · 7 + 5 · 10 = 168 + 50 = 218 €"},
+    {q:"Für neue Dressen werden 18 Trikots um je 29 € und 18 Hosen um je 19 € gekauft. Wie viel kostet das insgesamt?", a:"18 · 29 + 18 · 19 = 18 · 48 = 864 €"},
+    {q:"Ein Spielfeld ist 105 m lang und 68 m breit. Wie viele Meter läuft ein Linienrichter, wenn er einmal komplett rund um das Feld geht?", a:"2 · (105 + 68) = 2 · 173 = 346 m"},
+    {q:"Beim Turnier hat jede der 6 Mannschaften genau 4 Spiele. Wie viele Spiele finden insgesamt statt? (Jedes Spiel hat zwei Mannschaften.)", a:"6 · 4 ÷ 2 = 24 ÷ 2 = 12 Spiele"},
+    {q:"Ein Verein verkauft 125 Fanschals um je 18 € und 80 Hauben um je 12 €. Wie viel Geld nimmt der Verein ein?", a:"125 · 18 + 80 · 12 = 2250 + 960 = 3210 €"},
+    {q:"Auf einer Tribüne sind 27 Reihen mit je 32 Sitzen. Bei einem Spiel sind 718 Plätze besetzt. Wie viele Plätze bleiben frei?", a:"27 · 32 = 864 Plätze, 864 − 718 = 146 freie Plätze"},
+    {q:"Beim Laufevent läuft jede der 48 Personen 2,5 km. Wie viele Kilometer werden insgesamt gelaufen?", a:"48 · 2,5 = 120 km"}
+  ];
+
+  // Generatoren für Aufgabenarten (leicht angepasst von index.html)
+  const generators = {
+    "1.1": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["1.1"]*2;i++){
+        const n=lvl==="advanced"?randInt(1000,999999):randInt(100,99999);
+        t.push({q:"Vorgänger und Nachfolger von "+n, a:(n-1)+" / "+(n+1)});
+      } shuffle(t); return t.slice(0,SA_CONFIG["1.1"]);
+    },
+    "1.2": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["1.2"]*3;i++){
+        const typ=randInt(1,3);
+        if(typ===1){
+          const max=lvl==="advanced"?3999:2000;
+          const n=randInt(10,max);
+          t.push({q:n+" in römischen Zahlen",a:intToRoman(n)});
+        } else if(typ===2){
+          const max=lvl==="advanced"?3999:2000;
+          const n=randInt(10,max), r=intToRoman(n);
+          t.push({q:r+" als Zahl",a:""+n});
+        } else {
+          const n=lvl==="advanced"?randInt(100000,9999999):randInt(1000,999999);
+          const s=n.toString(), len=s.length;
+          if(lvl==="advanced"){
+            const posNames=["Einer","Zehner","Hunderter","Tausender","Zehntausender","Hunderttausender","Millionen"];
+            const pos=randInt(0,len-1), stelle=posNames[pos];
+            t.push({q:"Welche Ziffer steht an der "+stelle+"-Stelle von "+n+"?",a:s[len-1-pos]});
+          } else {
+            const t1=Math.floor(n/1000), h=Math.floor((n%1000)/100), z=Math.floor((n%100)/10), e=n%10;
+            t.push({q:n+" zerlegen (T/H/Z/E)",a:t1+" T, "+h+" H, "+z+" Z, "+e+" E"});
+          }
+        }
+      } shuffle(t); return t.slice(0,SA_CONFIG["1.2"]);
+    },
+    "1.3": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["1.3"]*3;i++){
+        if(randInt(1,2)===1){
+          const a=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
+          const b=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
+          const sign=a>b?">":a<b?"<":"=";
+          t.push({q:a+" __ "+b,a:sign});
+        } else {
+          const count=lvl==="advanced"?7:5;
+          const min=lvl==="advanced"?10000:1000, max=lvl==="advanced"?9999999:99999;
+          let arr=[]; for(let k=0;k<count;k++) arr.push(randInt(min,max));
+          const sorted=arr.slice().sort((x,y)=>x-y);
+          t.push({q:"Sortiere: "+arr.join(", "),a:sorted.join(", ")});
+        }
+      } shuffle(t); return t.slice(0,SA_CONFIG["1.3"]);
+    },
+    "1.4": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["1.4"]*3;i++){
+        const mode=randInt(1,lvl==="advanced"?4:3); let n,a,q;
+        if(mode===1){n=lvl==="advanced"?randInt(100,99999):randInt(0,9999);a=Math.round(n/10)*10;q="Runde "+n+" auf Zehner";}
+        else if(mode===2){n=lvl==="advanced"?randInt(1000,999999):randInt(0,99999);a=Math.round(n/100)*100;q="Runde "+n+" auf Hunderter";}
+        else if(mode===3){n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);a=Math.round(n/1000)*1000;q="Runde "+n+" auf Tausender";}
+        else {n=randInt(10000,9999999);a=Math.round(n/10000)*10000;q="Runde "+n+" auf Zehntausender";}
+        t.push({q,a:""+a});
+      } shuffle(t); return t.slice(0,SA_CONFIG["1.4"]);
+    },
+    "2.1": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["2.1"]*3;i++){
+        const typ=randInt(1,3); let q,res;
+        if(typ===1){const a=randInt(100,5000),b=randInt(100,5000);q=a+" + "+b;res=a+b;}
+        else if(typ===2){const a=lvl==="advanced"?randInt(1000,9000):randInt(500,5000),b=randInt(100,a-100),c=randInt(10,200);q="("+a+" - "+b+") + "+c;res=(a-b)+c;}
+        else {const a=randInt(500,10000),b=randInt(100,a-100),c=randInt(50,b);q=a+" - ("+b+" - "+c+")";res=a-(b-c);}
+        t.push({q,a:""+res});
+      } shuffle(t); return t.slice(0,SA_CONFIG["2.1"]);
+    },
+    "2.2": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["2.2"]*3;i++){
+        const typ=randInt(1,3);
+        if(typ===1){
+          const n=lvl==="advanced"?randInt(50,200):randInt(20,120);
+          t.push({q:"Alle Teiler von "+n,a:divisors(n).join(", ")});
+        } else if(typ===2){
+          const b=lvl==="advanced"?randInt(7,20):randInt(3,12);
+          t.push({q:"Erste 8 Vielfache von "+b,a:multiples(b,8).join(", ")});
+        } else {
+          const a=lvl==="advanced"?randInt(20,200):randInt(10,99);
+          const b=lvl==="advanced"?randInt(10,30):randInt(2,12);
+          if(Math.random()<0.5) t.push({q:a+"×"+b,a:""+(a*b)});
+          else {const prod=a*b;t.push({q:prod+"÷"+a,a:""+b});}
+        }
+      } shuffle(t); return t.slice(0,SA_CONFIG["2.2"]);
+    },
+    "2.3": lvl=>{
+      const t=[]; for(let i=0;i<SA_CONFIG["2.3"]*3;i++){
+        const typ=randInt(1,3); let q,res;
+        if(typ===1){
+          const a=randInt(50,400),b=randInt(5,20),c=randInt(10,50);
+          q=a+" + "+b+"×"+c;res=a+b*c;
+        } else if(typ===2){
+          const a=randInt(200,900),b=randInt(2,9),c=randInt(10,50);
+          q="("+a+"÷"+b+") + "+c;res=Math.floor(a/b)+c;
+        } else {
+          const a=randInt(20,80),b=randInt(5,15),c=randInt(10,100);
+          q="("+a+"×"+b+") - "+c;res=a*b-c;
+        }
+        t.push({q,a:""+res});
+      } shuffle(t); return t.slice(0,SA_CONFIG["2.3"]);
+    },
+    "T": lvl=>{
+      const pool=(lvl==="advanced"?textTasksAdvanced.slice():textTasksStandard.slice());
+      shuffle(pool);
+      return pool.slice(0,SA_CONFIG["T"]);
+    }
+  };
+
+  const sectionOrder = [
+    {key:"1.1", title:"1. Zahlen & Zählen"},
+    {key:"1.2", title:"2. Zahlensysteme"},
+    {key:"1.3", title:"3. Zahlen ordnen"},
+    {key:"1.4", title:"4. Runden"},
+    {key:"2.1", title:"5. Addieren & Subtrahieren"},
+    {key:"2.2", title:"6. Multiplizieren & Dividieren"},
+    {key:"2.3", title:"7. Verbundene Aufgaben"},
+    {key:"T",   title:"8. Textaufgaben"}
+  ];
+
+  function generateExam() {
+    const saDiv = document.getElementById("saSheet");
+    const solDiv = document.getElementById("solutionSheet");
+    saDiv.innerHTML = "";
+    solDiv.innerHTML = "";
+
+    // Kopfbereich fürs Aufgabenblatt
+    saDiv.innerHTML += `
+      <table class="header-table">
+        <tr>
+          <td><strong>Name:</strong></td>
+          <td><strong>Klasse:</strong></td>
+          <td><strong>Datum:</strong></td>
+          <td><strong>Punkte:</strong> ____ / ____</td>
+        </tr>
+      </table>
+      <p><strong>Hinweis:</strong> Rechenschritte sauber anschreiben. Taschenrechner ist ${currentLevel==="advanced" ? "nicht erlaubt" : "nur nach Absprache erlaubt"}.</p>
+    `;
+
+    solDiv.innerHTML += `<p><strong>Lösungsblatt – Kontrolle für Lehrer/Schüler</strong></p>`;
+
+    let taskNumber = 1;
+
+    sectionOrder.forEach(sec => {
+      const tasks = generators[sec.key](currentLevel);
+      if (!tasks || tasks.length === 0) return;
+
+      saDiv.innerHTML += `<p><strong>${sec.title}</strong></p>`;
+      solDiv.innerHTML += `<p><strong>${sec.title}</strong></p>`;
+
+      tasks.forEach(t => {
+        // Aufgabenblatt
+        const taskHtml = `
+          <div class="task">
+            <span class="task-number">${taskNumber}.)</span>
+            <span>${t.q}</span>
+            <div style="min-height: 24px; border-bottom: 1px solid #000; margin-top: 4px;"></div>
+          </div>
+        `;
+        saDiv.innerHTML += taskHtml;
+
+        // Lösungsblatt
+        const solHtml = `
+          <div class="task">
+            <span class="task-number">${taskNumber}.)</span>
+            <div class="solution-block">${t.a}</div>
+          </div>
+        `;
+        solDiv.innerHTML += solHtml;
+
+        taskNumber++;
+      });
+    });
+  }
+
+  // Direkt beim Laden eine SA erzeugen
+  generateExam();
+</script>
+</body>
+</html>
