@@ -45,6 +45,10 @@
   .top-nav-link:hover {
     background: #222;
   }
+  .top-nav-link.active {
+    background: #d4af37;
+    color: #000;
+  }
 
   h1 {
     text-align: center;
@@ -61,7 +65,12 @@
   .section-note {
     font-size: 0.9em;
     color: #ccc;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+  }
+  .section-progress {
+    font-size: 0.9em;
+    color: #9f9;
+    margin-bottom: 8px;
   }
   .section-box {
     margin-bottom: 24px;
@@ -84,7 +93,7 @@
   }
   textarea {
     width: 100%;
-    min-height: 60px;
+    min-height: 50px;
     margin-top: 6px;
     border: 1px solid #d4af37;
     padding: 4px;
@@ -97,6 +106,16 @@
     padding: 8px;
     border-left: 4px solid #ff7f00;
     background: #333;
+  }
+  .feedback {
+    margin-top: 4px;
+    font-size: 0.9em;
+  }
+  .feedback.ok {
+    color: #9f9;
+  }
+  .feedback.bad {
+    color: #f99;
   }
   button {
     background: #ff7f00;
@@ -119,6 +138,10 @@
   }
 
   /* große Buttons unter dem Logo */
+  .nav-button-row {
+    text-align: center;
+    margin-bottom: 18px;
+  }
   a.nav-button {
     display: inline-block;
     background: #ff7f00;
@@ -127,7 +150,7 @@
     border-radius: 4px;
     font-weight: bold;
     text-decoration: none;
-    margin: 10px 10px 18px 0;
+    margin: 10px 10px 0 10px;
   }
   a.nav-button:active {
     transform: scale(0.97);
@@ -155,7 +178,7 @@
 <div class="top-nav">
   <div class="top-nav-inner">
     <span class="top-nav-title">SV Tillmitsch</span>
-    <a class="top-nav-link" href="index.html">Mathe-Trainer</a>
+    <a class="top-nav-link active" href="index.html">Mathe-Trainer</a>
     <a class="top-nav-link" href="textaufgaben.html">Textaufgaben</a>
     <a class="top-nav-link" href="sa-generator.html">Schularbeit</a>
   </div>
@@ -164,14 +187,14 @@
 <h1>SV Tillmitsch – Mathe-Trainer</h1>
 <img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
 
-<p>
+<div class="nav-button-row">
   <a class="nav-button" href="textaufgaben.html">
     Nur Textaufgaben (Schularbeitsvorbereitung)
   </a>
   <a class="nav-button" href="sa-generator.html">
     Schularbeit generieren
   </a>
-</p>
+</div>
 
 <div class="level-bar">
   <strong>Schwierigkeitsgrad:</strong>
@@ -184,16 +207,27 @@
   </div>
 </div>
 
-<p>Für 1. Klasse Gymnasium. Pro Kapitel werden <b>20 zufällige Aufgaben</b> erzeugt.</p>
+<p>Für 1. Klasse Gymnasium. Pro Kapitel werden <b>20 zufällige Aufgaben</b> erzeugt.  
+Bei Aufgaben mit Zahlenergebnis kannst du deine Lösung direkt automatisch prüfen.</p>
 
 <div id="sections"></div>
 
 <script>
   const TASKS_PER_SECTION = 20;
   let currentLevel = "standard";
+  const progressData = {}; // {sectionKey: {total, correct}}
 
-  document.getElementById("levelSelect").addEventListener("change", function () {
+  // Level aus localStorage holen
+  const savedTrainerLevel = localStorage.getItem("trainerLevel");
+  if (savedTrainerLevel) {
+    currentLevel = savedTrainerLevel;
+  }
+
+  const levelSelect = document.getElementById("levelSelect");
+  levelSelect.value = currentLevel;
+  levelSelect.addEventListener("change", function () {
     currentLevel = this.value;
+    localStorage.setItem("trainerLevel", currentLevel);
     renderAllSections();
   });
 
@@ -206,6 +240,15 @@
   }
   function divisors(n){let r=[];for(let i=1;i<=n;i++){if(n%i===0)r.push(i);}return r;}
   function multiples(b,c){let r=[];for(let i=1;i<=c;i++)r.push(b*i);return r;}
+
+  // Nur Antworten, die wirklich nur aus einer Zahl bestehen, werden automatisch geprüft
+  function getNumericAnswer(ans) {
+    if (typeof ans === "number") return ans;
+    if (typeof ans !== "string") return null;
+    const trimmed = ans.trim().replace(",", ".");
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) return parseFloat(trimmed);
+    return null;
+  }
 
   const generators = {
     "1.1": lvl=>{
@@ -248,8 +291,8 @@
           t.push({q:a+" __ "+b,a:sign});
         } else {
           const count=lvl==="advanced"?7:5;
-          let arr=[]; const min=lvl==="advanced"?10000:1000, max=lvl==="advanced"?9999999:99999;
-          for(let k=0;k<count;k++) arr.push(randInt(min,max));
+          const min=lvl==="advanced"?10000:1000, max=lvl==="advanced"?9999999:99999;
+          let arr=[]; for(let k=0;k<count;k++) arr.push(randInt(min,max));
           const sorted=arr.slice().sort((x,y)=>x-y);
           t.push({q:"Sortiere: "+arr.join(", "),a:sorted.join(", ")});
         }
@@ -262,7 +305,7 @@
         else if(mode===2){n=lvl==="advanced"?randInt(1000,999999):randInt(0,99999);a=Math.round(n/100)*100;q="Runde "+n+" auf Hunderter";}
         else if(mode===3){n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);a=Math.round(n/1000)*1000;q="Runde "+n+" auf Tausender";}
         else {n=randInt(10000,9999999);a=Math.round(n/10000)*10000;q="Runde "+n+" auf Zehntausender";}
-        t.push({q,a:""+a});
+        t.push({q,a});
       } return t;
     },
     "2.1": lvl=>{
@@ -271,7 +314,7 @@
         if(typ===1){const a=randInt(100,5000),b=randInt(100,5000);q=a+" + "+b;res=a+b;}
         else if(typ===2){const a=lvl==="advanced"?randInt(1000,9000):randInt(500,5000),b=randInt(100,a-100),c=randInt(10,200);q="("+a+" - "+b+") + "+c;res=(a-b)+c;}
         else {const a=randInt(500,10000),b=randInt(100,a-100),c=randInt(50,b);q=a+" - ("+b+" - "+c+")";res=a-(b-c);}
-        t.push({q,a:""+res});
+        t.push({q,a:res});
       } return t;
     },
     "2.2": lvl=>{
@@ -286,10 +329,8 @@
         } else {
           const a=lvl==="advanced"?randInt(20,200):randInt(10,99);
           const b=lvl==="advanced"?randInt(10,30):randInt(2,12);
-          if(Math.random()<0.5) t.push({q:a+"×"+b,a:""+(a*b)});
-          else {
-            const prod=a*b; t.push({q:prod+"÷"+a,a:""+b});
-          }
+          if(Math.random()<0.5) t.push({q:a+"×"+b,a:a*b});
+          else {const prod=a*b; t.push({q:prod+"÷"+a,a:b});}
         }
       } return t;
     },
@@ -306,7 +347,7 @@
           const a=randInt(20,80),b=randInt(5,15),c=randInt(10,100);
           q="("+a+"×"+b+") - "+c;res=a*b-c;
         }
-        t.push({q,a:""+res});
+        t.push({q,a:res});
       } return t;
     }
   };
@@ -320,6 +361,17 @@
     { key:"2.2", title:"2.2 Multiplizieren & Dividieren", note:"Produkte, Divisionen, Teiler, Vielfache." },
     { key:"2.3", title:"2.3 Verbundene Aufgaben", note:"Gemischte Rechnungen." }
   ];
+
+  function updateProgressDisplay(sectionKey) {
+    const prog = progressData[sectionKey] || {total:0, correct:0};
+    const el = document.getElementById("progress-" + sectionKey);
+    if (!el) return;
+    if (prog.total === 0) {
+      el.textContent = "Richtig: 0 / 0";
+    } else {
+      el.textContent = "Richtig: " + prog.correct + " / " + prog.total;
+    }
+  }
 
   function renderAllSections(){
     const container=document.getElementById("sections");
@@ -337,6 +389,11 @@
       note.className="section-note";
       note.textContent=sec.note;
       box.appendChild(note);
+
+      const prog=document.createElement("div");
+      prog.className="section-progress";
+      prog.id="progress-"+sec.key;
+      box.appendChild(prog);
 
       const btnNew=document.createElement("button");
       btnNew.textContent="Neue Aufgaben für dieses Kapitel";
@@ -359,9 +416,14 @@
     const gen=generators[sectionKey];
     const tasks=gen(currentLevel);
 
+    progressData[sectionKey] = {total: tasks.length, correct: 0};
+    updateProgressDisplay(sectionKey);
+
     tasks.forEach(t=>{
       const card=document.createElement("div");
       card.className="card";
+      card.dataset.sectionKey = sectionKey;
+      card.dataset.wasCorrect = "false";
 
       const head=document.createElement("div");
       head.className="card-header";
@@ -380,16 +442,49 @@
 
       const solDiv=document.createElement("div");
       solDiv.className="solution";
-      solDiv.textContent=t.a;
+      solDiv.textContent=(t.a!==undefined && t.a!==null) ? t.a.toString() : "";
 
-      const btn=document.createElement("button");
-      btn.type="button";
-      btn.textContent="Lösung anzeigen";
-      btn.onclick=function(){
+      const feedback=document.createElement("div");
+      feedback.className="feedback";
+      body.appendChild(feedback);
+
+      const solutionBtn=document.createElement("button");
+      solutionBtn.type="button";
+      solutionBtn.textContent="Lösung anzeigen";
+      solutionBtn.onclick=function(){
         solDiv.style.display=solDiv.style.display==="block"?"none":"block";
       };
+      body.appendChild(solutionBtn);
 
-      body.appendChild(btn);
+      const numericExpected = getNumericAnswer(t.a);
+      if (numericExpected !== null) {
+        const checkBtn=document.createElement("button");
+        checkBtn.type="button";
+        checkBtn.textContent="Überprüfen";
+        checkBtn.onclick=function(){
+          const userInput = ta.value.trim().replace(",", ".");
+          const val = parseFloat(userInput);
+          if (isNaN(val)) {
+            feedback.textContent = "Bitte eine Zahl eingeben.";
+            feedback.className = "feedback bad";
+            return;
+          }
+          if (Math.abs(val - numericExpected) < 0.001) {
+            feedback.textContent = "Richtig!";
+            feedback.className = "feedback ok";
+            if (card.dataset.wasCorrect !== "true") {
+              card.dataset.wasCorrect = "true";
+              progressData[sectionKey].correct++;
+              updateProgressDisplay(sectionKey);
+            }
+          } else {
+            feedback.textContent = "Nochmals nachrechnen.";
+            feedback.className = "feedback bad";
+          }
+        };
+        body.appendChild(checkBtn);
+      }
+
       body.appendChild(solDiv);
       card.appendChild(body);
       container.appendChild(card);
