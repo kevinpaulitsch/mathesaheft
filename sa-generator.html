@@ -130,6 +130,10 @@
   .task-number {
     font-weight: bold;
   }
+  .points {
+    font-weight: normal;
+    font-size: 0.9em;
+  }
   .solution-block {
     margin-top: 4px;
     padding-left: 10px;
@@ -195,7 +199,7 @@
   </div>
 
   <div class="hint">
-    Erzeugt eine komplette Schularbeit mit den gewählten Themen.  
+    Jede Themen-Gruppe hat eigene Punkte pro Aufgabe (z.B. Textaufgaben am meisten).  
     Für PDF-Export: „Als PDF drucken“ → im Browser „Als PDF speichern“.
   </div>
   <button id="generateBtn">Neue Schularbeit erstellen</button>
@@ -209,6 +213,7 @@
 <div id="solutionSheet" class="sheet"></div>
 
 <script>
+  // Anzahl Aufgaben pro Thema
   const SA_CONFIG = {
     "1.1": 2,
     "1.2": 2,
@@ -218,6 +223,18 @@
     "2.2": 2,
     "2.3": 2,
     "T": 4
+  };
+
+  // Punkte pro Aufgabe je Thema
+  const POINTS_CONFIG = {
+    "1.1": 2, // Zahlen & Zählen
+    "1.2": 2, // Zahlensysteme
+    "1.3": 2, // Zahlen ordnen
+    "1.4": 2, // Runden
+    "2.1": 3, // Addieren & Subtrahieren
+    "2.2": 3, // Multiplizieren & Dividieren
+    "2.3": 4, // Verbundene Aufgaben
+    "T":   5  // Textaufgaben
   };
 
   let currentLevel = "standard";
@@ -403,19 +420,27 @@
       return;
     }
 
+    // Maximalpunkte berechnen
+    let totalMaxPoints = 0;
+    activeKeys.forEach(k => {
+      const tasksCount = SA_CONFIG[k] || 0;
+      const pointsPerTask = POINTS_CONFIG[k] || 0;
+      totalMaxPoints += tasksCount * pointsPerTask;
+    });
+
     saDiv.innerHTML += `
       <table class="header-table">
         <tr>
           <td><strong>Name:</strong></td>
           <td><strong>Klasse:</strong></td>
           <td><strong>Datum:</strong></td>
-          <td><strong>Punkte:</strong> ____ / ____</td>
+          <td><strong>Punkte:</strong> ____ / ${totalMaxPoints}</td>
         </tr>
       </table>
       <p><strong>Hinweis:</strong> Rechenschritte sauber anschreiben. Taschenrechner ist ${currentLevel==="advanced" ? "nicht erlaubt" : "nur nach Absprache erlaubt"}.</p>
     `;
 
-    solDiv.innerHTML += `<p><strong>Lösungsblatt – Kontrolle</strong></p>`;
+    solDiv.innerHTML += `<p><strong>Lösungsblatt – Kontrolle</strong> (Maximal ${totalMaxPoints} Punkte)</p>`;
 
     let taskNumber = 1;
 
@@ -425,6 +450,8 @@
       const tasks = generators[sec.key](currentLevel);
       if (!tasks || tasks.length === 0) return;
 
+      const pointsPerTask = POINTS_CONFIG[sec.key] || 0;
+
       saDiv.innerHTML += `<p><strong>${sec.title}</strong></p>`;
       solDiv.innerHTML += `<p><strong>${sec.title}</strong></p>`;
 
@@ -432,8 +459,9 @@
         const taskHtml = `
           <div class="task">
             <span class="task-number">${taskNumber}.)</span>
-            <span>${t.q}</span>
-            <div style="min-height: 24px; border-bottom: 1px solid #000; margin-top: 4px;"></div>
+            <span class="points">(${pointsPerTask} P.)</span>
+            <span> ${t.q}</span>
+            <div style="min-height: 24px; border-bottom: 1px solid ${pointsPerTask ? "#000" : "#000"}; margin-top: 4px;"></div>
           </div>
         `;
         saDiv.innerHTML += taskHtml;
@@ -441,6 +469,7 @@
         const solHtml = `
           <div class="task">
             <span class="task-number">${taskNumber}.)</span>
+            <span class="points">(${pointsPerTask} P.)</span>
             <div class="solution-block">${t.a}</div>
           </div>
         `;
@@ -451,7 +480,7 @@
     });
   }
 
-  // Start: einmal SA erzeugen
+  // Beim Laden direkt eine SA erzeugen
   generateExam();
 </script>
 </body>
