@@ -6,11 +6,46 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    margin: 24px;
+    margin: 80px 24px 24px 24px; /* oben Platz fürs Menü */
     max-width: 1000px;
     background: #111;
     color: #eee;
   }
+
+  /* Top-Menü */
+  .top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #000;
+    border-bottom: 2px solid #d4af37;
+    z-index: 1000;
+  }
+  .top-nav-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .top-nav-title {
+    font-weight: bold;
+    color: #d4af37;
+    margin-right: 16px;
+  }
+  .top-nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95em;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .top-nav-link:hover {
+    background: #222;
+  }
+
   h1 {
     text-align: center;
     color: #d4af37;
@@ -83,7 +118,7 @@
     margin: 10px auto 25px auto;
   }
 
-  /* ✔ Navigation-Button */
+  /* große Buttons unter dem Logo */
   a.nav-button {
     display: inline-block;
     background: #ff7f00;
@@ -92,7 +127,7 @@
     border-radius: 4px;
     font-weight: bold;
     text-decoration: none;
-    margin: 10px 0 18px 0;
+    margin: 10px 10px 18px 0;
   }
   a.nav-button:active {
     transform: scale(0.97);
@@ -115,22 +150,29 @@
 </style>
 </head>
 <body>
+
+<!-- Gemeinsames Panthers-Menü -->
+<div class="top-nav">
+  <div class="top-nav-inner">
+    <span class="top-nav-title">SV Tillmitsch</span>
+    <a class="top-nav-link" href="index.html">Mathe-Trainer</a>
+    <a class="top-nav-link" href="textaufgaben.html">Textaufgaben</a>
+    <a class="top-nav-link" href="sa-generator.html">Schularbeit</a>
+  </div>
+</div>
+
 <h1>SV Tillmitsch – Mathe-Trainer</h1>
 <img src="logo.png" alt="SV Tillmitsch Logo" class="logo">
 
-<!-- ✔ LINK ZUR TEXTAUFGABEN-SEITE -->
 <p>
   <a class="nav-button" href="textaufgaben.html">
     Nur Textaufgaben (Schularbeitsvorbereitung)
   </a>
-</p>
-
-<p>
   <a class="nav-button" href="sa-generator.html">
     Schularbeit generieren
   </a>
 </p>
-  
+
 <div class="level-bar">
   <strong>Schwierigkeitsgrad:</strong>
   <select id="levelSelect">
