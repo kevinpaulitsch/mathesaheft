@@ -93,12 +93,15 @@
     background: #000;
     color: #eee;
   }
-  input[type="text"] {
+  input[type="text"], input[type="number"] {
     padding: 4px 6px;
     border-radius: 4px;
     border: 1px solid #d4af37;
     background: #000;
     color: #eee;
+  }
+  input[type="number"] {
+    width: 50px;
   }
   button {
     background: #ff7f00;
@@ -159,6 +162,15 @@
     font-weight: bold;
     color: #ffdf80;
   }
+  .templates-list {
+    font-size: 0.9em;
+    border-top: 1px solid #333;
+    padding-top: 6px;
+    margin-top: 6px;
+  }
+  .template-item {
+    margin-bottom: 4px;
+  }
 
   @media print {
     body {
@@ -215,6 +227,34 @@
   </div>
 
   <div class="controls-row">
+    <strong>Anzahl Aufgaben pro Thema:</strong><br>
+    <label>1.1 Zahlen &amp; Zählen: 
+      <input type="number" class="topic-count" data-key="1.1" min="0" max="20" value="2">
+    </label>
+    <label>1.2 Zahlensysteme: 
+      <input type="number" class="topic-count" data-key="1.2" min="0" max="20" value="2">
+    </label>
+    <label>1.3 Zahlen ordnen: 
+      <input type="number" class="topic-count" data-key="1.3" min="0" max="20" value="2">
+    </label>
+    <label>1.4 Runden: 
+      <input type="number" class="topic-count" data-key="1.4" min="0" max="20" value="2">
+    </label><br>
+    <label>2.1 Addieren &amp; Subtrahieren: 
+      <input type="number" class="topic-count" data-key="2.1" min="0" max="20" value="2">
+    </label>
+    <label>2.2 Multiplizieren &amp; Dividieren: 
+      <input type="number" class="topic-count" data-key="2.2" min="0" max="20" value="2">
+    </label>
+    <label>2.3 Verbundene Aufgaben: 
+      <input type="number" class="topic-count" data-key="2.3" min="0" max="20" value="2">
+    </label>
+    <label>Textaufgaben: 
+      <input type="number" class="topic-count" data-key="T" min="0" max="20" value="4">
+    </label>
+  </div>
+
+  <div class="controls-row">
     <strong>Seed:</strong>
     <input type="text" id="seedInput" style="width: 110px;">
     <button id="useSeedBtn">Mit Seed erzeugen</button>
@@ -231,9 +271,17 @@
     <span id="timerDisplay" class="timer"></span>
   </div>
 
+  <div class="controls-row">
+    <strong>Vorlagen (Lehrer-Modus):</strong><br>
+    <input type="text" id="templateNameInput" placeholder="Name der Vorlage" style="width: 180px;">
+    <button id="saveTemplateBtn">Aktuelle SA als Vorlage speichern</button>
+    <div id="templatesList" class="templates-list"></div>
+  </div>
+
   <div class="hint">
-    Themen + Level werden im Browser gespeichert.  
-    SA-Modus blendet das Lösungsblatt aus und startet einen 50-Minuten-Timer.
+    Level, Themen und Aufgabenanzahl werden im Browser gespeichert.  
+    SA-Modus blendet das Lösungsblatt aus und startet einen 50-Minuten-Timer.  
+    Vorlagen speichern: Seed + Themen + Aufgabenanzahl + Level bleiben erhalten.
   </div>
 </div>
 
@@ -244,18 +292,6 @@
 <div id="solutionSheet" class="sheet"></div>
 
 <script>
-  // Anzahl Aufgaben pro Thema
-  const SA_CONFIG = {
-    "1.1": 2,
-    "1.2": 2,
-    "1.3": 2,
-    "1.4": 2,
-    "2.1": 2,
-    "2.2": 2,
-    "2.3": 2,
-    "T": 4
-  };
-
   // Punkte pro Aufgabe je Thema
   const POINTS_CONFIG = {
     "1.1": 2,
@@ -268,14 +304,28 @@
     "T":   5
   };
 
-  // PRNG mit Seed (mulberry32)
+  const sectionOrder = [
+    {key:"1.1", title:"1. Zahlen & Zählen"},
+    {key:"1.2", title:"2. Zahlensysteme"},
+    {key:"1.3", title:"3. Zahlen ordnen"},
+    {key:"1.4", title:"4. Runden"},
+    {key:"2.1", title:"5. Addieren & Subtrahieren"},
+    {key:"2.2", title:"6. Multiplizieren & Dividieren"},
+    {key:"2.3", title:"7. Verbundene Aufgaben"},
+    {key:"T",   title:"8. Textaufgaben"}
+  ];
+
   let currentLevel = "standard";
   let currentSeed = null;
   let rng = null;
   let examMode = false;
   let timerId = null;
   let remainingSeconds = 0;
+  let currentExamConfig = null; // für Vorlagen
 
+  let templates = []; // gespeicherte SAs
+
+  // PRNG mit Seed (mulberry32)
   function mulberry32(a) {
     return function() {
       let t = a += 0x6D2B79F5;
@@ -334,15 +384,27 @@
     {q:"Beim Laufevent läuft jede der 48 Personen 2,5 km. Wie viele Kilometer werden insgesamt gelaufen?", a:"48 · 2,5 = 120 km"}
   ];
 
+  // Aufgabenanzahl aus Inputs
+  function getTaskCount(key) {
+    const input = document.querySelector('.topic-count[data-key="'+key+'"]');
+    if (!input) return 0;
+    let v = parseInt(input.value, 10);
+    if (isNaN(v) || v < 0) v = 0;
+    return v;
+  }
+
+  // Generatoren benutzen getTaskCount(key)
   const generators = {
     "1.1": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["1.1"]*2;i++){
+      const cnt = getTaskCount("1.1");
+      const t=[]; for(let i=0;i<cnt*2;i++){
         const n=lvl==="advanced"?randInt(1000,999999):randInt(100,99999);
         t.push({q:"Vorgänger und Nachfolger von "+n, a:(n-1)+" / "+(n+1)});
-      } shuffle(t); return t.slice(0,SA_CONFIG["1.1"]);
+      } shuffle(t); return t.slice(0,cnt);
     },
     "1.2": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["1.2"]*3;i++){
+      const cnt = getTaskCount("1.2");
+      const t=[]; for(let i=0;i<cnt*3;i++){
         const typ=randInt(1,3);
         if(typ===1){
           const max=lvl==="advanced"?3999:2000;
@@ -364,10 +426,11 @@
             t.push({q:n+" zerlegen (T/H/Z/E)",a:t1+" T, "+h+" H, "+z+" Z, "+e+" E"});
           }
         }
-      } shuffle(t); return t.slice(0,SA_CONFIG["1.2"]);
+      } shuffle(t); return t.slice(0,cnt);
     },
     "1.3": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["1.3"]*3;i++){
+      const cnt = getTaskCount("1.3");
+      const t=[]; for(let i=0;i<cnt*3;i++){
         if(randInt(1,2)===1){
           const a=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
           const b=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
@@ -380,29 +443,33 @@
           const sorted=arr.slice().sort((x,y)=>x-y);
           t.push({q:"Sortiere: "+arr.join(", "),a:sorted.join(", ")});
         }
-      } shuffle(t); return t.slice(0,SA_CONFIG["1.3"]);
+      } shuffle(t); return t.slice(0,cnt);
     },
     "1.4": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["1.4"]*3;i++){
-        const mode=randInt(1,lvl==="advanced"?4:3); let n,a,q;
+      const cnt = getTaskCount("1.4");
+      const t=[]; for(let i=0;i<cnt*3;i++){
+        const mode = randInt(1,lvl==="advanced"?4:3);
+        let n,a,q;
         if(mode===1){n=lvl==="advanced"?randInt(100,99999):randInt(0,9999);a=Math.round(n/10)*10;q="Runde "+n+" auf Zehner";}
         else if(mode===2){n=lvl==="advanced"?randInt(1000,999999):randInt(0,99999);a=Math.round(n/100)*100;q="Runde "+n+" auf Hunderter";}
         else if(mode===3){n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);a=Math.round(n/1000)*1000;q="Runde "+n+" auf Tausender";}
         else {n=randInt(10000,9999999);a=Math.round(n/10000)*10000;q="Runde "+n+" auf Zehntausender";}
         t.push({q,a:""+a});
-      } shuffle(t); return t.slice(0,SA_CONFIG["1.4"]);
+      } shuffle(t); return t.slice(0,cnt);
     },
     "2.1": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["2.1"]*3;i++){
+      const cnt = getTaskCount("2.1");
+      const t=[]; for(let i=0;i<cnt*3;i++){
         const typ=randInt(1,3); let q,res;
         if(typ===1){const a=randInt(100,5000),b=randInt(100,5000);q=a+" + "+b;res=a+b;}
         else if(typ===2){const a=lvl==="advanced"?randInt(1000,9000):randInt(500,5000),b=randInt(100,a-100),c=randInt(10,200);q="("+a+" - "+b+") + "+c;res=(a-b)+c;}
         else {const a=randInt(500,10000),b=randInt(100,a-100),c=randInt(50,b);q=a+" - ("+b+" - "+c+")";res=a-(b-c);}
-        t.push({q,a:res});
-      } shuffle(t); return t.slice(0,SA_CONFIG["2.1"]);
+        t.push({q,a:""+res});
+      } shuffle(t); return t.slice(0,cnt);
     },
     "2.2": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["2.2"]*3;i++){
+      const cnt = getTaskCount("2.2");
+      const t=[]; for(let i=0;i<cnt*3;i++){
         const typ=randInt(1,3);
         if(typ===1){
           const n=lvl==="advanced"?randInt(50,200):randInt(20,120);
@@ -416,10 +483,11 @@
           if(rand()<0.5) t.push({q:a+"×"+b,a:""+(a*b)});
           else {const prod=a*b;t.push({q:prod+"÷"+a,a:""+b});}
         }
-      } shuffle(t); return t.slice(0,SA_CONFIG["2.2"]);
+      } shuffle(t); return t.slice(0,cnt);
     },
     "2.3": lvl=>{
-      const t=[]; for(let i=0;i<SA_CONFIG["2.3"]*3;i++){
+      const cnt = getTaskCount("2.3");
+      const t=[]; for(let i=0;i<cnt*3;i++){
         const typ=randInt(1,3); let q,res;
         if(typ===1){
           const a=randInt(50,400),b=randInt(5,20),c=randInt(10,50);
@@ -431,26 +499,16 @@
           const a=randInt(20,80),b=randInt(5,15),c=randInt(10,100);
           q="("+a+"×"+b+") - "+c;res=a*b-c;
         }
-        t.push({q,a:res});
-      } shuffle(t); return t.slice(0,SA_CONFIG["2.3"]);
+        t.push({q,a:""+res});
+      } shuffle(t); return t.slice(0,cnt);
     },
     "T": lvl=>{
+      const cnt = getTaskCount("T");
       const pool=(lvl==="advanced"?textTasksAdvanced.slice():textTasksStandard.slice());
       shuffle(pool);
-      return pool.slice(0,SA_CONFIG["T"]);
+      return pool.slice(0,cnt);
     }
   };
-
-  const sectionOrder = [
-    {key:"1.1", title:"1. Zahlen & Zählen"},
-    {key:"1.2", title:"2. Zahlensysteme"},
-    {key:"1.3", title:"3. Zahlen ordnen"},
-    {key:"1.4", title:"4. Runden"},
-    {key:"2.1", title:"5. Addieren & Subtrahieren"},
-    {key:"2.2", title:"6. Multiplizieren & Dividieren"},
-    {key:"2.3", title:"7. Verbundene Aufgaben"},
-    {key:"T",   title:"8. Textaufgaben"}
-  ];
 
   function getActiveTopics() {
     return Array.from(document.querySelectorAll(".topic-checkbox"))
@@ -458,18 +516,35 @@
       .map(cb => cb.dataset.key);
   }
 
+  function getCurrentCountsMap() {
+    const map = {};
+    sectionOrder.forEach(sec => {
+      map[sec.key] = getTaskCount(sec.key);
+    });
+    return map;
+  }
+
   function saveSaSettings() {
     localStorage.setItem("saLevel", currentLevel);
     localStorage.setItem("saTopics", JSON.stringify(getActiveTopics()));
+    localStorage.setItem("saCounts", JSON.stringify(getCurrentCountsMap()));
   }
 
   function loadSaSettings() {
-    const savedLevel = localStorage.getItem("saLevel");
     const levelSelect = document.getElementById("levelSelect");
+    const savedLevel = localStorage.getItem("saLevel");
     if (savedLevel && (savedLevel === "standard" || savedLevel === "advanced")) {
       currentLevel = savedLevel;
       levelSelect.value = savedLevel;
+    } else {
+      // falls nichts gespeichert: mit Trainer-Level synchronisieren, wenn vorhanden
+      const trainerLevel = localStorage.getItem("trainerLevel");
+      if (trainerLevel && (trainerLevel === "standard" || trainerLevel === "advanced")) {
+        currentLevel = trainerLevel;
+        levelSelect.value = trainerLevel;
+      }
     }
+
     const savedTopics = localStorage.getItem("saTopics");
     if (savedTopics) {
       try {
@@ -478,10 +553,29 @@
         checkboxes.forEach(cb => {
           cb.checked = arr.includes(cb.dataset.key);
         });
-      } catch(e) {
-        // egal, dann Standard
-      }
+      } catch(e) {/* ignore */}
     }
+
+    const savedCounts = localStorage.getItem("saCounts");
+    if (savedCounts) {
+      try {
+        const map = JSON.parse(savedCounts);
+        document.querySelectorAll(".topic-count").forEach(inp => {
+          const k = inp.dataset.key;
+          if (map.hasOwnProperty(k)) {
+            inp.value = map[k];
+          }
+        });
+      } catch(e) {/* ignore */}
+    }
+
+    const savedTemplates = localStorage.getItem("saTemplates");
+    if (savedTemplates) {
+      try {
+        templates = JSON.parse(savedTemplates) || [];
+      } catch(e) { templates = []; }
+    }
+    renderTemplatesList();
   }
 
   function updateTimerDisplay() {
@@ -548,6 +642,9 @@
   document.querySelectorAll(".topic-checkbox").forEach(cb=>{
     cb.addEventListener("change", saveSaSettings);
   });
+  document.querySelectorAll(".topic-count").forEach(inp=>{
+    inp.addEventListener("change", saveSaSettings);
+  });
 
   document.getElementById("printBtn").addEventListener("click", function () {
     window.print();
@@ -591,10 +688,16 @@
     // Einstellungen speichern
     saveSaSettings();
 
+    // Aufgabenanzahl pro Thema für diese SA
+    const counts = {};
+    activeKeys.forEach(k => {
+      counts[k] = getTaskCount(k);
+    });
+
     // Maximalpunkte berechnen
     let totalMaxPoints = 0;
     activeKeys.forEach(k => {
-      const tasksCount = SA_CONFIG[k] || 0;
+      const tasksCount = counts[k] || 0;
       const pointsPerTask = POINTS_CONFIG[k] || 0;
       totalMaxPoints += tasksCount * pointsPerTask;
     });
@@ -617,6 +720,8 @@
 
     sectionOrder.forEach(sec => {
       if (!activeKeys.includes(sec.key)) return;
+      const cnt = counts[sec.key] || 0;
+      if (cnt <= 0) return;
 
       const tasks = generators[sec.key](currentLevel);
       if (!tasks || tasks.length === 0) return;
@@ -649,10 +754,123 @@
         taskNumber++;
       });
     });
+
+    // aktuelle SA-Konfiguration für Vorlagen speichern
+    currentExamConfig = {
+      seed: seed,
+      level: currentLevel,
+      topics: activeKeys.slice(),
+      counts: counts
+    };
   }
 
-  // Einstellungen laden, dann sofort eine SA erzeugen
+  // Vorlagen-Funktionen
+  function saveTemplatesToStorage() {
+    localStorage.setItem("saTemplates", JSON.stringify(templates));
+  }
+
+  function renderTemplatesList() {
+    const list = document.getElementById("templatesList");
+    list.innerHTML = "";
+    if (!templates || templates.length === 0) {
+      list.textContent = "Noch keine Vorlagen gespeichert.";
+      return;
+    }
+    templates.forEach(tpl => {
+      const div = document.createElement("div");
+      div.className = "template-item";
+      const topicsShort = tpl.topics.join(", ");
+      const spanText = document.createElement("span");
+      spanText.textContent = tpl.name + " – Seed " + tpl.seed + " – Themen: " + topicsShort;
+      div.appendChild(spanText);
+
+      const btnLoad = document.createElement("button");
+      btnLoad.type = "button";
+      btnLoad.textContent = "Laden";
+      btnLoad.style.marginLeft = "8px";
+      btnLoad.onclick = function () {
+        loadTemplate(tpl.id);
+      };
+      div.appendChild(btnLoad);
+
+      const btnDel = document.createElement("button");
+      btnDel.type = "button";
+      btnDel.textContent = "Löschen";
+      btnDel.onclick = function () {
+        deleteTemplate(tpl.id);
+      };
+      div.appendChild(btnDel);
+
+      list.appendChild(div);
+    });
+  }
+
+  function saveCurrentAsTemplate() {
+    if (!currentExamConfig) {
+      alert("Bitte zuerst eine Schularbeit erzeugen, bevor du sie als Vorlage speicherst.");
+      return;
+    }
+    const nameInput = document.getElementById("templateNameInput");
+    let name = (nameInput.value || "").trim();
+    if (!name) {
+      name = "SA-" + new Date().toLocaleDateString();
+    }
+
+    const id = Date.now();
+    const tpl = {
+      id: id,
+      name: name,
+      seed: currentExamConfig.seed,
+      level: currentExamConfig.level,
+      topics: currentExamConfig.topics,
+      counts: currentExamConfig.counts
+    };
+    templates.push(tpl);
+    saveTemplatesToStorage();
+    renderTemplatesList();
+  }
+
+  function loadTemplate(id) {
+    const tpl = templates.find(t => t.id === id);
+    if (!tpl) return;
+
+    // Level
+    currentLevel = tpl.level;
+    document.getElementById("levelSelect").value = tpl.level;
+
+    // Themen
+    const checkboxes = document.querySelectorAll(".topic-checkbox");
+    checkboxes.forEach(cb => {
+      cb.checked = tpl.topics.includes(cb.dataset.key);
+    });
+
+    // Aufgabenanzahl
+    document.querySelectorAll(".topic-count").forEach(inp => {
+      const k = inp.dataset.key;
+      if (tpl.counts && tpl.counts.hasOwnProperty(k)) {
+        inp.value = tpl.counts[k];
+      }
+    });
+
+    // Seed eintragen und SA erzeugen
+    document.getElementById("seedInput").value = tpl.seed;
+    saveSaSettings();
+    generateExam(tpl.seed);
+  }
+
+  function deleteTemplate(id) {
+    templates = templates.filter(t => t.id !== id);
+    saveTemplatesToStorage();
+    renderTemplatesList();
+  }
+
+  document.getElementById("saveTemplateBtn").addEventListener("click", function () {
+    saveCurrentAsTemplate();
+  });
+
+  // Initial laden
   loadSaSettings();
+  // einmal SA erzeugen
   generateExam(null);
 </script>
 </body>
