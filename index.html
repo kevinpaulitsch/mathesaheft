@@ -386,16 +386,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
   const TASKS_PER_SECTION = 20;
   let currentDifficulty = "easy"; // easy / medium / hard
 
-  // Session-Progress
-  const progressData = {}; // {sectionKey: {total, answered, correct}}
-
-  // Langzeit-Statistik
-  let statsStore = {};     // {sectionKey: {totalAnswered, totalCorrect}}
-
-  // Fehler-Statistik
-  let weakStats = {};      // {sectionKey: {subtype: {wrong}}}
-
-  // Meta (XP, Level, Streaks, Achievements, Speed-Bestwerte)
+  const progressData = {};
+  let statsStore = {};
+  let weakStats = {};
   let meta = {
     xp: 0,
     totalCorrect: 0,
@@ -405,63 +398,27 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     lastDayISO: null,
     dayStreak: 0,
     todayXp: 0,
-    achievements: {}, // {id: true}
-    bestSpeed: {}      // {sectionKey: {correct, total}}
+    achievements: {},
+    bestSpeed: {}
   };
 
-  // Achievements-Definitionen
   const ACHIEVEMENTS = [
-    {
-      id: "starter",
-      label: "Starter",
-      desc: "10 Aufgaben richtig.",
-      check: m => m.totalCorrect >= 10
-    },
-    {
-      id: "hundert",
-      label: "Rechenkönig",
-      desc: "100 Aufgaben richtig.",
-      check: m => m.totalCorrect >= 100
-    },
-    {
-      id: "roundingPro",
-      label: "Runden-Profi",
-      desc: "Mindestens 30 richtige Runden-Aufgaben.",
-      check: () => {
-        const s = statsStore["1.4"];
-        return s && s.totalCorrect >= 30;
+    { id: "starter", label: "Starter", desc: "10 Aufgaben richtig.", check: m => m.totalCorrect >= 10 },
+    { id: "hundert", label: "Rechenkönig", desc: "100 Aufgaben richtig.", check: m => m.totalCorrect >= 100 },
+    { id: "roundingPro", label: "Runden-Profi", desc: "Mindestens 30 richtige Runden-Aufgaben.", check: () => {
+        const s = statsStore["1.4"]; return s && s.totalCorrect >= 30;
       }
     },
-    {
-      id: "streak10",
-      label: "Serie 10",
-      desc: "10 Aufgaben in Folge richtig.",
-      check: m => m.bestStreak >= 10
-    },
-    {
-      id: "streak20",
-      label: "Serie 20",
-      desc: "20 Aufgaben in Folge richtig.",
-      check: m => m.bestStreak >= 20
-    },
-    {
-      id: "day7",
-      label: "7-Tage-Streak",
-      desc: "7 Tage in Folge gelernt.",
-      check: m => m.dayStreak >= 7
-    },
-    {
-      id: "speed10",
-      label: "Speed-Runner",
-      desc: "In einer Speed-Challenge mindestens 10 richtige Aufgaben.",
-      check: m => {
+    { id: "streak10", label: "Serie 10", desc: "10 Aufgaben in Folge richtig.", check: m => m.bestStreak >= 10 },
+    { id: "streak20", label: "Serie 20", desc: "20 Aufgaben in Folge richtig.", check: m => m.bestStreak >= 20 },
+    { id: "day7", label: "7-Tage-Streak", desc: "7 Tage in Folge gelernt.", check: m => m.dayStreak >= 7 },
+    { id: "speed10", label: "Speed-Runner", desc: "In einer Speed-Challenge mindestens 10 richtige Aufgaben.", check: m => {
         if (!m.bestSpeed) return false;
         return Object.values(m.bestSpeed).some(b => b.correct >= 10);
       }
     }
   ];
 
-  // localStorage laden
   try {
     const stored = localStorage.getItem("trainerStats");
     if (stored) statsStore = JSON.parse(stored) || {};
@@ -476,44 +433,29 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     const m = localStorage.getItem("trainerMeta");
     if (m) {
       const parsed = JSON.parse(m);
-      if (parsed && typeof parsed === "object") {
-        meta = Object.assign(meta, parsed);
-      }
+      if (parsed && typeof parsed === "object") meta = Object.assign(meta, parsed);
     }
-  } catch(e) { /* ignore */ }
+  } catch(e) {}
 
   try {
     const d = localStorage.getItem("trainerDifficulty");
-    if (d && (d === "easy" || d === "medium" || d === "hard")) {
-      currentDifficulty = d;
-    }
+    if (d && (d === "easy" || d === "medium" || d === "hard")) currentDifficulty = d;
   } catch(e) { currentDifficulty = "easy"; }
 
-  function saveStatsStore() {
-    localStorage.setItem("trainerStats", JSON.stringify(statsStore));
-  }
-  function saveWeakStats() {
-    localStorage.setItem("trainerWeak", JSON.stringify(weakStats));
-  }
-  function saveMeta() {
-    localStorage.setItem("trainerMeta", JSON.stringify(meta));
-  }
-  function saveDifficulty() {
-    localStorage.setItem("trainerDifficulty", currentDifficulty);
-  }
+  function saveStatsStore(){ localStorage.setItem("trainerStats", JSON.stringify(statsStore)); }
+  function saveWeakStats(){ localStorage.setItem("trainerWeak", JSON.stringify(weakStats)); }
+  function saveMeta(){ localStorage.setItem("trainerMeta", JSON.stringify(meta)); }
+  function saveDifficulty(){ localStorage.setItem("trainerDifficulty", currentDifficulty); }
 
-  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-  function intToRoman(num) {
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function intToRoman(num){
     const vals=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
     const syms=["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"];
-    let res=""; for(let i=0;i<vals.length;i++){while(num>=vals[i]){num-=vals[i];res+=syms[i];}}
-    return res;
+    let res=""; for(let i=0;i<vals.length;i++){while(num>=vals[i]){num-=vals[i];res+=syms[i];}} return res;
   }
   function divisors(n){let r=[];for(let i=1;i<=n;i++){if(n%i===0)r.push(i);}return r;}
   function multiples(b,c){let r=[];for(let i=1;i<=c;i++)r.push(b*i);return r;}
-
-  // Nur Antworten, die nur aus einer Zahl bestehen, werden automatisch geprüft
-  function getNumericAnswer(ans) {
+  function getNumericAnswer(ans){
     if (typeof ans === "number") return ans;
     if (typeof ans !== "string") return null;
     const trimmed = ans.trim().replace(",", ".");
@@ -521,45 +463,42 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     return null;
   }
 
-  // Fehler für (sectionKey, subtype) registrieren -> beeinflusst spätere Aufgabenauswahl
-  function recordWrong(sectionKey, subtype) {
+  function recordWrong(sectionKey, subtype){
     if (!subtype) return;
-    if (!weakStats[sectionKey]) weakStats[sectionKey] = {};
-    if (!weakStats[sectionKey][subtype]) weakStats[sectionKey][subtype] = { wrong: 0 };
+    if (!weakStats[sectionKey]) weakStats[sectionKey]={};
+    if (!weakStats[sectionKey][subtype]) weakStats[sectionKey][subtype]={wrong:0};
     weakStats[sectionKey][subtype].wrong++;
     saveWeakStats();
   }
 
-  // Runden-Modus passend zur Fehlerstatistik auswählen
-  function chooseRoundingMode(modes) {
-    const sectionKey = "1.4";
-    const stats = weakStats[sectionKey] || {};
-    let totalWeight = 0;
-    const weighted = modes.map(m => {
-      const wrong = (stats[m] && stats[m].wrong) ? stats[m].wrong : 0;
-      const w = 1 + wrong; // Basis 1, +1 pro Fehler
-      totalWeight += w;
-      return { mode: m, weight: w };
+  function chooseRoundingMode(modes){
+    const sectionKey="1.4";
+    const stats=weakStats[sectionKey]||{};
+    let totalWeight=0;
+    const weighted=modes.map(m=>{
+      const wrong=(stats[m]&&stats[m].wrong)?stats[m].wrong:0;
+      const w=1+wrong;
+      totalWeight+=w;
+      return{mode:m,weight:w};
     });
-    let r = Math.random() * totalWeight;
-    for (const item of weighted) {
-      if (r < item.weight) return item.mode;
-      r -= item.weight;
+    let r=Math.random()*totalWeight;
+    for(const item of weighted){
+      if(r<item.weight) return item.mode;
+      r-=item.weight;
     }
     return modes[0];
   }
 
-  // Generatoren, abhängig von currentDifficulty: easy / medium / hard
-  const generators = {
+  const generators={
     "1.1": diff=>{
       const t=[]; 
       for(let i=0;i<TASKS_PER_SECTION;i++){
         let n;
-        if (diff === "easy")      n = randInt(10, 999);
-        else if (diff === "medium") n = randInt(100, 99999);
-        else                        n = randInt(1000, 999999);
+        if(diff==="easy") n=randInt(10,999);
+        else if(diff==="medium") n=randInt(100,99999);
+        else n=randInt(1000,999999);
         t.push({q:"Vorgänger und Nachfolger von "+n, a:(n-1)+" / "+(n+1), subtype:"vorgaenger"});
-      } 
+      }
       return t;
     },
     "1.2": diff=>{
@@ -578,9 +517,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
           t.push({q:r+" als Zahl",a:""+n, subtype:"rom2dec"});
         } else {
           let n;
-          if (diff==="easy")       n=randInt(100,9999);
-          else if (diff==="medium")n=randInt(1000,999999);
-          else                     n=randInt(100000,9999999);
+          if (diff==="easy") n=randInt(100,9999);
+          else if (diff==="medium") n=randInt(1000,999999);
+          else n=randInt(100000,9999999);
           const s=n.toString(), len=s.length;
           if(diff==="hard"){
             const posNames=["Einer","Zehner","Hunderter","Tausender","Zehntausender","Hunderttausender","Millionen"];
@@ -599,13 +538,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
       for(let i=0;i<TASKS_PER_SECTION;i++){
         if(randInt(1,2)===1){
           let a,b;
-          if (diff==="easy") {
-            a=randInt(10,999); b=randInt(10,999);
-          } else if (diff==="medium") {
-            a=randInt(1000,99999); b=randInt(1000,99999);
-          } else {
-            a=randInt(10000,9999999); b=randInt(10000,9999999);
-          }
+          if (diff==="easy") { a=randInt(10,999); b=randInt(10,999); }
+          else if (diff==="medium") { a=randInt(1000,99999); b=randInt(1000,99999); }
+          else { a=randInt(10000,9999999); b=randInt(10000,9999999); }
           const sign=a>b?">":a<b?"<":"=";
           t.push({q:a+" __ "+b,a:sign, subtype:"vergleichen"});
         } else {
@@ -630,24 +565,24 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
         const mode = chooseRoundingMode(modes);
         let n,a,q;
         if(mode==="Z"){
-          if (diff==="easy")      n=randInt(0,999);
+          if (diff==="easy") n=randInt(0,999);
           else if (diff==="medium") n=randInt(0,9999);
-          else                     n=randInt(100,99999);
+          else n=randInt(100,99999);
           a=Math.round(n/10)*10;
           q="Runde "+n+" auf Zehner";
         } else if(mode==="H"){
-          if (diff==="easy")      n=randInt(0,9999);
+          if (diff==="easy") n=randInt(0,9999);
           else if (diff==="medium") n=randInt(0,99999);
-          else                     n=randInt(1000,999999);
+          else n=randInt(1000,999999);
           a=Math.round(n/100)*100;
           q="Runde "+n+" auf Hunderter";
         } else if(mode==="T"){
-          if (diff==="easy")      n=randInt(0,99999);
+          if (diff==="easy") n=randInt(0,99999);
           else if (diff==="medium") n=randInt(0,999999);
-          else                     n=randInt(5000,999999);
+          else n=randInt(5000,999999);
           a=Math.round(n/1000)*1000;
           q="Runde "+n+" auf Tausender";
-        } else { // ZT, nur hard
+        } else {
           n=randInt(10000,9999999);
           a=Math.round(n/10000)*10000;
           q="Runde "+n+" auf Zehntausender";
@@ -662,9 +597,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
         const typ=randInt(1,3); let q,res,sub;
         if(typ===1){
           let a,b;
-          if (diff==="easy")      { a=randInt(10,500);  b=randInt(10,500); }
+          if (diff==="easy") { a=randInt(10,500); b=randInt(10,500); }
           else if (diff==="medium"){ a=randInt(100,5000); b=randInt(100,5000); }
-          else                    { a=randInt(500,20000); b=randInt(500,20000); }
+          else { a=randInt(500,20000); b=randInt(500,20000); }
           q=a+" + "+b;res=a+b;sub="einfachAdd";
         } else if(typ===2){
           let a,b,c;
@@ -697,25 +632,21 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
         const typ=randInt(1,3);
         if(typ===1){
           let n;
-          if (diff==="easy")      n=randInt(10,60);
+          if (diff==="easy") n=randInt(10,60);
           else if (diff==="medium") n=randInt(20,120);
-          else                     n=randInt(50,200);
+          else n=randInt(50,200);
           t.push({q:"Alle Teiler von "+n,a:divisors(n).join(", "), subtype:"teiler"});
         } else if(typ===2){
           let b;
-          if (diff==="easy")      b=randInt(2,9);
+          if (diff==="easy") b=randInt(2,9);
           else if (diff==="medium") b=randInt(3,12);
-          else                     b=randInt(7,20);
+          else b=randInt(7,20);
           t.push({q:"Erste 8 Vielfache von "+b,a:multiples(b,8).join(", "), subtype:"vielfache"});
         } else {
           let a,b;
-          if (diff==="easy") {
-            a=randInt(5,20); b=randInt(2,10);
-          } else if (diff==="medium") {
-            a=randInt(10,99); b=randInt(2,12);
-          } else {
-            a=randInt(20,200); b=randInt(10,30);
-          }
+          if (diff==="easy") { a=randInt(5,20); b=randInt(2,10); }
+          else if (diff==="medium") { a=randInt(10,99); b=randInt(2,12); }
+          else { a=randInt(20,200); b=randInt(10,30); }
           if(Math.random()<0.5) t.push({q:a+"×"+b,a:a*b, subtype:"mult"});
           else {const prod=a*b; t.push({q:prod+"÷"+a,a:b, subtype:"div"});}
         }
@@ -763,7 +694,7 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     }
   };
 
-  const sectionDefs = [
+  const sectionDefs=[
     { key:"1.1", title:"1.1 Zahlen & Zählen", note:"Vorgänger und Nachfolger großer Zahlen." },
     { key:"1.2", title:"1.2 Zahlensysteme", note:"Römische Zahlen & Stellenwerte." },
     { key:"1.3", title:"1.3 Zahlen ordnen", note:"Sortieren & Vergleichen." },
@@ -773,408 +704,294 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     { key:"2.3", title:"2.3 Verbundene Aufgaben", note:"Gemischte Rechnungen." }
   ];
 
-  function updateProgressDisplay(sectionKey) {
-    const prog = progressData[sectionKey] || {total:0, answered:0, correct:0};
-    const global = statsStore[sectionKey] || {totalAnswered:0, totalCorrect:0};
-    const el = document.getElementById("progress-" + sectionKey);
-    if (!el) return;
-
-    const sessionStr = "Heutiger Durchgang: " +
-      prog.correct + " / " + (prog.answered || 0) +
-      " von " + prog.total + " Aufgaben";
-
-    let globalStr = "Gesamt: noch keine Daten";
-    if (global.totalAnswered > 0) {
-      const pct = Math.round((global.totalCorrect / global.totalAnswered) * 100);
-      globalStr = "Gesamt: " + global.totalCorrect + " / " +
-        global.totalAnswered + " (" + pct + "%)";
+  function updateProgressDisplay(sectionKey){
+    const prog=progressData[sectionKey]||{total:0,answered:0,correct:0};
+    const global=statsStore[sectionKey]||{totalAnswered:0,totalCorrect:0};
+    const el=document.getElementById("progress-"+sectionKey);
+    if(!el) return;
+    const sessionStr="Heutiger Durchgang: "+prog.correct+" / "+(prog.answered||0)+" von "+prog.total+" Aufgaben";
+    let globalStr="Gesamt: noch keine Daten";
+    if(global.totalAnswered>0){
+      const pct=Math.round((global.totalCorrect/global.totalAnswered)*100);
+      globalStr="Gesamt: "+global.totalCorrect+" / "+global.totalAnswered+" ("+pct+"%)";
     }
-
-    el.textContent = sessionStr + " | " + globalStr;
+    el.textContent=sessionStr+" | "+globalStr;
   }
 
-  // Level / XP / Streak-Anzeige
-  function computeLevel() {
-    const xpPerLevel = 200;
-    const level = Math.floor(meta.xp / xpPerLevel) + 1;
-    const xpInto = meta.xp % xpPerLevel;
-    const xpNeeded = xpPerLevel;
-    return { level, xpInto, xpNeeded };
+  function computeLevel(){
+    const xpPerLevel=200;
+    const level=Math.floor(meta.xp/xpPerLevel)+1;
+    const xpInto=meta.xp%xpPerLevel;
+    return{level,xpInto,xpNeeded:xpPerLevel};
   }
 
-  function updateDifficultyLock(level) {
-    const select = document.getElementById("difficultySelect");
-    if (!select) return;
-
-    const optEasy = select.querySelector('option[value="easy"]');
-    const optMedium = select.querySelector('option[value="medium"]');
-    const optHard = select.querySelector('option[value="hard"]');
-
-    const mediumUnlocked = level >= 3;
-    const hardUnlocked = level >= 6;
-
-    if (optEasy) optEasy.disabled = false;
-    if (optMedium) optMedium.disabled = !mediumUnlocked;
-    if (optHard) optHard.disabled = !hardUnlocked;
-
-    // Falls aktuell gesetzter Schwierigkeitsgrad noch nicht freigeschaltet ist -> runterstufen
-    if (currentDifficulty === "hard" && !hardUnlocked) {
-      currentDifficulty = mediumUnlocked ? "medium" : "easy";
-    }
-    if (currentDifficulty === "medium" && !mediumUnlocked) {
-      currentDifficulty = "easy";
-    }
-
-    select.value = currentDifficulty;
+  function updateDifficultyLock(level){
+    const select=document.getElementById("difficultySelect");
+    if(!select) return;
+    const optEasy=select.querySelector('option[value="easy"]');
+    const optMedium=select.querySelector('option[value="medium"]');
+    const optHard=select.querySelector('option[value="hard"]');
+    const mediumUnlocked=level>=3;
+    const hardUnlocked=level>=6;
+    if(optEasy) optEasy.disabled=false;
+    if(optMedium) optMedium.disabled=!mediumUnlocked;
+    if(optHard) optHard.disabled=!hardUnlocked;
+    if(currentDifficulty==="hard" && !hardUnlocked) currentDifficulty=mediumUnlocked?"medium":"easy";
+    if(currentDifficulty==="medium" && !mediumUnlocked) currentDifficulty="easy";
+    select.value=currentDifficulty;
     saveDifficulty();
   }
 
-  function updateMetaUI() {
-    const { level, xpInto, xpNeeded } = computeLevel();
-    const levelLabel = document.getElementById("levelLabel");
-    const xpLabel = document.getElementById("xpLabel");
-    const xpFill = document.getElementById("xpFill");
-    const todayXpLabel = document.getElementById("todayXpLabel");
-    const streakLabel = document.getElementById("streakLabel");
-    const dayStreakLabel = document.getElementById("dayStreakLabel");
-
-    if (levelLabel) levelLabel.textContent = "Level " + level;
-    if (xpLabel) xpLabel.textContent = xpInto + " / " + xpNeeded + " XP";
-    if (xpFill) xpFill.style.width = (xpNeeded > 0 ? (xpInto / xpNeeded * 100).toFixed(1) : 0) + "%";
-
-    const dailyTarget = 150;
-    if (todayXpLabel) {
-      todayXpLabel.textContent = "Heute: " + meta.todayXp + " / " + dailyTarget + " XP";
-    }
-    if (streakLabel) {
-      streakLabel.textContent = "Aufgaben-Serie: " + meta.currentStreak + " (Best: " + meta.bestStreak + ")";
-    }
-    if (dayStreakLabel) {
-      dayStreakLabel.textContent = "Tages-Streak: " + meta.dayStreak + " Tage";
-    }
-
-    updateDifficultyLock(level);
-    updateAchievementsUI();
-  }
-
-  function updateAchievementsUI() {
-    const panel = document.getElementById("achievementsPanel");
-    const list = document.getElementById("achievementsList");
-    if (!panel || !list) return;
-
-    list.innerHTML = "";
-    ACHIEVEMENTS.forEach(def => {
-      const done = !!meta.achievements[def.id];
-      const el = document.createElement("div");
-      el.className = "achievement-item";
-
-      const badge = document.createElement("span");
-      badge.className = "badge " + (done ? "badge-ok" : "badge-miss");
-      badge.textContent = done ? "✔" : "✖";
+  function updateAchievementsUI(){
+    const panel=document.getElementById("achievementsPanel");
+    const list=document.getElementById("achievementsList");
+    if(!panel||!list) return;
+    list.innerHTML="";
+    ACHIEVEMENTS.forEach(def=>{
+      const done=!!meta.achievements[def.id];
+      const el=document.createElement("div");
+      el.className="achievement-item";
+      const badge=document.createElement("span");
+      badge.className="badge "+(done?"badge-ok":"badge-miss");
+      badge.textContent=done?"✔":"✖";
       el.appendChild(badge);
-
-      const text = document.createElement("span");
-      text.innerHTML = "<strong>" + def.label + ":</strong> " + def.desc;
+      const text=document.createElement("span");
+      text.innerHTML="<strong>"+def.label+":</strong> "+def.desc;
       el.appendChild(text);
-
       list.appendChild(el);
     });
   }
 
-  function addXp(amount) {
-    if (amount <= 0) return;
-    const now = new Date();
-    const todayISO = now.toISOString().slice(0,10);
+  function updateMetaUI(){
+    const {level,xpInto,xpNeeded}=computeLevel();
+    const levelLabel=document.getElementById("levelLabel");
+    const xpLabel=document.getElementById("xpLabel");
+    const xpFill=document.getElementById("xpFill");
+    const todayXpLabel=document.getElementById("todayXpLabel");
+    const streakLabel=document.getElementById("streakLabel");
+    const dayStreakLabel=document.getElementById("dayStreakLabel");
+    if(levelLabel) levelLabel.textContent="Level "+level;
+    if(xpLabel) xpLabel.textContent=xpInto+" / "+xpNeeded+" XP";
+    if(xpFill) xpFill.style.width=(xpNeeded>0?(xpInto/xpNeeded*100).toFixed(1):0)+"%";
+    const dailyTarget=150;
+    if(todayXpLabel) todayXpLabel.textContent="Heute: "+meta.todayXp+" / "+dailyTarget+" XP";
+    if(streakLabel) streakLabel.textContent="Aufgaben-Serie: "+meta.currentStreak+" (Best: "+meta.bestStreak+")";
+    if(dayStreakLabel) dayStreakLabel.textContent="Tages-Streak: "+meta.dayStreak+" Tage";
+    updateDifficultyLock(level);
+    updateAchievementsUI();
+  }
 
-    if (meta.lastDayISO !== todayISO) {
-      if (meta.lastDayISO) {
-        const last = new Date(meta.lastDayISO);
-        const diffDays = Math.round((now - last) / (1000*60*60*24));
-        if (diffDays === 1) {
-          meta.dayStreak = (meta.dayStreak || 0) + 1;
-        } else {
-          meta.dayStreak = 1;
-        }
-      } else {
-        meta.dayStreak = 1;
-      }
-      meta.todayXp = 0;
-      meta.lastDayISO = todayISO;
+  function addXp(amount){
+    if(amount<=0) return;
+    const now=new Date();
+    const todayISO=now.toISOString().slice(0,10);
+    if(meta.lastDayISO!==todayISO){
+      if(meta.lastDayISO){
+        const last=new Date(meta.lastDayISO);
+        const diffDays=Math.round((now-last)/(1000*60*60*24));
+        if(diffDays===1) meta.dayStreak=(meta.dayStreak||0)+1;
+        else meta.dayStreak=1;
+      } else meta.dayStreak=1;
+      meta.todayXp=0;
+      meta.lastDayISO=todayISO;
     }
-
-    meta.xp += amount;
-    meta.todayXp += amount;
+    meta.xp+=amount;
+    meta.todayXp+=amount;
     saveMeta();
   }
 
-  function checkAchievements(sectionKey, subtype) {
-    let unlockedSomething = false;
-    ACHIEVEMENTS.forEach(def => {
-      if (meta.achievements[def.id]) return;
-      let ok = false;
-      try {
-        ok = !!def.check(meta);
-      } catch(e) { ok = false; }
-      if (ok) {
-        meta.achievements[def.id] = true;
-        unlockedSomething = true;
-      }
+  function checkAchievements(sectionKey,subtype){
+    let unlocked=false;
+    ACHIEVEMENTS.forEach(def=>{
+      if(meta.achievements[def.id]) return;
+      let ok=false;
+      try{ ok=!!def.check(meta);}catch(e){ok=false;}
+      if(ok){ meta.achievements[def.id]=true; unlocked=true; }
     });
-    if (unlockedSomething) {
-      saveMeta();
-      updateMetaUI();
-    }
+    if(unlocked){ saveMeta(); updateMetaUI(); }
   }
 
-  function onCorrectAnswer(sectionKey, subtype) {
+  function onCorrectAnswer(sectionKey,subtype){
     meta.totalCorrect++;
     meta.currentStreak++;
-    if (meta.currentStreak > meta.bestStreak) {
-      meta.bestStreak = meta.currentStreak;
-    }
+    if(meta.currentStreak>meta.bestStreak) meta.bestStreak=meta.currentStreak;
     addXp(10);
     saveMeta();
-    checkAchievements(sectionKey, subtype);
+    checkAchievements(sectionKey,subtype);
     updateMetaUI();
   }
 
-  // Speed-Modus Variablen
-  let speedActive = false;
-  let speedSectionKey = "1.4";
-  let speedTasks = [];
-  let speedIndex = 0;
-  let speedCorrect = 0;
-  let speedTotal = 0;
-  let speedTimerId = null;
-  let speedRemaining = 0;
+  let speedActive=false, speedSectionKey="1.4", speedTasks=[], speedIndex=0,
+      speedCorrect=0, speedTotal=0, speedTimerId=null, speedRemaining=0;
 
-  function startSpeed() {
-    if (speedActive) return;
-    const select = document.getElementById("speedSectionSelect");
-    speedSectionKey = select.value || "1.4";
-
-    speedActive = true;
-    speedCorrect = 0;
-    speedTotal = 0;
-    speedTasks = [];
-    speedIndex = 0;
-    speedRemaining = 60;
-
-    document.getElementById("speedResult").textContent = "";
-    document.getElementById("speedFeedback").textContent = "";
-    document.getElementById("speedQuestionBox").style.display = "block";
-    document.getElementById("speedStartBtn").disabled = true;
-    document.getElementById("speedStopBtn").disabled = false;
-
+  function startSpeed(){
+    if(speedActive) return;
+    const select=document.getElementById("speedSectionSelect");
+    speedSectionKey=select.value||"1.4";
+    speedActive=true;
+    speedCorrect=0; speedTotal=0; speedTasks=[]; speedIndex=0; speedRemaining=60;
+    document.getElementById("speedResult").textContent="";
+    document.getElementById("speedFeedback").textContent="";
+    document.getElementById("speedQuestionBox").style.display="block";
+    document.getElementById("speedStartBtn").disabled=true;
+    document.getElementById("speedStopBtn").disabled=false;
     loadNextSpeedTask();
     updateSpeedTimerUI();
-
-    speedTimerId = setInterval(function() {
+    speedTimerId=setInterval(function(){
       speedRemaining--;
-      if (speedRemaining <= 0) {
-        speedRemaining = 0;
+      if(speedRemaining<=0){
+        speedRemaining=0;
         updateSpeedTimerUI();
         stopSpeed("Zeit abgelaufen.");
-      } else {
-        updateSpeedTimerUI();
-      }
-    }, 1000);
+      } else updateSpeedTimerUI();
+    },1000);
   }
 
-  function stopSpeed(message) {
-    if (!speedActive) return;
-    speedActive = false;
-    if (speedTimerId) {
-      clearInterval(speedTimerId);
-      speedTimerId = null;
-    }
-    document.getElementById("speedTimer").textContent = "";
-    document.getElementById("speedStartBtn").disabled = false;
-    document.getElementById("speedStopBtn").disabled = true;
-    document.getElementById("speedQuestionBox").style.display = "none";
-
-    const res = document.getElementById("speedResult");
-    res.textContent = "Speed-Ergebnis: " + speedCorrect + " richtige von " +
-      speedTotal + " bearbeiteten Aufgaben in 60 Sekunden.";
-
-    // Bestwert speichern
-    if (!meta.bestSpeed) meta.bestSpeed = {};
-    const prev = meta.bestSpeed[speedSectionKey];
-    if (!prev || speedCorrect > prev.correct) {
-      meta.bestSpeed[speedSectionKey] = { correct: speedCorrect, total: speedTotal };
+  function stopSpeed(message){
+    if(!speedActive) return;
+    speedActive=false;
+    if(speedTimerId){ clearInterval(speedTimerId); speedTimerId=null; }
+    document.getElementById("speedTimer").textContent="";
+    document.getElementById("speedStartBtn").disabled=false;
+    document.getElementById("speedStopBtn").disabled=true;
+    document.getElementById("speedQuestionBox").style.display="none";
+    const res=document.getElementById("speedResult");
+    res.textContent="Speed-Ergebnis: "+speedCorrect+" richtige von "+speedTotal+" bearbeiteten Aufgaben in 60 Sekunden.";
+    if(!meta.bestSpeed) meta.bestSpeed={};
+    const prev=meta.bestSpeed[speedSectionKey];
+    if(!prev||speedCorrect>prev.correct){
+      meta.bestSpeed[speedSectionKey]={correct:speedCorrect,total:speedTotal};
       saveMeta();
-      checkAchievements(speedSectionKey, null);
+      checkAchievements(speedSectionKey,null);
       updateMetaUI();
     }
-
-    if (message) {
-      // optional: alert(message);
-    }
   }
 
-  function updateSpeedTimerUI() {
-    const el = document.getElementById("speedTimer");
-    if (!el) return;
-    if (!speedActive) {
-      el.textContent = "";
-      return;
-    }
-    const m = Math.floor(speedRemaining / 60);
-    const s = speedRemaining % 60;
-    el.textContent = "Speed: " + m + ":" + (s<10?"0"+s:s);
+  function updateSpeedTimerUI(){
+    const el=document.getElementById("speedTimer");
+    if(!el) return;
+    if(!speedActive){ el.textContent=""; return; }
+    const m=Math.floor(speedRemaining/60);
+    const s=speedRemaining%60;
+    el.textContent="Speed: "+m+":"+(s<10?"0"+s:s);
   }
 
-  function loadNextSpeedTask() {
-    if (!speedActive) return;
-    if (speedIndex >= speedTasks.length) {
-      const gen = generators[speedSectionKey];
-      if (!gen) {
-        document.getElementById("speedQuestionText").textContent = "Kein Generator für dieses Kapitel.";
+  function loadNextSpeedTask(){
+    if(!speedActive) return;
+    if(speedIndex>=speedTasks.length){
+      const gen=generators[speedSectionKey];
+      if(!gen){
+        document.getElementById("speedQuestionText").textContent="Kein Generator für dieses Kapitel.";
         return;
       }
-      speedTasks = gen(currentDifficulty);
-      speedIndex = 0;
+      speedTasks=gen(currentDifficulty);
+      speedIndex=0;
     }
-
-    const t = speedTasks[speedIndex++];
-    const qEl = document.getElementById("speedQuestionText");
-    const input = document.getElementById("speedAnswer");
-    const fb = document.getElementById("speedFeedback");
-
-    qEl.textContent = t.q;
-    input.value = "";
-    fb.textContent = "";
+    const t=speedTasks[speedIndex++];
+    const qEl=document.getElementById("speedQuestionText");
+    const input=document.getElementById("speedAnswer");
+    const fb=document.getElementById("speedFeedback");
+    qEl.textContent=t.q;
+    input.value="";
+    fb.textContent="";
     input.focus();
-
-    document.getElementById("speedQuestionBox").dataset.answer = t.a;
+    document.getElementById("speedQuestionBox").dataset.answer=t.a;
   }
 
-  function handleSpeedCheck() {
-    if (!speedActive) return;
-    const box = document.getElementById("speedQuestionBox");
-    const expectedRaw = box.dataset.answer;
-    const fb = document.getElementById("speedFeedback");
-    const input = document.getElementById("speedAnswer").value.trim();
-
+  function handleSpeedCheck(){
+    if(!speedActive) return;
+    const box=document.getElementById("speedQuestionBox");
+    const expectedRaw=box.dataset.answer;
+    const fb=document.getElementById("speedFeedback");
+    const input=document.getElementById("speedAnswer").value.trim();
     speedTotal++;
-
-    const numericExpected = getNumericAnswer(expectedRaw);
-    let correct = false;
-    if (numericExpected !== null) {
-      const val = parseFloat(input.replace(",", "."));
-      if (!isNaN(val) && Math.abs(val - numericExpected) < 0.001) {
-        correct = true;
-      }
+    const numericExpected=getNumericAnswer(expectedRaw);
+    let correct=false;
+    if(numericExpected!==null){
+      const val=parseFloat(input.replace(",","."));
+      if(!isNaN(val)&&Math.abs(val-numericExpected)<0.001) correct=true;
     } else {
-      const normExpected = (expectedRaw || "").toString().trim().toLowerCase();
-      const normInput = input.toLowerCase();
-      if (normInput === normExpected) correct = true;
+      const normExpected=(expectedRaw||"").toString().trim().toLowerCase().replace(/\s+/g," ");
+      const normInput=input.toLowerCase().replace(/\s+/g," ");
+      if(normInput===normExpected) correct=true;
     }
-
-    if (correct) {
-      fb.textContent = "Richtig!";
-      fb.style.color = "#9f9";
-      speedCorrect++;
-    } else {
-      fb.textContent = "Falsch.";
-      fb.style.color = "#f99";
-    }
-
+    if(correct){ fb.textContent="Richtig!"; fb.style.color="#9f9"; speedCorrect++; }
+    else { fb.textContent="Falsch."; fb.style.color="#f99"; }
     loadNextSpeedTask();
   }
 
-  // Sections rendern
   function renderAllSections(){
     const container=document.getElementById("sections");
     container.innerHTML="";
-
     sectionDefs.forEach(sec=>{
       const box=document.createElement("div");
       box.className="section-box";
-
       const h2=document.createElement("h2");
       h2.textContent=sec.title;
       box.appendChild(h2);
-
       const note=document.createElement("div");
       note.className="section-note";
       note.textContent=sec.note;
       box.appendChild(note);
-
       const prog=document.createElement("div");
       prog.className="section-progress";
       prog.id="progress-"+sec.key;
       box.appendChild(prog);
-
       const btnNew=document.createElement("button");
       btnNew.textContent="Neue Aufgaben für dieses Kapitel";
-
       const tasksContainer=document.createElement("div");
       tasksContainer.className="tasks-container";
-
       btnNew.onclick=function(){renderTasksInto(sec.key,tasksContainer);};
-
       box.appendChild(btnNew);
       box.appendChild(tasksContainer);
       container.appendChild(box);
-
       renderTasksInto(sec.key,tasksContainer);
     });
-
-    // Speed-Select füllen
-    const speedSelect = document.getElementById("speedSectionSelect");
-    if (speedSelect) {
-      speedSelect.innerHTML = "";
-      sectionDefs.forEach(sec => {
-        const opt = document.createElement("option");
-        opt.value = sec.key;
-        opt.textContent = sec.title;
+    const speedSelect=document.getElementById("speedSectionSelect");
+    if(speedSelect){
+      speedSelect.innerHTML="";
+      sectionDefs.forEach(sec=>{
+        const opt=document.createElement("option");
+        opt.value=sec.key;
+        opt.textContent=sec.title;
         speedSelect.appendChild(opt);
       });
-      speedSelect.value = "1.4"; // Standard: Runden
+      speedSelect.value="1.4";
     }
   }
 
-  function renderTasksInto(sectionKey, container){
+  function renderTasksInto(sectionKey,container){
     container.innerHTML="";
     const gen=generators[sectionKey];
     const tasks=gen(currentDifficulty);
-
-    progressData[sectionKey] = {total: tasks.length, answered: 0, correct: 0};
+    progressData[sectionKey]={total:tasks.length,answered:0,correct:0};
     updateProgressDisplay(sectionKey);
-
     tasks.forEach(t=>{
       const card=document.createElement("div");
       card.className="card";
-      card.dataset.sectionKey = sectionKey;
-      card.dataset.wasCorrect = "false";
-      card.dataset.answered = "false";
-      card.dataset.subtype = t.subtype || "";
-      card.dataset.hadErrorRecorded = "false";
-
+      card.dataset.sectionKey=sectionKey;
+      card.dataset.wasCorrect="false";
+      card.dataset.answered="false";
+      card.dataset.subtype=t.subtype||"";
+      card.dataset.hadErrorRecorded="false";
       const head=document.createElement("div");
       head.className="card-header";
       head.textContent=t.q;
       card.appendChild(head);
-
       const body=document.createElement("div");
       body.className="card-body";
-
       const label=document.createElement("div");
       label.textContent="Deine Lösung:";
       body.appendChild(label);
-
       const ta=document.createElement("textarea");
       body.appendChild(ta);
-
       const solDiv=document.createElement("div");
       solDiv.className="solution";
-      solDiv.textContent=(t.a!==undefined && t.a!==null) ? t.a.toString() : "";
-
+      const expectedRaw=(t.a!==undefined&&t.a!==null)?t.a.toString():"";
+      solDiv.textContent=expectedRaw;
       const feedback=document.createElement("div");
       feedback.className="feedback";
       body.appendChild(feedback);
-
       const solutionBtn=document.createElement("button");
       solutionBtn.type="button";
       solutionBtn.textContent="Lösung anzeigen";
@@ -1183,69 +1000,56 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
       };
       body.appendChild(solutionBtn);
 
-      const numericExpected = getNumericAnswer(t.a);
-      if (numericExpected !== null) {
-        const checkBtn=document.createElement("button");
-        checkBtn.type="button";
-        checkBtn.textContent="Überprüfen";
-        checkBtn.onclick=function(){
-          const userInput = ta.value.trim().replace(",", ".");
-          const val = parseFloat(userInput);
-          const secKey = sectionKey;
-
-          if (card.dataset.answered !== "true") {
-            card.dataset.answered = "true";
-
-            if (!progressData[secKey]) {
-              progressData[secKey] = {total:0, answered:0, correct:0};
-            }
-            progressData[secKey].answered++;
-
-            if (!statsStore[secKey]) {
-              statsStore[secKey] = {totalAnswered:0, totalCorrect:0};
-            }
-            statsStore[secKey].totalAnswered++;
+      const checkBtn=document.createElement("button");
+      checkBtn.type="button";
+      checkBtn.textContent="Überprüfen";
+      checkBtn.onclick=function(){
+        const userInputRaw=ta.value.trim();
+        const secKey=sectionKey;
+        const numericExpected=getNumericAnswer(expectedRaw);
+        if(card.dataset.answered!=="true"){
+          card.dataset.answered="true";
+          if(!progressData[secKey]) progressData[secKey]={total:0,answered:0,correct:0};
+          progressData[secKey].answered++;
+          if(!statsStore[secKey]) statsStore[secKey]={totalAnswered:0,totalCorrect:0};
+          statsStore[secKey].totalAnswered++;
+          saveStatsStore();
+          meta.totalAnswered++;
+          saveMeta();
+        }
+        let correct=false;
+        if(numericExpected!==null){
+          const val=parseFloat(userInputRaw.replace(",","."));
+          if(!isNaN(val)&&Math.abs(val-numericExpected)<0.001) correct=true;
+        } else {
+          const normExpected=expectedRaw.toString().trim().toLowerCase().replace(/\s+/g," ");
+          const normInput=userInputRaw.toLowerCase().replace(/\s+/g," ");
+          if(normInput===normExpected) correct=true;
+        }
+        if(correct){
+          feedback.textContent="Richtig!";
+          feedback.className="feedback ok";
+          if(card.dataset.wasCorrect!=="true"){
+            card.dataset.wasCorrect="true";
+            progressData[secKey].correct++;
+            statsStore[secKey].totalCorrect++;
             saveStatsStore();
-
-            meta.totalAnswered++;
-            saveMeta();
+            onCorrectAnswer(secKey,card.dataset.subtype||"");
           }
-
-          if (isNaN(val)) {
-            feedback.textContent = "Bitte eine Zahl eingeben.";
-            feedback.className = "feedback bad";
-            updateProgressDisplay(secKey);
-            return;
+        } else {
+          feedback.textContent="Nochmals nachrechnen.";
+          feedback.className="feedback bad";
+          meta.currentStreak=0;
+          saveMeta();
+          if(card.dataset.hadErrorRecorded!=="true"){
+            card.dataset.hadErrorRecorded="true";
+            recordWrong(secKey,card.dataset.subtype||"");
           }
-
-          if (Math.abs(val - numericExpected) < 0.001) {
-            feedback.textContent = "Richtig!";
-            feedback.className = "feedback ok";
-
-            if (card.dataset.wasCorrect !== "true") {
-              card.dataset.wasCorrect = "true";
-              progressData[secKey].correct++;
-              statsStore[secKey].totalCorrect++;
-              saveStatsStore();
-              onCorrectAnswer(secKey, card.dataset.subtype || "");
-            }
-          } else {
-            feedback.textContent = "Nochmals nachrechnen.";
-            feedback.className = "feedback bad";
-
-            meta.currentStreak = 0;
-            saveMeta();
-
-            if (card.dataset.hadErrorRecorded !== "true") {
-              card.dataset.hadErrorRecorded = "true";
-              recordWrong(secKey, card.dataset.subtype || "");
-            }
-            updateMetaUI();
-          }
-          updateProgressDisplay(secKey);
-        };
-        body.appendChild(checkBtn);
-      }
+          updateMetaUI();
+        }
+        updateProgressDisplay(secKey);
+      };
+      body.appendChild(checkBtn);
 
       body.appendChild(solDiv);
       card.appendChild(body);
@@ -1253,51 +1057,38 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     });
   }
 
-  // Achievements-Panel Toggle
-  document.getElementById("toggleAchievementsBtn").addEventListener("click", function () {
-    const panel = document.getElementById("achievementsPanel");
-    if (!panel) return;
-    panel.style.display = (panel.style.display === "block" ? "none" : "block");
+  document.getElementById("toggleAchievementsBtn").addEventListener("click",function(){
+    const panel=document.getElementById("achievementsPanel");
+    if(!panel) return;
+    panel.style.display=panel.style.display==="block"?"none":"block";
   });
 
-  // Schwierigkeitsgrad-Auswahl
-  const difficultySelect = document.getElementById("difficultySelect");
-  difficultySelect.addEventListener("change", function () {
-    const val = this.value;
-    const { level } = computeLevel();
-    const mediumUnlocked = level >= 3;
-    const hardUnlocked = level >= 6;
-
-    if (val === "medium" && !mediumUnlocked) {
+  const difficultySelect=document.getElementById("difficultySelect");
+  difficultySelect.addEventListener("change",function(){
+    const val=this.value;
+    const {level}=computeLevel();
+    const mediumUnlocked=level>=3;
+    const hardUnlocked=level>=6;
+    if(val==="medium"&&!mediumUnlocked){
       alert("Mittel ist erst ab Level 3 freigeschaltet.");
-      this.value = currentDifficulty;
-      return;
+      this.value=currentDifficulty; return;
     }
-    if (val === "hard" && !hardUnlocked) {
+    if(val==="hard"&&!hardUnlocked){
       alert("Schwer ist erst ab Level 6 freigeschaltet.");
-      this.value = currentDifficulty;
-      return;
+      this.value=currentDifficulty; return;
     }
-
-    currentDifficulty = val;
+    currentDifficulty=val;
     saveDifficulty();
     renderAllSections();
   });
 
-  // Speed-Modus Buttons
-  document.getElementById("speedStartBtn").addEventListener("click", startSpeed);
-  document.getElementById("speedStopBtn").addEventListener("click", function () {
-    stopSpeed();
-  });
-  document.getElementById("speedCheckBtn").addEventListener("click", handleSpeedCheck);
-  document.getElementById("speedAnswer").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSpeedCheck();
-    }
+  document.getElementById("speedStartBtn").addEventListener("click",startSpeed);
+  document.getElementById("speedStopBtn").addEventListener("click",function(){stopSpeed();});
+  document.getElementById("speedCheckBtn").addEventListener("click",handleSpeedCheck);
+  document.getElementById("speedAnswer").addEventListener("keydown",function(e){
+    if(e.key==="Enter"){ e.preventDefault(); handleSpeedCheck(); }
   });
 
-  // Initial-Render
   renderAllSections();
   updateMetaUI();
 </script>
