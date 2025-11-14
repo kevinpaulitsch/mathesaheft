@@ -62,6 +62,7 @@
     border-bottom: 3px solid #d4af37;
     padding-bottom: 4px;
   }
+
   .section-note {
     font-size: 0.9em;
     color: #ccc;
@@ -77,6 +78,7 @@
     padding-bottom: 8px;
     border-bottom: 1px solid #333;
   }
+
   .card {
     border: 2px solid #d4af37;
     border-radius: 6px;
@@ -91,6 +93,7 @@
     padding: 8px 10px;
     border-top: 1px solid #444;
   }
+
   textarea {
     width: 100%;
     min-height: 50px;
@@ -100,6 +103,7 @@
     background: #000;
     color: #eee;
   }
+
   .solution {
     display: none;
     margin-top: 6px;
@@ -117,6 +121,7 @@
   .feedback.bad {
     color: #f99;
   }
+
   button {
     background: #ff7f00;
     color: #000;
@@ -131,6 +136,7 @@
   button:active {
     transform: scale(0.97);
   }
+
   img.logo {
     width: 180px;
     display: block;
@@ -157,7 +163,7 @@
   }
 
   .level-bar {
-    margin: 12px 0 20px 0;
+    margin: 12px 0 12px 0;
     padding: 10px;
     border: 1px solid #444;
     border-radius: 6px;
@@ -169,6 +175,116 @@
     border: 1px solid #d4af37;
     background: #000;
     color: #eee;
+  }
+
+  /* Meta-Bar (XP, Level, Streaks) */
+  .meta-bar {
+    margin: 6px 0 18px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #181818;
+    font-size: 0.9em;
+  }
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .meta-row-small {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .xp-bar {
+    flex: 1;
+    height: 10px;
+    background: #333;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .xp-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff7f00, #d4af37);
+    transition: width 0.3s;
+  }
+  #levelLabel {
+    font-weight: bold;
+    color: #d4af37;
+  }
+  #xpLabel, #todayXpLabel, #streakLabel, #dayStreakLabel {
+    font-size: 0.85em;
+    color: #ccc;
+  }
+
+  /* Achievements */
+  .achievements-panel {
+    display: none;
+    margin-bottom: 16px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #181818;
+    font-size: 0.9em;
+  }
+  .achievement-item {
+    margin-bottom: 4px;
+  }
+  .badge {
+    display: inline-block;
+    min-width: 14px;
+    text-align: center;
+    border-radius: 50%;
+    padding: 0 4px;
+    margin-right: 4px;
+    font-weight: bold;
+  }
+  .badge-ok {
+    background: #3a3;
+    color: #000;
+  }
+  .badge-miss {
+    background: #555;
+    color: #aaa;
+  }
+
+  /* Speed-Modus */
+  .speed-mode {
+    margin-top: 30px;
+    padding-top: 12px;
+    border-top: 2px dashed #444;
+  }
+  .speed-controls {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+  }
+  .timer {
+    margin-left: 10px;
+    font-weight: bold;
+    color: #ffdf80;
+  }
+  #speedQuestionBox {
+    margin-top: 10px;
+  }
+  #speedAnswer {
+    width: 100%;
+    margin-top: 6px;
+    border: 1px solid #d4af37;
+    padding: 4px;
+    background: #000;
+    color: #eee;
+  }
+  #speedFeedback {
+    margin-top: 4px;
+    font-size: 0.9em;
+  }
+  #speedResult {
+    margin-top: 6px;
+    font-size: 0.9em;
+    color: #ccc;
   }
 </style>
 </head>
@@ -207,11 +323,58 @@
   </div>
 </div>
 
+<!-- XP / Level / Streaks -->
+<div id="metaBar" class="meta-bar">
+  <div class="meta-row">
+    <span id="levelLabel">Level 1</span>
+    <div class="xp-bar">
+      <div id="xpFill" class="xp-fill"></div>
+    </div>
+    <span id="xpLabel">0 / 200 XP</span>
+  </div>
+  <div class="meta-row-small">
+    <span id="todayXpLabel">Heute: 0 / 150 XP</span>
+    <span id="streakLabel">Aufgaben-Serie: 0 (Best: 0)</span>
+    <span id="dayStreakLabel">Tages-Streak: 0 Tage</span>
+  </div>
+  <button id="toggleAchievementsBtn" type="button">Erfolge anzeigen</button>
+</div>
+
+<div id="achievementsPanel" class="achievements-panel">
+  <strong>Erfolge:</strong>
+  <div id="achievementsList"></div>
+</div>
+
 <p>Für 1. Klasse Gymnasium. Pro Kapitel werden <b>20 zufällige Aufgaben</b> erzeugt.  
 Bei Aufgaben mit Zahlenergebnis kannst du deine Lösung direkt automatisch prüfen.  
-Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
+Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
 
 <div id="sections"></div>
+
+<!-- Speed-Modus -->
+<div id="speedMode" class="speed-mode">
+  <h2>Speed-Modus (60-Sekunden-Challenge)</h2>
+  <div class="speed-controls">
+    <span>Kapitel:</span>
+    <select id="speedSectionSelect"></select>
+    <button id="speedStartBtn" type="button">Challenge starten</button>
+    <button id="speedStopBtn" type="button" disabled>Stop</button>
+    <span id="speedTimer" class="timer"></span>
+  </div>
+  <div class="hint" style="font-size:0.85em;color:#ccc;margin-bottom:4px;">
+    So viele Aufgaben wie möglich in 60 Sekunden lösen. Nur Aufgaben mit Zahlenergebnis werden gewertet.
+  </div>
+  <div id="speedQuestionBox" class="card" style="display:none;">
+    <div class="card-header" id="speedQuestionText"></div>
+    <div class="card-body">
+      <div>Deine Lösung:</div>
+      <input id="speedAnswer" type="text">
+      <button id="speedCheckBtn" type="button">Überprüfen &amp; nächste</button>
+      <div id="speedFeedback"></div>
+    </div>
+  </div>
+  <div id="speedResult"></div>
+</div>
 
 <script>
   const TASKS_PER_SECTION = 20;
@@ -226,7 +389,73 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
   // Fehler-Statistik pro Untertyp (für Runden usw.)
   let weakStats = {};      // {sectionKey: {subtype: {wrong}}}
 
-  // aus localStorage holen
+  // Meta (XP, Level, Streaks, Achievements, Speed-Bestwerte)
+  let meta = {
+    xp: 0,
+    totalCorrect: 0,
+    totalAnswered: 0,
+    currentStreak: 0,
+    bestStreak: 0,
+    lastDayISO: null,
+    dayStreak: 0,
+    todayXp: 0,
+    achievements: {}, // {id: true}
+    bestSpeed: {}      // {sectionKey: {correct, total}}
+  };
+
+  // Achievements-Definitionen
+  const ACHIEVEMENTS = [
+    {
+      id: "starter",
+      label: "Starter",
+      desc: "10 Aufgaben richtig.",
+      check: m => m.totalCorrect >= 10
+    },
+    {
+      id: "hundert",
+      label: "Rechenkönig",
+      desc: "100 Aufgaben richtig.",
+      check: m => m.totalCorrect >= 100
+    },
+    {
+      id: "roundingPro",
+      label: "Runden-Profi",
+      desc: "Mindestens 30 richtige Runden-Aufgaben.",
+      check: () => {
+        const s = statsStore["1.4"];
+        return s && s.totalCorrect >= 30;
+      }
+    },
+    {
+      id: "streak10",
+      label: "Serie 10",
+      desc: "10 Aufgaben in Folge richtig.",
+      check: m => m.bestStreak >= 10
+    },
+    {
+      id: "streak20",
+      label: "Serie 20",
+      desc: "20 Aufgaben in Folge richtig.",
+      check: m => m.bestStreak >= 20
+    },
+    {
+      id: "day7",
+      label: "7-Tage-Streak",
+      desc: "7 Tage in Folge gelernt.",
+      check: m => m.dayStreak >= 7
+    },
+    {
+      id: "speed10",
+      label: "Speed-Runner",
+      desc: "In einer Speed-Challenge mindestens 10 richtige Aufgaben.",
+      check: m => {
+        if (!m.bestSpeed) return false;
+        return Object.values(m.bestSpeed).some(b => b.correct >= 10);
+      }
+    }
+  ];
+
+  // localStorage laden
   try {
     const stored = localStorage.getItem("trainerStats");
     if (stored) statsStore = JSON.parse(stored) || {};
@@ -236,6 +465,16 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
     const w = localStorage.getItem("trainerWeak");
     if (w) weakStats = JSON.parse(w) || {};
   } catch(e) { weakStats = {}; }
+
+  try {
+    const m = localStorage.getItem("trainerMeta");
+    if (m) {
+      const parsed = JSON.parse(m);
+      if (parsed && typeof parsed === "object") {
+        meta = Object.assign(meta, parsed);
+      }
+    }
+  } catch(e) { /* ignore */ }
 
   // Level aus localStorage holen
   const savedTrainerLevel = localStorage.getItem("trainerLevel");
@@ -256,6 +495,9 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
   }
   function saveWeakStats() {
     localStorage.setItem("trainerWeak", JSON.stringify(weakStats));
+  }
+  function saveMeta() {
+    localStorage.setItem("trainerMeta", JSON.stringify(meta));
   }
 
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -374,7 +616,7 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
           n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);
           a=Math.round(n/1000)*1000;
           q="Runde "+n+" auf Tausender";
-        } else { // "ZT" – nur im advanced-Mode
+        } else { // "ZT"
           n=randInt(10000,9999999);
           a=Math.round(n/10000)*10000;
           q="Runde "+n+" auf Zehntausender";
@@ -457,6 +699,277 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
     el.textContent = sessionStr + " | " + globalStr;
   }
 
+  // Level / XP / Streak-Anzeige
+  function computeLevel() {
+    const xpPerLevel = 200;
+    const level = Math.floor(meta.xp / xpPerLevel) + 1;
+    const xpInto = meta.xp % xpPerLevel;
+    const xpNeeded = xpPerLevel;
+    return { level, xpInto, xpNeeded };
+  }
+
+  function updateMetaUI() {
+    const { level, xpInto, xpNeeded } = computeLevel();
+    const levelLabel = document.getElementById("levelLabel");
+    const xpLabel = document.getElementById("xpLabel");
+    const xpFill = document.getElementById("xpFill");
+    const todayXpLabel = document.getElementById("todayXpLabel");
+    const streakLabel = document.getElementById("streakLabel");
+    const dayStreakLabel = document.getElementById("dayStreakLabel");
+
+    if (levelLabel) levelLabel.textContent = "Level " + level;
+    if (xpLabel) xpLabel.textContent = xpInto + " / " + xpNeeded + " XP";
+    if (xpFill) xpFill.style.width = (xpNeeded > 0 ? (xpInto / xpNeeded * 100).toFixed(1) : 0) + "%";
+
+    const dailyTarget = 150;
+    if (todayXpLabel) {
+      todayXpLabel.textContent = "Heute: " + meta.todayXp + " / " + dailyTarget + " XP";
+    }
+    if (streakLabel) {
+      streakLabel.textContent = "Aufgaben-Serie: " + meta.currentStreak + " (Best: " + meta.bestStreak + ")";
+    }
+    if (dayStreakLabel) {
+      dayStreakLabel.textContent = "Tages-Streak: " + meta.dayStreak + " Tage";
+    }
+
+    updateAchievementsUI();
+  }
+
+  function updateAchievementsUI() {
+    const panel = document.getElementById("achievementsPanel");
+    const list = document.getElementById("achievementsList");
+    if (!panel || !list) return;
+
+    list.innerHTML = "";
+    ACHIEVEMENTS.forEach(def => {
+      const done = !!meta.achievements[def.id];
+      const el = document.createElement("div");
+      el.className = "achievement-item";
+
+      const badge = document.createElement("span");
+      badge.className = "badge " + (done ? "badge-ok" : "badge-miss");
+      badge.textContent = done ? "✔" : "✖";
+      el.appendChild(badge);
+
+      const text = document.createElement("span");
+      text.innerHTML = "<strong>" + def.label + ":</strong> " + def.desc;
+      el.appendChild(text);
+
+      list.appendChild(el);
+    });
+  }
+
+  function addXp(amount) {
+    if (amount <= 0) return;
+    const now = new Date();
+    const todayISO = now.toISOString().slice(0,10);
+
+    if (meta.lastDayISO !== todayISO) {
+      if (meta.lastDayISO) {
+        const last = new Date(meta.lastDayISO);
+        const diffDays = Math.round((now - last) / (1000*60*60*24));
+        if (diffDays === 1) {
+          meta.dayStreak = (meta.dayStreak || 0) + 1;
+        } else {
+          meta.dayStreak = 1;
+        }
+      } else {
+        meta.dayStreak = 1;
+      }
+      meta.todayXp = 0;
+      meta.lastDayISO = todayISO;
+    }
+
+    meta.xp += amount;
+    meta.todayXp += amount;
+    saveMeta();
+  }
+
+  function checkAchievements(sectionKey, subtype) {
+    let unlockedSomething = false;
+    ACHIEVEMENTS.forEach(def => {
+      if (meta.achievements[def.id]) return;
+      let ok = false;
+      try {
+        ok = !!def.check(meta);
+      } catch(e) { ok = false; }
+      if (ok) {
+        meta.achievements[def.id] = true;
+        unlockedSomething = true;
+      }
+    });
+    if (unlockedSomething) {
+      saveMeta();
+      updateMetaUI();
+      // Optional: kleine Meldung
+      // alert("Neuer Erfolg freigeschaltet!");
+    }
+  }
+
+  function onCorrectAnswer(sectionKey, subtype) {
+    meta.totalCorrect++;
+    meta.currentStreak++;
+    if (meta.currentStreak > meta.bestStreak) {
+      meta.bestStreak = meta.currentStreak;
+    }
+    addXp(10);
+    saveMeta();
+    checkAchievements(sectionKey, subtype);
+    updateMetaUI();
+  }
+
+  // Speed-Modus Variablen
+  let speedActive = false;
+  let speedSectionKey = "1.4";
+  let speedTasks = [];
+  let speedIndex = 0;
+  let speedCorrect = 0;
+  let speedTotal = 0;
+  let speedTimerId = null;
+  let speedRemaining = 0;
+
+  function startSpeed() {
+    if (speedActive) return;
+    const select = document.getElementById("speedSectionSelect");
+    speedSectionKey = select.value || "1.4";
+
+    speedActive = true;
+    speedCorrect = 0;
+    speedTotal = 0;
+    speedTasks = [];
+    speedIndex = 0;
+    speedRemaining = 60;
+
+    document.getElementById("speedResult").textContent = "";
+    document.getElementById("speedFeedback").textContent = "";
+    document.getElementById("speedQuestionBox").style.display = "block";
+    document.getElementById("speedStartBtn").disabled = true;
+    document.getElementById("speedStopBtn").disabled = false;
+
+    loadNextSpeedTask();
+    updateSpeedTimerUI();
+
+    speedTimerId = setInterval(function() {
+      speedRemaining--;
+      if (speedRemaining <= 0) {
+        speedRemaining = 0;
+        updateSpeedTimerUI();
+        stopSpeed("Zeit abgelaufen.");
+      } else {
+        updateSpeedTimerUI();
+      }
+    }, 1000);
+  }
+
+  function stopSpeed(message) {
+    if (!speedActive) return;
+    speedActive = false;
+    if (speedTimerId) {
+      clearInterval(speedTimerId);
+      speedTimerId = null;
+    }
+    document.getElementById("speedTimer").textContent = "";
+    document.getElementById("speedStartBtn").disabled = false;
+    document.getElementById("speedStopBtn").disabled = true;
+    document.getElementById("speedQuestionBox").style.display = "none";
+
+    const res = document.getElementById("speedResult");
+    res.textContent = "Speed-Ergebnis: " + speedCorrect + " richtige von " +
+      speedTotal + " bearbeiteten Aufgaben in 60 Sekunden.";
+
+    // Bestwert speichern
+    if (!meta.bestSpeed) meta.bestSpeed = {};
+    const prev = meta.bestSpeed[speedSectionKey];
+    if (!prev || speedCorrect > prev.correct) {
+      meta.bestSpeed[speedSectionKey] = { correct: speedCorrect, total: speedTotal };
+      saveMeta();
+      checkAchievements(speedSectionKey, null);
+      updateMetaUI();
+    }
+
+    if (message) {
+      // optional alert, kannst du auch auskommentieren
+      // alert(message);
+    }
+  }
+
+  function updateSpeedTimerUI() {
+    const el = document.getElementById("speedTimer");
+    if (!el) return;
+    if (!speedActive) {
+      el.textContent = "";
+      return;
+    }
+    const m = Math.floor(speedRemaining / 60);
+    const s = speedRemaining % 60;
+    el.textContent = "Speed: " + m + ":" + (s<10?"0"+s:s);
+  }
+
+  function loadNextSpeedTask() {
+    if (!speedActive) return;
+    if (speedIndex >= speedTasks.length) {
+      // neuen Schwung Aufgaben holen
+      const gen = generators[speedSectionKey];
+      if (!gen) {
+        document.getElementById("speedQuestionText").textContent = "Kein Generator für dieses Kapitel.";
+        return;
+      }
+      speedTasks = gen(currentLevel);
+      speedIndex = 0;
+    }
+
+    const t = speedTasks[speedIndex++];
+    const qEl = document.getElementById("speedQuestionText");
+    const input = document.getElementById("speedAnswer");
+    const fb = document.getElementById("speedFeedback");
+
+    qEl.textContent = t.q;
+    input.value = "";
+    fb.textContent = "";
+    input.focus();
+
+    // aktuelle Lösung als Datensatz merken
+    document.getElementById("speedQuestionBox").dataset.answer = t.a;
+  }
+
+  function handleSpeedCheck() {
+    if (!speedActive) return;
+    const box = document.getElementById("speedQuestionBox");
+    const expectedRaw = box.dataset.answer;
+    const fb = document.getElementById("speedFeedback");
+    const input = document.getElementById("speedAnswer").value.trim();
+
+    speedTotal++;
+
+    const numericExpected = getNumericAnswer(expectedRaw);
+    let correct = false;
+    if (numericExpected !== null) {
+      const val = parseFloat(input.replace(",", "."));
+      if (!isNaN(val) && Math.abs(val - numericExpected) < 0.001) {
+        correct = true;
+      }
+    } else {
+      // Fallback: String-Vergleich (groß/klein egal, Leerzeichen raus)
+      const normExpected = (expectedRaw || "").toString().trim().toLowerCase();
+      const normInput = input.toLowerCase();
+      if (normInput === normExpected) correct = true;
+    }
+
+    if (correct) {
+      fb.textContent = "Richtig!";
+      fb.style.color = "#9f9";
+      speedCorrect++;
+    } else {
+      fb.textContent = "Falsch.";
+      fb.style.color = "#f99";
+      // Speed-Fehler sollen Streak nicht beeinflussen, das ist ein eigener Modus
+    }
+
+    // direkt nächste Aufgabe laden
+    loadNextSpeedTask();
+  }
+
+  // Sections rendern
   function renderAllSections(){
     const container=document.getElementById("sections");
     container.innerHTML="";
@@ -493,6 +1006,19 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
 
       renderTasksInto(sec.key,tasksContainer);
     });
+
+    // Speed-Select füllen
+    const speedSelect = document.getElementById("speedSectionSelect");
+    if (speedSelect) {
+      speedSelect.innerHTML = "";
+      sectionDefs.forEach(sec => {
+        const opt = document.createElement("option");
+        opt.value = sec.key;
+        opt.textContent = sec.title;
+        speedSelect.appendChild(opt);
+      });
+      speedSelect.value = "1.4"; // Standard: Runden
+    }
   }
 
   function renderTasksInto(sectionKey, container){
@@ -567,6 +1093,9 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
             }
             statsStore[secKey].totalAnswered++;
             saveStatsStore();
+
+            meta.totalAnswered++;
+            saveMeta();
           }
 
           if (isNaN(val)) {
@@ -585,16 +1114,22 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
               progressData[secKey].correct++;
               statsStore[secKey].totalCorrect++;
               saveStatsStore();
+              onCorrectAnswer(secKey, card.dataset.subtype || "");
             }
           } else {
             feedback.textContent = "Nochmals nachrechnen.";
             feedback.className = "feedback bad";
+
+            // Streak bricht bei Fehler
+            meta.currentStreak = 0;
+            saveMeta();
 
             // ersten Fehler für diese Karte zählen -> Fehler-Wiederholung
             if (card.dataset.hadErrorRecorded !== "true") {
               card.dataset.hadErrorRecorded = "true";
               recordWrong(secKey, card.dataset.subtype || "");
             }
+            updateMetaUI();
           }
           updateProgressDisplay(secKey);
         };
@@ -607,7 +1142,29 @@ Statistik und „Fehler-Wiederholung“ werden im Browser gespeichert.</p>
     });
   }
 
+  // Achievements-Panel Toggle
+  document.getElementById("toggleAchievementsBtn").addEventListener("click", function () {
+    const panel = document.getElementById("achievementsPanel");
+    if (!panel) return;
+    panel.style.display = (panel.style.display === "block" ? "none" : "block");
+  });
+
+  // Speed-Modus Buttons
+  document.getElementById("speedStartBtn").addEventListener("click", startSpeed);
+  document.getElementById("speedStopBtn").addEventListener("click", function () {
+    stopSpeed();
+  });
+  document.getElementById("speedCheckBtn").addEventListener("click", handleSpeedCheck);
+  document.getElementById("speedAnswer").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSpeedCheck();
+    }
+  });
+
+  // Initial-Render
   renderAllSections();
+  updateMetaUI();
 </script>
 </body>
 </html>
