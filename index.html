@@ -176,6 +176,11 @@
     background: #000;
     color: #eee;
   }
+  .difficulty-note {
+    font-size: 0.8em;
+    color: #ccc;
+    margin-top: 4px;
+  }
 
   /* Meta-Bar (XP, Level, Streaks) */
   .meta-bar {
@@ -314,12 +319,13 @@
 
 <div class="level-bar">
   <strong>Schwierigkeitsgrad:</strong>
-  <select id="levelSelect">
-    <option value="standard">Standard (1. Klasse Gym)</option>
-    <option value="advanced">Schwer</option>
+  <select id="difficultySelect">
+    <option value="easy">Leicht</option>
+    <option value="medium">Mittel</option>
+    <option value="hard">Schwer</option>
   </select>
-  <div style="font-size:0.85em;color:#ccc;margin-top:4px;">
-    Level wählen und dann auf „Neue Aufgaben für dieses Kapitel“ klicken.
+  <div class="difficulty-note">
+    Mittel ab Level 3, Schwer ab Level 6 freigeschaltet.
   </div>
 </div>
 
@@ -378,15 +384,15 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
 
 <script>
   const TASKS_PER_SECTION = 20;
-  let currentLevel = "standard";
+  let currentDifficulty = "easy"; // easy / medium / hard
 
-  // Session-Progress: nur aktueller Durchgang
+  // Session-Progress
   const progressData = {}; // {sectionKey: {total, answered, correct}}
 
-  // Langzeit-Statistik (über mehrere Sessions)
+  // Langzeit-Statistik
   let statsStore = {};     // {sectionKey: {totalAnswered, totalCorrect}}
 
-  // Fehler-Statistik pro Untertyp (für Runden usw.)
+  // Fehler-Statistik
   let weakStats = {};      // {sectionKey: {subtype: {wrong}}}
 
   // Meta (XP, Level, Streaks, Achievements, Speed-Bestwerte)
@@ -476,19 +482,12 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     }
   } catch(e) { /* ignore */ }
 
-  // Level aus localStorage holen
-  const savedTrainerLevel = localStorage.getItem("trainerLevel");
-  if (savedTrainerLevel) {
-    currentLevel = savedTrainerLevel;
-  }
-
-  const levelSelect = document.getElementById("levelSelect");
-  levelSelect.value = currentLevel;
-  levelSelect.addEventListener("change", function () {
-    currentLevel = this.value;
-    localStorage.setItem("trainerLevel", currentLevel);
-    renderAllSections();
-  });
+  try {
+    const d = localStorage.getItem("trainerDifficulty");
+    if (d && (d === "easy" || d === "medium" || d === "hard")) {
+      currentDifficulty = d;
+    }
+  } catch(e) { currentDifficulty = "easy"; }
 
   function saveStatsStore() {
     localStorage.setItem("trainerStats", JSON.stringify(statsStore));
@@ -498,6 +497,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
   }
   function saveMeta() {
     localStorage.setItem("trainerMeta", JSON.stringify(meta));
+  }
+  function saveDifficulty() {
+    localStorage.setItem("trainerDifficulty", currentDifficulty);
   }
 
   function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -528,8 +530,7 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     saveWeakStats();
   }
 
-  // speziell für Runden: Modus passend zur Fehlerstatistik auswählen
-  // modes z.B. ["Z","H","T","ZT"]
+  // Runden-Modus passend zur Fehlerstatistik auswählen
   function chooseRoundingMode(modes) {
     const sectionKey = "1.4";
     const stats = weakStats[sectionKey] || {};
@@ -548,28 +549,40 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     return modes[0];
   }
 
+  // Generatoren, abhängig von currentDifficulty: easy / medium / hard
   const generators = {
-    "1.1": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
-        const n = (lvl==="advanced"?randInt(1000,999999):randInt(100,99999));
+    "1.1": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
+        let n;
+        if (diff === "easy")      n = randInt(10, 999);
+        else if (diff === "medium") n = randInt(100, 99999);
+        else                        n = randInt(1000, 999999);
         t.push({q:"Vorgänger und Nachfolger von "+n, a:(n-1)+" / "+(n+1), subtype:"vorgaenger"});
-      } return t;
+      } 
+      return t;
     },
-    "1.2": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+    "1.2": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
         const typ=randInt(1,3);
         if(typ===1){
-          const max=lvl==="advanced"?3999:2000;
-          const n=randInt(10,max);
+          const max=(diff==="hard"?3999:(diff==="medium"?2000:1000));
+          const min=(diff==="easy"?5:10);
+          const n=randInt(min,max);
           t.push({q:n+" in römischen Zahlen",a:intToRoman(n), subtype:"dec2rom"});
         } else if(typ===2){
-          const max=lvl==="advanced"?3999:2000;
-          const n=randInt(10,max), r=intToRoman(n);
+          const max=(diff==="hard"?3999:(diff==="medium"?2000:1000));
+          const min=(diff==="easy"?5:10);
+          const n=randInt(min,max), r=intToRoman(n);
           t.push({q:r+" als Zahl",a:""+n, subtype:"rom2dec"});
         } else {
-          const n=lvl==="advanced"?randInt(100000,9999999):randInt(1000,999999);
+          let n;
+          if (diff==="easy")       n=randInt(100,9999);
+          else if (diff==="medium")n=randInt(1000,999999);
+          else                     n=randInt(100000,9999999);
           const s=n.toString(), len=s.length;
-          if(lvl==="advanced"){
+          if(diff==="hard"){
             const posNames=["Einer","Zehner","Hunderter","Tausender","Zehntausender","Hunderttausender","Millionen"];
             const pos=randInt(0,len-1), stelle=posNames[pos];
             t.push({q:"Welche Ziffer steht an der "+stelle+"-Stelle von "+n+"?",a:s[len-1-pos], subtype:"stelle"});
@@ -578,45 +591,63 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
             t.push({q:n+" zerlegen (T/H/Z/E)",a:t1+" T, "+h+" H, "+z+" Z, "+e+" E", subtype:"zerlegen"});
           }
         }
-      } return t;
+      } 
+      return t;
     },
-    "1.3": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+    "1.3": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
         if(randInt(1,2)===1){
-          const a=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
-          const b=lvl==="advanced"?randInt(10000,9999999):randInt(1000,99999);
+          let a,b;
+          if (diff==="easy") {
+            a=randInt(10,999); b=randInt(10,999);
+          } else if (diff==="medium") {
+            a=randInt(1000,99999); b=randInt(1000,99999);
+          } else {
+            a=randInt(10000,9999999); b=randInt(10000,9999999);
+          }
           const sign=a>b?">":a<b?"<":"=";
           t.push({q:a+" __ "+b,a:sign, subtype:"vergleichen"});
         } else {
-          const count=lvl==="advanced"?7:5;
-          const min=lvl==="advanced"?10000:1000, max=lvl==="advanced"?9999999:99999;
+          const count=(diff==="hard"?7:5);
+          let min,max;
+          if (diff==="easy") { min=10; max=999; }
+          else if (diff==="medium") { min=1000; max=99999; }
+          else { min=10000; max=9999999; }
           let arr=[]; for(let k=0;k<count;k++) arr.push(randInt(min,max));
           const sorted=arr.slice().sort((x,y)=>x-y);
           t.push({q:"Sortiere: "+arr.join(", "),a:sorted.join(", "), subtype:"sortieren"});
         }
-      } return t;
+      } 
+      return t;
     },
-    "1.4": lvl=>{
+    "1.4": diff=>{
       const t=[]; 
-      const modesAdvanced = ["Z","H","T","ZT"];
-      const modesStandard = ["Z","H","T"];
+      const modesHard = ["Z","H","T","ZT"];
+      const modesBasic = ["Z","H","T"];
       for(let i=0;i<TASKS_PER_SECTION;i++){
-        const modes = (lvl==="advanced" ? modesAdvanced : modesStandard);
+        const modes = (diff==="hard" ? modesHard : modesBasic);
         const mode = chooseRoundingMode(modes);
         let n,a,q;
         if(mode==="Z"){
-          n=lvl==="advanced"?randInt(100,99999):randInt(0,9999);
+          if (diff==="easy")      n=randInt(0,999);
+          else if (diff==="medium") n=randInt(0,9999);
+          else                     n=randInt(100,99999);
           a=Math.round(n/10)*10;
           q="Runde "+n+" auf Zehner";
         } else if(mode==="H"){
-          n=lvl==="advanced"?randInt(1000,999999):randInt(0,99999);
+          if (diff==="easy")      n=randInt(0,9999);
+          else if (diff==="medium") n=randInt(0,99999);
+          else                     n=randInt(1000,999999);
           a=Math.round(n/100)*100;
           q="Runde "+n+" auf Hunderter";
         } else if(mode==="T"){
-          n=lvl==="advanced"?randInt(5000,999999):randInt(0,999999);
+          if (diff==="easy")      n=randInt(0,99999);
+          else if (diff==="medium") n=randInt(0,999999);
+          else                     n=randInt(5000,999999);
           a=Math.round(n/1000)*1000;
           q="Runde "+n+" auf Tausender";
-        } else { // "ZT"
+        } else { // ZT, nur hard
           n=randInt(10000,9999999);
           a=Math.round(n/10000)*10000;
           q="Runde "+n+" auf Zehntausender";
@@ -625,47 +656,110 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
       } 
       return t;
     },
-    "2.1": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+    "2.1": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
         const typ=randInt(1,3); let q,res,sub;
-        if(typ===1){const a=randInt(100,5000),b=randInt(100,5000);q=a+" + "+b;res=a+b;sub="einfachAdd";}
-        else if(typ===2){const a=lvl==="advanced"?randInt(1000,9000):randInt(500,5000),b=randInt(100,a-100),c=randInt(10,200);q="("+a+" - "+b+") + "+c;res=(a-b)+c;sub="klammerAddSub";}
-        else {const a=randInt(500,10000),b=randInt(100,a-100),c=randInt(50,b);q=a+" - ("+b+" - "+c+")";res=a-(b-c);sub="subSub";}
+        if(typ===1){
+          let a,b;
+          if (diff==="easy")      { a=randInt(10,500);  b=randInt(10,500); }
+          else if (diff==="medium"){ a=randInt(100,5000); b=randInt(100,5000); }
+          else                    { a=randInt(500,20000); b=randInt(500,20000); }
+          q=a+" + "+b;res=a+b;sub="einfachAdd";
+        } else if(typ===2){
+          let a,b,c;
+          if (diff==="easy") {
+            a=randInt(100,500); b=randInt(10,a-10); c=randInt(10,100);
+          } else if (diff==="medium") {
+            a=randInt(500,5000); b=randInt(100,a-100); c=randInt(10,200);
+          } else {
+            a=randInt(2000,20000); b=randInt(500,a-500); c=randInt(50,500);
+          }
+          q="("+a+" - "+b+") + "+c;res=(a-b)+c;sub="klammerAddSub";
+        } else {
+          let a,b,c;
+          if (diff==="easy") {
+            a=randInt(100,1000); b=randInt(20,a-20); c=randInt(10,b);
+          } else if (diff==="medium") {
+            a=randInt(500,10000); b=randInt(100,a-100); c=randInt(50,b);
+          } else {
+            a=randInt(2000,20000); b=randInt(500,a-500); c=randInt(100,b);
+          }
+          q=a+" - ("+b+" - "+c+")";res=a-(b-c);sub="subSub";
+        }
         t.push({q,a:res, subtype:sub});
-      } return t;
+      } 
+      return t;
     },
-    "2.2": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+    "2.2": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
         const typ=randInt(1,3);
         if(typ===1){
-          const n=lvl==="advanced"?randInt(50,200):randInt(20,120);
+          let n;
+          if (diff==="easy")      n=randInt(10,60);
+          else if (diff==="medium") n=randInt(20,120);
+          else                     n=randInt(50,200);
           t.push({q:"Alle Teiler von "+n,a:divisors(n).join(", "), subtype:"teiler"});
         } else if(typ===2){
-          const b=lvl==="advanced"?randInt(7,20):randInt(3,12);
+          let b;
+          if (diff==="easy")      b=randInt(2,9);
+          else if (diff==="medium") b=randInt(3,12);
+          else                     b=randInt(7,20);
           t.push({q:"Erste 8 Vielfache von "+b,a:multiples(b,8).join(", "), subtype:"vielfache"});
         } else {
-          const a=lvl==="advanced"?randInt(20,200):randInt(10,99);
-          const b=lvl==="advanced"?randInt(10,30):randInt(2,12);
+          let a,b;
+          if (diff==="easy") {
+            a=randInt(5,20); b=randInt(2,10);
+          } else if (diff==="medium") {
+            a=randInt(10,99); b=randInt(2,12);
+          } else {
+            a=randInt(20,200); b=randInt(10,30);
+          }
           if(Math.random()<0.5) t.push({q:a+"×"+b,a:a*b, subtype:"mult"});
           else {const prod=a*b; t.push({q:prod+"÷"+a,a:b, subtype:"div"});}
         }
-      } return t;
+      } 
+      return t;
     },
-    "2.3": lvl=>{
-      const t=[]; for(let i=0;i<TASKS_PER_SECTION;i++){
+    "2.3": diff=>{
+      const t=[]; 
+      for(let i=0;i<TASKS_PER_SECTION;i++){
         const typ=randInt(1,3); let q,res,sub;
         if(typ===1){
-          const a=randInt(50,400),b=randInt(5,20),c=randInt(10,50);
+          let a,b,c;
+          if (diff==="easy") {
+            a=randInt(10,100); b=randInt(2,10); c=randInt(5,20);
+          } else if (diff==="medium") {
+            a=randInt(50,400); b=randInt(5,20); c=randInt(10,50);
+          } else {
+            a=randInt(100,800); b=randInt(10,30); c=randInt(20,100);
+          }
           q=a+" + "+b+"×"+c;res=a+b*c;sub="aPlusBxC";
         } else if(typ===2){
-          const a=randInt(200,900),b=randInt(2,9),c=randInt(10,50);
+          let a,b,c;
+          if (diff==="easy") {
+            a=randInt(50,200); b=randInt(2,6); c=randInt(5,20);
+          } else if (diff==="medium") {
+            a=randInt(200,900); b=randInt(2,9); c=randInt(10,50);
+          } else {
+            a=randInt(500,2000); b=randInt(3,12); c=randInt(20,100);
+          }
           q="("+a+"÷"+b+") + "+c;res=Math.floor(a/b)+c;sub="aDivBplusC";
         } else {
-          const a=randInt(20,80),b=randInt(5,15),c=randInt(10,100);
+          let a,b,c;
+          if (diff==="easy") {
+            a=randInt(5,20); b=randInt(2,10); c=randInt(5,30);
+          } else if (diff==="medium") {
+            a=randInt(20,80); b=randInt(5,15); c=randInt(10,100);
+          } else {
+            a=randInt(50,120); b=randInt(10,30); c=randInt(20,150);
+          }
           q="("+a+"×"+b+") - "+c;res=a*b-c;sub="axBminusC";
         }
         t.push({q,a:res, subtype:sub});
-      } return t;
+      } 
+      return t;
     }
   };
 
@@ -708,6 +802,33 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     return { level, xpInto, xpNeeded };
   }
 
+  function updateDifficultyLock(level) {
+    const select = document.getElementById("difficultySelect");
+    if (!select) return;
+
+    const optEasy = select.querySelector('option[value="easy"]');
+    const optMedium = select.querySelector('option[value="medium"]');
+    const optHard = select.querySelector('option[value="hard"]');
+
+    const mediumUnlocked = level >= 3;
+    const hardUnlocked = level >= 6;
+
+    if (optEasy) optEasy.disabled = false;
+    if (optMedium) optMedium.disabled = !mediumUnlocked;
+    if (optHard) optHard.disabled = !hardUnlocked;
+
+    // Falls aktuell gesetzter Schwierigkeitsgrad noch nicht freigeschaltet ist -> runterstufen
+    if (currentDifficulty === "hard" && !hardUnlocked) {
+      currentDifficulty = mediumUnlocked ? "medium" : "easy";
+    }
+    if (currentDifficulty === "medium" && !mediumUnlocked) {
+      currentDifficulty = "easy";
+    }
+
+    select.value = currentDifficulty;
+    saveDifficulty();
+  }
+
   function updateMetaUI() {
     const { level, xpInto, xpNeeded } = computeLevel();
     const levelLabel = document.getElementById("levelLabel");
@@ -732,6 +853,7 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
       dayStreakLabel.textContent = "Tages-Streak: " + meta.dayStreak + " Tage";
     }
 
+    updateDifficultyLock(level);
     updateAchievementsUI();
   }
 
@@ -801,8 +923,6 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     if (unlockedSomething) {
       saveMeta();
       updateMetaUI();
-      // Optional: kleine Meldung
-      // alert("Neuer Erfolg freigeschaltet!");
     }
   }
 
@@ -888,8 +1008,7 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     }
 
     if (message) {
-      // optional alert, kannst du auch auskommentieren
-      // alert(message);
+      // optional: alert(message);
     }
   }
 
@@ -908,13 +1027,12 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
   function loadNextSpeedTask() {
     if (!speedActive) return;
     if (speedIndex >= speedTasks.length) {
-      // neuen Schwung Aufgaben holen
       const gen = generators[speedSectionKey];
       if (!gen) {
         document.getElementById("speedQuestionText").textContent = "Kein Generator für dieses Kapitel.";
         return;
       }
-      speedTasks = gen(currentLevel);
+      speedTasks = gen(currentDifficulty);
       speedIndex = 0;
     }
 
@@ -928,7 +1046,6 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     fb.textContent = "";
     input.focus();
 
-    // aktuelle Lösung als Datensatz merken
     document.getElementById("speedQuestionBox").dataset.answer = t.a;
   }
 
@@ -949,7 +1066,6 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
         correct = true;
       }
     } else {
-      // Fallback: String-Vergleich (groß/klein egal, Leerzeichen raus)
       const normExpected = (expectedRaw || "").toString().trim().toLowerCase();
       const normInput = input.toLowerCase();
       if (normInput === normExpected) correct = true;
@@ -962,10 +1078,8 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     } else {
       fb.textContent = "Falsch.";
       fb.style.color = "#f99";
-      // Speed-Fehler sollen Streak nicht beeinflussen, das ist ein eigener Modus
     }
 
-    // direkt nächste Aufgabe laden
     loadNextSpeedTask();
   }
 
@@ -1024,7 +1138,7 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
   function renderTasksInto(sectionKey, container){
     container.innerHTML="";
     const gen=generators[sectionKey];
-    const tasks=gen(currentLevel);
+    const tasks=gen(currentDifficulty);
 
     progressData[sectionKey] = {total: tasks.length, answered: 0, correct: 0};
     updateProgressDisplay(sectionKey);
@@ -1079,7 +1193,6 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
           const val = parseFloat(userInput);
           const secKey = sectionKey;
 
-          // erster Check für diese Karte -> „answered“ + Gesamtstatistik
           if (card.dataset.answered !== "true") {
             card.dataset.answered = "true";
 
@@ -1120,11 +1233,9 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
             feedback.textContent = "Nochmals nachrechnen.";
             feedback.className = "feedback bad";
 
-            // Streak bricht bei Fehler
             meta.currentStreak = 0;
             saveMeta();
 
-            // ersten Fehler für diese Karte zählen -> Fehler-Wiederholung
             if (card.dataset.hadErrorRecorded !== "true") {
               card.dataset.hadErrorRecorded = "true";
               recordWrong(secKey, card.dataset.subtype || "");
@@ -1147,6 +1258,30 @@ Statistik, XP, Streaks und „Fehler-Wiederholung“ werden im Browser gespeiche
     const panel = document.getElementById("achievementsPanel");
     if (!panel) return;
     panel.style.display = (panel.style.display === "block" ? "none" : "block");
+  });
+
+  // Schwierigkeitsgrad-Auswahl
+  const difficultySelect = document.getElementById("difficultySelect");
+  difficultySelect.addEventListener("change", function () {
+    const val = this.value;
+    const { level } = computeLevel();
+    const mediumUnlocked = level >= 3;
+    const hardUnlocked = level >= 6;
+
+    if (val === "medium" && !mediumUnlocked) {
+      alert("Mittel ist erst ab Level 3 freigeschaltet.");
+      this.value = currentDifficulty;
+      return;
+    }
+    if (val === "hard" && !hardUnlocked) {
+      alert("Schwer ist erst ab Level 6 freigeschaltet.");
+      this.value = currentDifficulty;
+      return;
+    }
+
+    currentDifficulty = val;
+    saveDifficulty();
+    renderAllSections();
   });
 
   // Speed-Modus Buttons
