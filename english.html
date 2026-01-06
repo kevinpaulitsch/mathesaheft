@@ -4,195 +4,158 @@
 <meta charset="UTF-8">
 <title>GB English Trainer – More! 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef3ff;
-}
-.box {
-  max-width: 420px;
-  margin: 30px auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-select, button, input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-.mc button {
-  margin-top: 6px;
-}
+body{font-family:Arial;background:#eef3ff}
+.box{max-width:420px;margin:30px auto;background:#fff;
+padding:20px;border-radius:12px}
+select,button,input{width:100%;padding:10px;margin-top:10px}
+.mc button{margin-top:6px}
 </style>
 </head>
 
 <body>
 <div class="box">
-  <h2>GB English Trainer – More! 1</h2>
+<h2>GB English Trainer – More! 1</h2>
 
-  <select id="unitSelect">
-    <option value="all">⭐ Alle Units gemischt</option>
-    <option value="1">Unit 1</option>
-    <option value="2">Unit 2</option>
-    <option value="3">Unit 3</option>
-    <option value="4">Unit 4</option>
-    <option value="5">Unit 5</option>
-    <option value="6">Unit 6</option>
-    <option value="7">Unit 7</option>
-  </select>
+<select id="unitSelect">
+  <option value="all">⭐ Alle Units gemischt</option>
+  <option value="1">Unit 1</option>
+  <option value="2">Unit 2</option>
+  <option value="3">Unit 3</option>
+  <option value="4">Unit 4</option>
+  <option value="5">Unit 5</option>
+  <option value="6">Unit 6</option>
+  <option value="7">Unit 7</option>
+</select>
 
-  <select id="directionSelect">
-    <option value="de-en">Deutsch → Englisch</option>
-    <option value="en-de">Englisch → Deutsch</option>
-    <option value="mix">Gemischt</option>
-  </select>
+<select id="contentSelect">
+  <option value="vocab">📘 Vokabeln</option>
+  <option value="grammar">📐 Grammatik</option>
+</select>
 
-  <select id="exerciseSelect">
-    <option value="write">✍ Schreiben</option>
-    <option value="mc">🎯 Multiple Choice</option>
-  </select>
+<select id="directionSelect">
+  <option value="de-en">Deutsch → Englisch</option>
+  <option value="en-de">Englisch → Deutsch</option>
+  <option value="mix">Gemischt</option>
+</select>
 
-  <button id="trainerBtn">▶ Trainer</button>
-  <button id="testBtn">📝 Test</button>
-  <button id="errorBtn">🔁 Fehler-Trainer</button>
+<select id="exerciseSelect">
+  <option value="write">✍ Schreiben</option>
+  <option value="mc">🎯 Multiple Choice</option>
+</select>
 
-  <hr>
+<button id="trainerBtn">▶ Trainer</button>
+<button id="testBtn">📝 Test</button>
+<button id="errorBtn">🔁 Fehler-Trainer</button>
 
-  <div id="question"></div>
+<hr>
 
-  <input id="answerInput" placeholder="Antwort eingeben">
-
-  <div class="mc" id="mcBox"></div>
-
-  <button onclick="checkAnswer()">OK</button>
+<div id="question"></div>
+<input id="answerInput" placeholder="Antwort eingeben">
+<div class="mc" id="mcBox"></div>
+<button onclick="checkAnswer()">OK</button>
 </div>
 
 <script src="vocab.js"></script>
+<script src="grammar.js"></script>
 
 <script>
-let currentWord = null;
-let mode = "trainer";
-let wrongWords = [];
+let mode="trainer",current=null,wrong=[];
 
 /* Levenshtein */
-function levenshtein(a, b) {
-  const m = Array.from({length: a.length+1}, () =>
-    Array(b.length+1).fill(0));
-  for (let i=0;i<=a.length;i++) m[i][0]=i;
-  for (let j=0;j<=b.length;j++) m[0][j]=j;
-  for (let i=1;i<=a.length;i++){
-    for (let j=1;j<=b.length;j++){
-      m[i][j]=Math.min(
-        m[i-1][j]+1,
-        m[i][j-1]+1,
-        m[i-1][j-1]+(a[i-1]===b[j-1]?0:1)
-      );
-    }
-  }
-  return m[a.length][b.length];
+function levenshtein(a,b){
+const m=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));
+for(let i=0;i<=a.length;i++)m[i][0]=i;
+for(let j=0;j<=b.length;j++)m[0][j]=j;
+for(let i=1;i<=a.length;i++)
+for(let j=1;j<=b.length;j++)
+m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,
+m[i-1][j-1]+(a[i-1]==b[j-1]?0:1));
+return m[a.length][b.length];
 }
 
-/* Start */
-document.getElementById("trainerBtn").onclick = () => {
-  mode="trainer"; start();
-};
-document.getElementById("testBtn").onclick = () => {
-  mode="test"; start();
-};
-document.getElementById("errorBtn").onclick = () => {
-  mode="error"; start();
-};
+trainerBtn.onclick=()=>{mode="trainer";start()}
+testBtn.onclick=()=>{mode="test";start()}
+errorBtn.onclick=()=>{mode="error";start()}
 
-document.getElementById("answerInput").addEventListener("keydown", e=>{
-  if(e.key==="Enter") checkAnswer();
-});
+answerInput.addEventListener("keydown",e=>{
+if(e.key==="Enter")checkAnswer()
+})
 
 function start(){
-  let list = mode==="error" ? wrongWords : 
-    getVocabForUnit(document.getElementById("unitSelect").value);
+let unit=unitSelect.value;
+let type=contentSelect.value;
+let list;
 
-  if(list.length===0){
-    alert("Keine Vokabeln vorhanden");
-    return;
-  }
-  currentWord = list[Math.floor(Math.random()*list.length)];
-  showQuestion();
+if(mode==="error"){
+list=wrong;
+if(!list.length){alert("Keine Fehler 👍");return;}
+}else{
+list=type==="vocab"
+? getVocabForUnit(unit)
+: getGrammarForUnit(unit);
 }
 
-function showQuestion(){
-  document.getElementById("answerInput").value="";
-  document.getElementById("mcBox").innerHTML="";
-
-  let dir = document.getElementById("directionSelect").value;
-  let qText, correct;
-
-  if(dir==="mix"){
-    dir = Math.random()>0.5?"de-en":"en-de";
-  }
-
-  if(dir==="de-en"){
-    qText = currentWord.de;
-    correct = currentWord.en;
-  } else {
-    qText = currentWord.en;
-    correct = currentWord.de;
-  }
-
-  currentWord.correct = correct;
-  document.getElementById("question").innerText =
-    "Übersetze: " + qText;
-
-  if(document.getElementById("exerciseSelect").value==="mc"){
-    createMC(correct);
-  }
+current=list[Math.floor(Math.random()*list.length)];
+show();
 }
 
-function createMC(correct){
-  const box = document.getElementById("mcBox");
-  let options = [correct];
+function show(){
+answerInput.value="";
+mcBox.innerHTML="";
 
-  while(options.length<4){
-    const r = getVocabForUnit("all")
-      [Math.floor(Math.random()*getVocabForUnit("all").length)];
-    const opt = r.en===correct? r.de : r.en;
-    if(!options.includes(opt)) options.push(opt);
-  }
-
-  options.sort(()=>Math.random()-0.5);
-
-  options.forEach(o=>{
-    const b=document.createElement("button");
-    b.innerText=o;
-    b.onclick=()=>checkMC(o);
-    box.appendChild(b);
-  });
+if(contentSelect.value==="grammar"){
+question.innerText=current.q;
+current.correct=current.a;
+}else{
+let dir=directionSelect.value;
+if(dir==="mix")dir=Math.random()>0.5?"de-en":"en-de";
+if(dir==="de-en"){
+question.innerText="Übersetze: "+current.de;
+current.correct=current.en;
+}else{
+question.innerText="Übersetze: "+current.en;
+current.correct=current.de;
+}
 }
 
-function checkMC(val){
-  check(val);
+if(exerciseSelect.value==="mc")buildMC();
 }
 
-function checkAnswer(){
-  check(document.getElementById("answerInput").value);
+function buildMC(){
+let opts=[current.correct];
+while(opts.length<4){
+let src=contentSelect.value==="vocab"
+? getVocabForUnit("all")
+: getGrammarForUnit("all");
+let r=src[Math.floor(Math.random()*src.length)];
+let v=r.en||r.a;
+if(!opts.includes(v))opts.push(v);
+}
+opts.sort(()=>Math.random()-0.5);
+opts.forEach(o=>{
+let b=document.createElement("button");
+b.innerText=o;
+b.onclick=()=>check(o);
+mcBox.appendChild(b);
+});
 }
 
-function check(input){
-  const d = levenshtein(
-    input.trim().toLowerCase(),
-    currentWord.correct.toLowerCase()
-  );
+function checkAnswer(){check(answerInput.value)}
 
-  if(d<=1){
-    alert(d===0?"✅ Richtig":"🟡 Fast richtig");
-  } else {
-    alert("❌ Falsch: "+currentWord.correct);
-    if(!wrongWords.includes(currentWord)){
-      wrongWords.push(currentWord);
-    }
-  }
-  if(mode!=="test") start();
+function check(val){
+let d=levenshtein(
+val.trim().toLowerCase(),
+current.correct.toLowerCase()
+);
+
+if(d<=1){
+alert(d===0?"✅ Richtig":"🟡 Fast richtig");
+}else{
+alert("❌ Falsch: "+current.correct);
+if(!wrong.includes(current))wrong.push(current);
+}
+if(mode!=="test")start();
 }
 </script>
 </body>
