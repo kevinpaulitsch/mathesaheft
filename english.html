@@ -5,27 +5,52 @@
   <title>GB English Trainer – More! 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; background:#f2f6ff; }
+    body { font-family: Arial, sans-serif; background:#f2f6ff; margin: 0; padding: 0; }
     .box {
       max-width: 420px;
       margin: 30px auto;
       background: #fff;
       padding: 20px;
       border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     select, button, input {
       width: 100%;
       padding: 10px;
       margin: 6px 0;
       font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #45a049;
     }
     .question {
       font-size: 20px;
       margin: 15px 0;
       font-weight: bold;
+      color: #333;
     }
     .mc button {
       margin-top: 6px;
+      background: #2196F3;
+    }
+    .mc button:hover {
+      background: #0b7dda;
+    }
+    #answer {
+      display: block;
+    }
+    .hide {
+      display: none !important;
     }
   </style>
 </head>
@@ -53,7 +78,7 @@
   </select>
 
   <select id="mode">
-    <option value="write">✍ Schreiben</option>
+    <option value="write">✏ Schreiben</option>
     <option value="mc">🎯 Multiple Choice</option>
     <option value="grammar">📘 Grammatik</option>
   </select>
@@ -67,7 +92,7 @@
   <div id="mc" class="mc"></div>
 
   <input id="answer" placeholder="Antwort eingeben">
-  <button onclick="checkAnswer()">OK</button>
+  <button id="okBtn" onclick="checkAnswer()">OK</button>
 
   <div id="feedback"></div>
 </div>
@@ -111,6 +136,9 @@ function preparePool() {
 function nextQuestion() {
   if (pool.length === 0) {
     document.getElementById("question").innerText = "🎉 Fertig!";
+    document.getElementById("mc").innerHTML = "";
+    document.getElementById("answer").classList.add("hide");
+    document.getElementById("okBtn").classList.add("hide");
     return;
   }
 
@@ -125,6 +153,11 @@ function nextQuestion() {
   if (mode === "grammar") {
     document.getElementById("question").innerText = current.q;
     current.solution = current.a;
+    
+    // Bei Grammatik immer Multiple Choice anzeigen
+    document.getElementById("answer").classList.add("hide");
+    document.getElementById("okBtn").classList.add("hide");
+    showGrammarOptions(current.options, current.a);
     return;
   }
 
@@ -141,8 +174,24 @@ function nextQuestion() {
   document.getElementById("question").innerText = "Übersetze: " + q;
 
   if (mode === "mc") {
+    document.getElementById("answer").classList.add("hide");
+    document.getElementById("okBtn").classList.add("hide");
     showMC(a, dir);
+  } else {
+    document.getElementById("answer").classList.remove("hide");
+    document.getElementById("okBtn").classList.remove("hide");
   }
+}
+
+function showGrammarOptions(options, correct) {
+  const mc = document.getElementById("mc");
+  
+  options.forEach(opt => {
+    const b = document.createElement("button");
+    b.innerText = opt;
+    b.onclick = () => checkAnswer(opt);
+    mc.appendChild(b);
+  });
 }
 
 function showMC(correct, dir) {
@@ -199,7 +248,6 @@ document.getElementById("answer").addEventListener("keydown", e => {
   if (e.key === "Enter") checkAnswer();
 });
 </script>
-
 
 </body>
 </html>
