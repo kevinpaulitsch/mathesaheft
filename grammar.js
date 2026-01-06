@@ -1,139 +1,158 @@
-/* ============================
-   GRAMMAR ENGINE – MORE! 1
-   sauber, erweiterbar, eindeutig
-============================ */
+/* ===============================
+   GRAMMAR POOL – SCHOOL BASED
+   unendlich, eindeutig, klickbar
+================================ */
 
-const GRAMMAR_TEMPLATES = {
+const GRAMMAR_RULES = [
 
-  1: { // Unit 1 – Classroom
-    fixed: [
-      { q: "___ the door, please.", options: ["Open", "Opens"], a: "Open" },
-      { q: "___ quiet, please.", options: ["Be", "Is"], a: "Be" },
-      { q: "This is ___ desk.", options: ["a", "an"], a: "a" },
-      { q: "Write ___ name.", options: ["your", "you"], a: "your" }
-    ]
-  },
+  /* ===== TO BE – AFFIRMATIVE ===== */
+  () => ({
+    q: "She ___ happy.",
+    options: ["is", "are"],
+    a: "is"
+  }),
+  () => ({
+    q: "They ___ at school.",
+    options: ["is", "are"],
+    a: "are"
+  }),
 
-  2: { // Unit 2 – Prepositions
-    fixed: [
-      { q: "The monkey is ___ the tree.", options: ["in", "on"], a: "in" },
-      { q: "There ___ two lions.", options: ["is", "are"], a: "are" },
-      { q: "___ is the giraffe?", options: ["Where", "What"], a: "Where" }
-    ]
-  },
+  /* ===== TO BE – NEGATIVE ===== */
+  () => ({
+    q: "He ___ tired.",
+    options: ["isn't", "aren't"],
+    a: "isn't"
+  }),
+  () => ({
+    q: "We ___ late.",
+    options: ["aren't", "isn't"],
+    a: "aren't"
+  }),
 
-  3: { // Unit 3 – Pirates
-    fixed: [
-      { q: "He ___ a pirate.", options: ["is", "are"], a: "is" },
-      { q: "They ___ got treasure.", options: ["has", "have"], a: "have" }
-    ]
-  },
+  /* ===== THERE IS / THERE ARE ===== */
+  () => ({
+    q: "There ___ a dog in the park.",
+    options: ["is", "are"],
+    a: "is"
+  }),
+  () => ({
+    q: "There ___ two books on the desk.",
+    options: ["is", "are"],
+    a: "are"
+  }),
 
-  4: { // Unit 4 – Time
-    fixed: [
-      { q: "We go to bed ___ night.", options: ["at", "in"], a: "at" },
-      { q: "I get up ___ seven.", options: ["at", "in"], a: "at" }
-    ]
-  },
+  /* ===== PLURAL NOUNS ===== */
+  () => ({
+    q: "Two ___ (child).",
+    options: ["children", "childs"],
+    a: "children"
+  }),
+  () => ({
+    q: "Three ___ (box).",
+    options: ["boxes", "boxs"],
+    a: "boxes"
+  }),
 
-  5: { // Unit 5 – CAN / CAN'T (JETZT KORREKT!)
-    canCant: [
-      {
-        subject: "He",
-        verb: "carry",
-        object: "the guitar",
-        context: "heavy",
-        answer: "can't"
-      },
-      {
-        subject: "She",
-        verb: "play",
-        object: "the drums",
-        context: "can",
-        answer: "can"
-      },
-      {
-        subject: "He",
-        verb: "sing",
-        object: "",
-        context: "can't",
-        answer: "can't"
-      }
-    ]
-  },
+  /* ===== IRREGULAR PLURALS ===== */
+  () => ({
+    q: "Two ___ (man).",
+    options: ["men", "mans"],
+    a: "men"
+  }),
+  () => ({
+    q: "Three ___ (mouse).",
+    options: ["mice", "mouses"],
+    a: "mice"
+  }),
 
-  6: { // Unit 6 – Phrasal verbs
-    fixed: [
-      { q: "He runs ___ the street.", options: ["down", "in"], a: "down" },
-      { q: "The dog looks ___ the mirror.", options: ["in", "at"], a: "in" }
-    ]
-  },
+  /* ===== HAVE GOT / HAVEN'T GOT ===== */
+  () => ({
+    q: "She ___ got a bike.",
+    options: ["has", "have"],
+    a: "has"
+  }),
+  () => ({
+    q: "They ___ got a dog.",
+    options: ["have", "has"],
+    a: "have"
+  }),
+  () => ({
+    q: "He ___ got a sister.",
+    options: ["hasn't", "haven't"],
+    a: "hasn't"
+  }),
 
-  7: { // Unit 7 – Adverbs
-    fixed: [
-      { q: "I ___ eat meat.", options: ["never", "always"], a: "never" },
-      { q: "She ___ eats vegetables.", options: ["often", "never"], a: "often" }
-    ]
-  }
-};
+  /* ===== HAVE / HAS ===== */
+  () => ({
+    q: "She ___ lunch at school.",
+    options: ["has", "have"],
+    a: "has"
+  }),
+  () => ({
+    q: "We ___ English today.",
+    options: ["have", "has"],
+    a: "have"
+  }),
 
-/* ============================
-   GENERATOR
-============================ */
+  /* ===== POSSESSIVES ===== */
+  () => ({
+    q: "This is ___ bag. (Tom)",
+    options: ["his", "her"],
+    a: "his"
+  }),
+  () => ({
+    q: "She likes ___ dog.",
+    options: ["her", "his"],
+    a: "her"
+  }),
 
-function generateCanCantQuestion(template) {
-  let contextSentence = "";
-
-  if (template.context === "heavy") {
-    contextSentence = `The ${template.object} is very heavy.`;
-  } else if (template.context === "can") {
-    contextSentence = `${template.subject} learns every day.`;
-  } else if (template.context === "can't") {
-    contextSentence = `${template.subject} cannot do it.`;
-  }
-
-  return {
-    q: `${contextSentence} ${template.subject} ___ ${template.verb} ${template.object}.`,
+  /* ===== CAN / CAN’T – MIT KONTEXT ===== */
+  () => ({
+    q: "The bag is very heavy. He ___ carry it.",
     options: ["can", "can't"],
-    a: template.answer
-  };
+    a: "can't"
+  }),
+  () => ({
+    q: "She practices every day. She ___ swim very well.",
+    options: ["can", "can't"],
+    a: "can"
+  }),
+
+  /* ===== A / AN ===== */
+  () => ({
+    q: "This is ___ apple.",
+    options: ["a", "an"],
+    a: "an"
+  }),
+  () => ({
+    q: "He has ___ bike.",
+    options: ["a", "an"],
+    a: "a"
+  })
+];
+
+/* ===============================
+   MAIN ACCESS FUNCTION
+   returns e.g. 20 random tasks
+================================ */
+
+function getGrammarForUnit(unitIgnored, amount = 20) {
+  let tasks = [];
+
+  while (tasks.length < amount) {
+    const rule =
+      GRAMMAR_RULES[Math.floor(Math.random() * GRAMMAR_RULES.length)];
+    tasks.push(rule());
+  }
+
+  return shuffle(tasks);
 }
 
-/* ============================
-   MAIN FUNCTION
-============================ */
-
-function getGrammarForUnit(unit, amount = 20) {
-  let pool = [];
-
-  const units = unit === "all"
-    ? Object.values(GRAMMAR_TEMPLATES)
-    : [GRAMMAR_TEMPLATES[unit]];
-
-  units.forEach(u => {
-    if (!u) return;
-
-    if (u.fixed) pool.push(...u.fixed);
-
-    if (u.canCant) {
-      u.canCant.forEach(t => {
-        pool.push(generateCanCantQuestion(t));
-      });
-    }
-  });
-
-  // 🔀 Randomisieren
-  pool = shuffleArray(pool);
-
-  // 🎯 Max. z. B. 20 Aufgaben
-  return pool.slice(0, amount);
-}
-
-/* ============================
+/* ===============================
    HELPER
-============================ */
+================================ */
 
-function shuffleArray(arr) {
+function shuffle(arr) {
   return arr
     .map(v => ({ v, r: Math.random() }))
     .sort((a, b) => a.r - b.r)
