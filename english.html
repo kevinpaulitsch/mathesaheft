@@ -2,98 +2,261 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>GB English Trainer – More! 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Vocab Trainer – More! 1</title>
 <script src="vocab.js"></script>
+
 <style>
-body{font-family:Arial;background:#eef2ff;padding:10px}
-.card{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px}
-button,select,input{width:100%;padding:12px;margin:6px 0;font-size:16px}
-.correct{color:green}
-.wrong{color:red}
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2ff;
+  padding: 10px;
+}
+.card {
+  max-width: 520px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 14px;
+}
+h2 { text-align: center; }
+
+select, input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+
+button {
+  cursor: pointer;
+}
+
+#mcArea button {
+  margin-top: 6px;
+}
+
+.correct { color: green; font-weight: bold; }
+.wrong { color: red; font-weight: bold; }
+
+.small {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+}
 </style>
 </head>
 
 <body>
+
 <div class="card">
-<h2>GB English Trainer – More! 1</h2>
+<h2>🇬🇧 English Trainer – More! 1</h2>
 
-<select id="unit"></select>
+<!-- Unit-Auswahl -->
+<select id="unitSelect"></select>
 
-<button onclick="mode='trainer';start()">Trainer</button>
-<button onclick="mode='test';start()">Test</button>
+<!-- Richtung -->
+<select id="direction">
+  <option value="de-en">Deutsch → Englisch</option>
+  <option value="en-de">Englisch → Deutsch</option>
+  <option value="mixed">🔀 Gemischt</option>
+</select>
+
+<!-- Modus -->
+<select id="modeSelect">
+  <option value="write">✍️ Schreiben</option>
+  <option value="mc">🟦 Multiple Choice</option>
+</select>
+
+<!-- Trainer / Test -->
+<button onclick="setMode('trainer')">📘 Trainer</button>
+<button onclick="setMode('test')">📝 Test</button>
 
 <hr>
 
 <p id="question"></p>
+
 <input id="answer" placeholder="Antwort eingeben">
+
+<div id="mcArea" style="display:none">
+  <button onclick="choose(this)"></button>
+  <button onclick="choose(this)"></button>
+  <button onclick="choose(this)"></button>
+  <button onclick="choose(this)"></button>
+</div>
+
 <button onclick="check()">OK</button>
 
 <p id="feedback"></p>
-<p id="score"></p>
+<p class="small" id="score"></p>
 </div>
 
 <script>
-let words=[],current,score=0,asked=0,mode="trainer";
+let words = [];
+let current;
+let score = 0;
+let asked = 0;
+let mode = "trainer";
 
-const unitSelect=document.getElementById("unit");
-const q=document.getElementById("question");
-const a=document.getElementById("answer");
-const f=document.getElementById("feedback");
-const s=document.getElementById("score");
+const unitSelect = document.getElementById("unitSelect");
+const direction = document.getElementById("direction");
+const modeSelect = document.getElementById("modeSelect");
+const q = document.getElementById("question");
+const a = document.getElementById("answer");
+const f = document.getElementById("feedback");
+const s = document.getElementById("score");
+const mcArea = document.getElementById("mcArea");
 
-// Dropdown füllen
-let all=document.createElement("option");
-all.value="all";
-all.textContent="⭐ Alle Units gemischt";
-unitSelect.appendChild(all);
+/* ---------- Dropdown füllen ---------- */
+let allOpt = document.createElement("option");
+allOpt.value = "all";
+allOpt.textContent = "⭐ Alle Units gemischt";
+unitSelect.appendChild(allOpt);
 
-for(let u in VOCAB){
-  let o=document.createElement("option");
-  o.value=u;
-  o.textContent=VOCAB[u].title;
+for (let u in VOCAB) {
+  let o = document.createElement("option");
+  o.value = u;
+  o.textContent = VOCAB[u].title;
   unitSelect.appendChild(o);
 }
 
-function start(){
-  score=0; asked=0;
-  words=[];
-  if(unitSelect.value==="all"){
-    for(let u in VOCAB){ words=words.concat(VOCAB[u].words); }
+/* ---------- Start ---------- */
+function setMode(m) {
+  mode = m;
+  start();
+}
+
+function start() {
+  score = 0;
+  asked = 0;
+  words = [];
+
+  if (unitSelect.value === "all") {
+    for (let u in VOCAB) {
+      words = words.concat(VOCAB[u].words);
+    }
   } else {
-    words=[...VOCAB[unitSelect.value].words];
+    words = [...VOCAB[unitSelect.value].words];
   }
   next();
 }
 
-function next(){
-  current=words[Math.floor(Math.random()*words.length)];
-  q.textContent="Übersetze: "+current.de;
-  a.value="";
-  f.textContent="";
-}
+/* ---------- Nächste Frage ---------- */
+function next() {
+  current = words[Math.floor(Math.random() * words.length)];
+  f.textContent = "";
+  a.value = "";
 
-function check(){
-  asked++;
-  if(a.value.trim().toLowerCase()===current.en.toLowerCase()){
-    f.textContent="✔ Richtig";
-    f.className="correct";
-    score++;
-    if(mode==="trainer") setTimeout(next,800);
-    else if(asked>=10) endTest(); else next();
-  } else {
-    f.textContent="✖ Richtig wäre: "+current.en;
-    f.className="wrong";
-    if(mode==="trainer") setTimeout(next,1500);
-    else if(asked>=10) endTest(); else next();
+  let dir = direction.value;
+  let askDe = true;
+
+  if (dir === "mixed") {
+    askDe = Math.random() < 0.5;
+  } else if (dir === "en-de") {
+    askDe = false;
   }
-  s.textContent="Punkte: "+score+" / "+asked;
+
+  current.askDe = askDe;
+
+  q.textContent = askDe
+    ? "Übersetze: " + current.de
+    : "Translate: " + current.en;
+
+  if (modeSelect.value === "mc") {
+    a.style.display = "none";
+    mcArea.style.display = "block";
+    setupMC();
+  } else {
+    a.style.display = "block";
+    mcArea.style.display = "none";
+    a.focus();
+  }
 }
 
-function endTest(){
-  q.textContent="Test beendet!";
-  f.textContent="Ergebnis: "+score+" von "+asked;
+/* ---------- Schreiben ---------- */
+function check() {
+  if (modeSelect.value === "mc") return;
+
+  asked++;
+  let correct = current.askDe ? current.en : current.de;
+
+  if (a.value.trim().toLowerCase() === correct.toLowerCase()) {
+    f.textContent = "✔ Richtig";
+    f.className = "correct";
+    score++;
+  } else {
+    f.textContent = "✖ Richtig wäre: " + correct;
+    f.className = "wrong";
+  }
+
+  s.textContent = `Punkte: ${score} / ${asked}`;
+
+  if (mode === "trainer") {
+    setTimeout(next, 800);
+  } else if (asked >= 10) {
+    endTest();
+  } else {
+    setTimeout(next, 800);
+  }
 }
+
+/* ---------- ENTER-Taste ---------- */
+a.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    check();
+  }
+});
+
+/* ---------- Multiple Choice ---------- */
+function setupMC() {
+  let correct = current.askDe ? current.en : current.de;
+  let answers = [correct];
+
+  while (answers.length < 4) {
+    let r = current.askDe
+      ? words[Math.floor(Math.random() * words.length)].en
+      : words[Math.floor(Math.random() * words.length)].de;
+    if (!answers.includes(r)) answers.push(r);
+  }
+
+  answers.sort(() => Math.random() - 0.5);
+
+  [...mcArea.children].forEach((btn, i) => {
+    btn.textContent = answers[i];
+    btn.className = "";
+  });
+}
+
+function choose(btn) {
+  asked++;
+  let correct = current.askDe ? current.en : current.de;
+
+  if (btn.textContent === correct) {
+    btn.className = "correct";
+    score++;
+  } else {
+    btn.className = "wrong";
+  }
+
+  s.textContent = `Punkte: ${score} / ${asked}`;
+
+  if (mode === "trainer") {
+    setTimeout(next, 800);
+  } else if (asked >= 10) {
+    endTest();
+  } else {
+    setTimeout(next, 800);
+  }
+}
+
+/* ---------- Test Ende ---------- */
+function endTest() {
+  q.textContent = "📝 Test beendet";
+  f.textContent = `Ergebnis: ${score} von ${asked}`;
+}
+
+start();
 </script>
+
 </body>
 </html>
