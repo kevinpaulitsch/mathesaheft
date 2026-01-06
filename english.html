@@ -81,6 +81,7 @@ let current = null;
 let wrong = [];
 
 function startTrainer() {
+  wrong = [];
   preparePool();
   nextQuestion();
 }
@@ -118,35 +119,46 @@ function nextQuestion() {
   document.getElementById("answer").value = "";
   document.getElementById("mc").innerHTML = "";
 
-  if (current.q) {
+  const mode = document.getElementById("mode").value;
+
+  /* ===== GRAMMATIK ===== */
+  if (mode === "grammar") {
     document.getElementById("question").innerText = current.q;
+    current.solution = current.a;
     return;
   }
 
+  /* ===== VOKABELN ===== */
   const dir = document.getElementById("direction").value;
-  let q = current.de, a = current.en;
+
+  let q = current.de;
+  let a = current.en;
 
   if (dir === "en-de") [q, a] = [a, q];
   if (dir === "mix" && Math.random() > 0.5) [q, a] = [a, q];
 
-  current._answer = a;
+  current.solution = a;
   document.getElementById("question").innerText = "Übersetze: " + q;
 
-  if (document.getElementById("mode").value === "mc") {
-    showMC(a);
+  if (mode === "mc") {
+    showMC(a, dir);
   }
 }
 
-function showMC(correct) {
+function showMC(correct, dir) {
   const mc = document.getElementById("mc");
   let options = [correct];
 
   while (options.length < 4) {
-    const r = pool[Math.floor(Math.random() * pool.length)].en;
-    if (!options.includes(r)) options.push(r);
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    let candidate = r.en;
+
+    if (dir === "en-de") candidate = r.de;
+    if (!options.includes(candidate)) options.push(candidate);
   }
 
   options.sort(() => Math.random() - 0.5);
+
   options.forEach(o => {
     const b = document.createElement("button");
     b.innerText = o;
@@ -155,24 +167,28 @@ function showMC(correct) {
   });
 }
 
-function checkAnswer(val = null) {
-  const input = val || document.getElementById("answer").value.trim();
-  const solution = current.a || current._answer;
+function checkAnswer(value = null) {
+  const input = value || document.getElementById("answer").value.trim();
+  const solution = current.solution;
 
   if (!solution) return;
 
-  if (similar(input, solution)) {
+  if (isSimilar(input, solution)) {
     document.getElementById("feedback").innerText = "✅ Richtig";
   } else {
-    document.getElementById("feedback").innerText = "❌ Falsch – richtig: " + solution;
+    document.getElementById("feedback").innerText =
+      "❌ Falsch – richtig: " + solution;
     wrong.push(current);
   }
+
   setTimeout(nextQuestion, 800);
 }
 
-function similar(a, b) {
-  a = a.toLowerCase(); b = b.toLowerCase();
+function isSimilar(a, b) {
+  a = a.toLowerCase();
+  b = b.toLowerCase();
   let diff = Math.abs(a.length - b.length);
+
   for (let i = 0; i < Math.min(a.length, b.length); i++) {
     if (a[i] !== b[i]) diff++;
   }
@@ -183,6 +199,7 @@ document.getElementById("answer").addEventListener("keydown", e => {
   if (e.key === "Enter") checkAnswer();
 });
 </script>
+
 
 </body>
 </html>
