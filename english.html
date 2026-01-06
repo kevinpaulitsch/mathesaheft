@@ -2,205 +2,195 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>English Vocab Trainer – More! 1 (Units 1–7)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Trainer – More! 1</title>
+
+<script src="vocab.js"></script>
+
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;margin:0;padding:20px}
-h1{text-align:center}
-.container{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:8px}
-select,button,input{padding:8px;margin:5px}
-.card{margin-top:20px;padding:20px;border:1px solid #ddd;border-radius:6px}
-.correct{color:green;font-weight:bold}
-.wrong{color:red;font-weight:bold}
-.hidden{display:none}
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(#eaf1ff, #ffffff);
+  padding: 10px;
+}
+.card {
+  max-width: 700px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+h1 {
+  text-align: center;
+  font-size: 26px;
+}
+select, input, button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  font-size: 18px;
+  border-radius: 8px;
+}
+button {
+  background: #4a7cff;
+  color: white;
+  border: none;
+}
+button.secondary {
+  background: #999;
+}
+.correct { color: green; font-weight: bold; }
+.wrong { color: red; font-weight: bold; }
+.center { text-align: center; }
+.stars { font-size: 24px; }
+@media (max-width:600px) {
+  h1 { font-size: 22px; }
+  button { font-size: 16px; }
+}
 </style>
 </head>
+
 <body>
 
-<h1>GB English Vocab Trainer – More! 1</h1>
+<div class="card">
+<h1>🇬🇧 English Trainer – More! 1</h1>
 
-<div class="container">
-  <label>Modus:</label>
-  <select id="mode">
-    <option value="train-de-en">Training DE → EN</option>
-    <option value="train-en-de">Training EN → DE</option>
-    <option value="mc">Multiple Choice</option>
-    <option value="gap">Lückentext</option>
-    <option value="test">Test-Modus (20 Fragen)</option>
-  </select>
+<select id="unitSelect"></select>
 
-  <button onclick="nextQuestion()">Start / Weiter</button>
+<button onclick="setMode('trainer')">📘 Trainer</button>
+<button onclick="setMode('test')">📝 Test</button>
+<button onclick="setMode('gap')">✏️ Lückentext</button>
+<button onclick="setMode('errors')">🔁 Fehler üben</button>
+<button class="secondary" onclick="printTest()">🧾 Test drucken (PDF)</button>
 
-  <div id="card" class="card hidden">
-    <div id="question"></div>
-    <div id="answers"></div>
-    <input id="input" class="hidden" placeholder="Antwort eingeben">
-    <br>
-    <button id="checkBtn" onclick="checkAnswer()">Prüfen</button>
-    <div id="feedback"></div>
-  </div>
+<hr>
 
-  <div id="result" class="card hidden"></div>
+<p id="question" class="center"></p>
+
+<input id="answer" placeholder="Antwort eingeben">
+
+<button onclick="speak()">🔊 Anhören</button>
+<button onclick="check()">OK</button>
+
+<p id="feedback" class="center"></p>
+
+<p class="center">
+  Punkte: <strong><span id="score">0</span></strong>
+</p>
+
+<p class="center stars" id="stars"></p>
+<p class="center" id="level"></p>
+
 </div>
 
 <script>
-/* ========= ALLE VOKABELN UNITS 1–7 ========= */
-const vocab = [
-/* UNIT 1 */
-{de:"Tür",en:"door"},{de:"Fenster",en:"window"},{de:"Tafel",en:"board"},
-{de:"Schreibtisch",en:"desk"},{de:"Stuhl",en:"chair"},
-{de:"Boden",en:"floor"},{de:"Schere",en:"scissors"},
-{de:"Tablet",en:"tablet"},{de:"Mäppchen",en:"pencil case"},
-{de:"Stift",en:"pen"},{de:"Heft",en:"exercise book"},
-{de:"Schultasche",en:"school bag"},{de:"Lineal",en:"ruler"},
-{de:"Klebestift",en:"glue stick"},{de:"Spitzer",en:"pencil sharpener"},
-{de:"Wasserfarben",en:"watercolours"},
-{de:"Pinsel",en:"paintbrush"},
-{de:"Projektor",en:"projector"},
-{de:"Soundsystem",en:"sound system"},
-{de:"Pullover",en:"sweater"},{de:"Hut",en:"hat"},
-{de:"Rock",en:"skirt"},{de:"Socken",en:"socks"},
-{de:"Schuh",en:"shoe"},
+let mode="trainer";
+let currentUnit, words, currentWord;
+let score=0, asked=0;
+let wrongWords=[];
 
-/* UNIT 2 */
-{de:"Zoo",en:"zoo"},{de:"Baum",en:"tree"},
-{de:"Giraffe",en:"giraffe"},{de:"Affe",en:"monkey"},
-{de:"Papagei",en:"parrot"},{de:"Zug",en:"train"},
-{de:"Pinguin",en:"penguin"},{de:"Führer",en:"guide"},
-{de:"Löwe",en:"lion"},
-{de:"neben",en:"next to"},{de:"in",en:"in"},
-{de:"hinter",en:"behind"},{de:"unter",en:"under"},
-{de:"auf",en:"on"},{de:"vor",en:"in front of"},
+const unitSelect=document.getElementById("unitSelect");
 
-/* UNIT 3 */
-{de:"Schiff",en:"ship"},{de:"Meer",en:"sea"},
-{de:"Schatz",en:"treasure"},{de:"Pirat",en:"pirate"},
-{de:"Haken",en:"hook"},{de:"Holzbein",en:"wooden leg"},
-{de:"berühmt",en:"famous"},{de:"stark",en:"strong"},
-{de:"Kapitän",en:"captain"},{de:"Bruder",en:"brother"},
+for (let u in VOCAB) {
+  let o=document.createElement("option");
+  o.value=u;
+  o.textContent=VOCAB[u].title;
+  unitSelect.appendChild(o);
+}
+unitSelect.onchange=start;
 
-/* UNIT 4 */
-{de:"wütend",en:"angry"},{de:"glücklich",en:"happy"},
-{de:"ängstlich",en:"scared"},{de:"gelangweilt",en:"bored"},
-{de:"kalt",en:"cold"},{de:"heiß",en:"hot"},
-{de:"traurig",en:"sad"},{de:"aufgeregt",en:"excited"},
-{de:"nervös",en:"nervous"},{de:"müde",en:"tired"},
-{de:"hungrig",en:"hungry"},{de:"stolz",en:"proud"},
-{de:"Morgen",en:"morning"},{de:"Mittag",en:"lunchtime"},
-{de:"Abend",en:"evening"},{de:"Nacht",en:"night"},
-{de:"Montag",en:"Monday"},{de:"Dienstag",en:"Tuesday"},
-{de:"Mittwoch",en:"Wednesday"},{de:"Donnerstag",en:"Thursday"},
-{de:"Freitag",en:"Friday"},
-
-/* UNIT 5 */
-{de:"Keyboard",en:"keyboard"},{de:"Sänger",en:"singer"},
-{de:"Saxophon",en:"saxophone"},
-{de:"Freund",en:"boyfriend"},
-{de:"Konzert",en:"concert"},
-{de:"tanzen",en:"to dance"},
-{de:"Arbeit",en:"job"},
-{de:"perfekt",en:"perfect"},
-{de:"tragen",en:"to carry"},
-
-/* UNIT 6 */
-{de:"Stadt",en:"city"},{de:"Park",en:"park"},
-{de:"Markt",en:"market"},{de:"Straße",en:"street"},
-{de:"Fluss",en:"river"},{de:"Wald",en:"woods"},
-{de:"klettern",en:"to climb"},
-{de:"springen",en:"to jump"},
-{de:"gehen",en:"to leave"},
-{de:"suchen",en:"to look for"},
-{de:"ziehen",en:"to pull"},
-
-/* UNIT 7 */
-{de:"Huhn",en:"chicken"},{de:"Milch",en:"milk"},
-{de:"Käse",en:"cheese"},{de:"Ei",en:"egg"},
-{de:"Reis",en:"rice"},{de:"Nudeln",en:"noodles"},
-{de:"Suppe",en:"soup"},
-{de:"Frühstück",en:"breakfast"},
-{de:"Mittagessen",en:"lunch"},
-{de:"Abendessen",en:"dinner"},
-{de:"immer",en:"always"},{de:"oft",en:"often"},
-{de:"manchmal",en:"sometimes"},{de:"nie",en:"never"}
-];
-
-let current={}, correctAnswer="", score=0, total=0;
-
-/* ========= FUNKTIONEN ========= */
-function randomItem(arr){return arr[Math.floor(Math.random()*arr.length)]}
-
-function nextQuestion(){
-  document.getElementById("card").classList.remove("hidden");
-  document.getElementById("feedback").innerHTML="";
-  document.getElementById("answers").innerHTML="";
-  document.getElementById("input").classList.add("hidden");
-  current=randomItem(vocab);
-
-  const mode=document.getElementById("mode").value;
-  let q="";
-
-  if(mode==="train-de-en"){
-    q="Übersetze ins Englische: <b>"+current.de+"</b>";
-    correctAnswer=current.en;
-    document.getElementById("input").classList.remove("hidden");
-  }
-  if(mode==="train-en-de"){
-    q="Übersetze ins Deutsche: <b>"+current.en+"</b>";
-    correctAnswer=current.de;
-    document.getElementById("input").classList.remove("hidden");
-  }
-  if(mode==="mc"){
-    q="Was heißt: <b>"+current.de+"</b> ?";
-    correctAnswer=current.en;
-    let opts=[current.en];
-    while(opts.length<4){
-      let r=randomItem(vocab).en;
-      if(!opts.includes(r))opts.push(r);
-    }
-    opts.sort(()=>Math.random()-0.5);
-    opts.forEach(o=>{
-      let b=document.createElement("button");
-      b.innerText=o;
-      b.onclick=()=>answer(o);
-      document.getElementById("answers").appendChild(b);
-    });
-  }
-  if(mode==="gap"){
-    q="Lückentext: <br>I like ___ for breakfast.";
-    correctAnswer=current.en;
-    document.getElementById("input").classList.remove("hidden");
-  }
-  if(mode==="test"){
-    if(total>=20){
-      document.getElementById("result").classList.remove("hidden");
-      document.getElementById("result").innerHTML=
-        "<h2>Test beendet</h2><p>Punkte: "+score+"/20</p>";
-      total=0;score=0;
-      return;
-    }
-    total++;
-    q="Test "+total+": <b>"+current.de+"</b>";
-    correctAnswer=current.en;
-    document.getElementById("input").classList.remove("hidden");
-  }
-
-  document.getElementById("question").innerHTML=q;
+function setMode(m){
+  mode=m;
+  score=0;
+  asked=0;
+  wrongWords=[];
+  updateStats();
+  start();
 }
 
-function checkAnswer(){
-  let val=document.getElementById("input").value.trim();
-  answer(val);
+function start(){
+  currentUnit=VOCAB[unitSelect.value];
+  words=[...currentUnit.words];
+  next();
 }
 
-function answer(val){
-  if(val.toLowerCase()===correctAnswer.toLowerCase()){
-    document.getElementById("feedback").innerHTML="<span class='correct'>Richtig!</span>";
-    if(document.getElementById("mode").value==="test")score++;
-  }else{
-    document.getElementById("feedback").innerHTML=
-      "<span class='wrong'>Falsch.</span> Richtig: "+correctAnswer;
+function next(){
+  document.getElementById("answer").value="";
+  document.getElementById("feedback").textContent="";
+
+  if(mode==="errors" && wrongWords.length===0){
+    document.getElementById("question").textContent="🎉 Keine Fehler mehr!";
+    return;
   }
-  document.getElementById("input").value="";
+
+  if(mode==="test" && asked===10){
+    finishTest();
+    return;
+  }
+
+  asked++;
+  let pool=(mode==="errors")?wrongWords:words;
+  currentWord=pool[Math.floor(Math.random()*pool.length)];
+
+  document.getElementById("question").textContent =
+    mode==="gap"
+      ? `I like _____ (${currentWord.de})`
+      : `Übersetze: ${currentWord.de}`;
 }
+
+function check(){
+  let a=document.getElementById("answer").value.trim().toLowerCase();
+  if(a===currentWord.en.toLowerCase()){
+    score++;
+    document.getElementById("feedback").textContent="✔ Richtig";
+    document.getElementById("feedback").className="correct";
+  } else {
+    document.getElementById("feedback").textContent=
+      "✘ Falsch – richtig: "+currentWord.en;
+    document.getElementById("feedback").className="wrong";
+    if(!wrongWords.includes(currentWord)) wrongWords.push(currentWord);
+  }
+  updateStats();
+  setTimeout(next,1000);
+}
+
+function finishTest(){
+  let p=Math.round((score/10)*100);
+  let n=p>=90?"Sehr gut":p>=75?"Gut":p>=60?"Befriedigend":p>=50?"Genügend":"Nicht genügend";
+  document.getElementById("question").textContent=`📝 Test beendet: ${p}% – ${n}`;
+}
+
+function updateStats(){
+  document.getElementById("score").textContent=score;
+
+  let stars="⭐".repeat(Math.min(5,Math.floor(score/3)));
+  document.getElementById("stars").textContent=stars;
+
+  let level = score<10?"Level 1 🐣":score<25?"Level 2 🐥":score<50?"Level 3 🦊":"Level 4 🦁";
+  document.getElementById("level").textContent=level;
+
+  localStorage.setItem("progress_"+unitSelect.value,score);
+}
+
+function speak(){
+  if(!currentWord) return;
+  let u=new SpeechSynthesisUtterance(currentWord.en);
+  u.lang="en-GB";
+  speechSynthesis.speak(u);
+}
+
+function printTest(){
+  let w=window.open("");
+  w.document.write("<h1>English Test – "+VOCAB[unitSelect.value].title+"</h1><ol>");
+  VOCAB[unitSelect.value].words.slice(0,15).forEach(v=>{
+    w.document.write(`<li>${v.de} = __________</li>`);
+  });
+  w.document.write("</ol>");
+  w.print();
+}
+
+start();
 </script>
 
 </body>
