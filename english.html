@@ -2,196 +2,98 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<title>GB English Trainer – More! 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>English Trainer – More! 1</title>
-
 <script src="vocab.js"></script>
-
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(#eaf1ff, #ffffff);
-  padding: 10px;
-}
-.card {
-  max-width: 700px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-h1 {
-  text-align: center;
-  font-size: 26px;
-}
-select, input, button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  font-size: 18px;
-  border-radius: 8px;
-}
-button {
-  background: #4a7cff;
-  color: white;
-  border: none;
-}
-button.secondary {
-  background: #999;
-}
-.correct { color: green; font-weight: bold; }
-.wrong { color: red; font-weight: bold; }
-.center { text-align: center; }
-.stars { font-size: 24px; }
-@media (max-width:600px) {
-  h1 { font-size: 22px; }
-  button { font-size: 16px; }
-}
+body{font-family:Arial;background:#eef2ff;padding:10px}
+.card{max-width:420px;margin:auto;background:#fff;padding:20px;border-radius:12px}
+button,select,input{width:100%;padding:12px;margin:6px 0;font-size:16px}
+.correct{color:green}
+.wrong{color:red}
 </style>
 </head>
 
 <body>
-
 <div class="card">
-<h1>🇬🇧 English Trainer – More! 1</h1>
+<h2>GB English Trainer – More! 1</h2>
 
-<select id="unitSelect"></select>
+<select id="unit"></select>
 
-<button onclick="setMode('trainer')">📘 Trainer</button>
-<button onclick="setMode('test')">📝 Test</button>
-<button onclick="setMode('gap')">✏️ Lückentext</button>
-<button onclick="setMode('errors')">🔁 Fehler üben</button>
-<button class="secondary" onclick="printTest()">🧾 Test drucken (PDF)</button>
+<button onclick="mode='trainer';start()">Trainer</button>
+<button onclick="mode='test';start()">Test</button>
 
 <hr>
 
-<p id="question" class="center"></p>
-
+<p id="question"></p>
 <input id="answer" placeholder="Antwort eingeben">
-
-<button onclick="speak()">🔊 Anhören</button>
 <button onclick="check()">OK</button>
 
-<p id="feedback" class="center"></p>
-
-<p class="center">
-  Punkte: <strong><span id="score">0</span></strong>
-</p>
-
-<p class="center stars" id="stars"></p>
-<p class="center" id="level"></p>
-
+<p id="feedback"></p>
+<p id="score"></p>
 </div>
 
 <script>
-let mode="trainer";
-let currentUnit, words, currentWord;
-let score=0, asked=0;
-let wrongWords=[];
+let words=[],current,score=0,asked=0,mode="trainer";
 
-const unitSelect=document.getElementById("unitSelect");
+const unitSelect=document.getElementById("unit");
+const q=document.getElementById("question");
+const a=document.getElementById("answer");
+const f=document.getElementById("feedback");
+const s=document.getElementById("score");
 
-for (let u in VOCAB) {
+// Dropdown füllen
+let all=document.createElement("option");
+all.value="all";
+all.textContent="⭐ Alle Units gemischt";
+unitSelect.appendChild(all);
+
+for(let u in VOCAB){
   let o=document.createElement("option");
   o.value=u;
   o.textContent=VOCAB[u].title;
   unitSelect.appendChild(o);
 }
-unitSelect.onchange=start;
-
-function setMode(m){
-  mode=m;
-  score=0;
-  asked=0;
-  wrongWords=[];
-  updateStats();
-  start();
-}
 
 function start(){
-  currentUnit=VOCAB[unitSelect.value];
-  words=[...currentUnit.words];
+  score=0; asked=0;
+  words=[];
+  if(unitSelect.value==="all"){
+    for(let u in VOCAB){ words=words.concat(VOCAB[u].words); }
+  } else {
+    words=[...VOCAB[unitSelect.value].words];
+  }
   next();
 }
 
 function next(){
-  document.getElementById("answer").value="";
-  document.getElementById("feedback").textContent="";
-
-  if(mode==="errors" && wrongWords.length===0){
-    document.getElementById("question").textContent="🎉 Keine Fehler mehr!";
-    return;
-  }
-
-  if(mode==="test" && asked===10){
-    finishTest();
-    return;
-  }
-
-  asked++;
-  let pool=(mode==="errors")?wrongWords:words;
-  currentWord=pool[Math.floor(Math.random()*pool.length)];
-
-  document.getElementById("question").textContent =
-    mode==="gap"
-      ? `I like _____ (${currentWord.de})`
-      : `Übersetze: ${currentWord.de}`;
+  current=words[Math.floor(Math.random()*words.length)];
+  q.textContent="Übersetze: "+current.de;
+  a.value="";
+  f.textContent="";
 }
 
 function check(){
-  let a=document.getElementById("answer").value.trim().toLowerCase();
-  if(a===currentWord.en.toLowerCase()){
+  asked++;
+  if(a.value.trim().toLowerCase()===current.en.toLowerCase()){
+    f.textContent="✔ Richtig";
+    f.className="correct";
     score++;
-    document.getElementById("feedback").textContent="✔ Richtig";
-    document.getElementById("feedback").className="correct";
+    if(mode==="trainer") setTimeout(next,800);
+    else if(asked>=10) endTest(); else next();
   } else {
-    document.getElementById("feedback").textContent=
-      "✘ Falsch – richtig: "+currentWord.en;
-    document.getElementById("feedback").className="wrong";
-    if(!wrongWords.includes(currentWord)) wrongWords.push(currentWord);
+    f.textContent="✖ Richtig wäre: "+current.en;
+    f.className="wrong";
+    if(mode==="trainer") setTimeout(next,1500);
+    else if(asked>=10) endTest(); else next();
   }
-  updateStats();
-  setTimeout(next,1000);
+  s.textContent="Punkte: "+score+" / "+asked;
 }
 
-function finishTest(){
-  let p=Math.round((score/10)*100);
-  let n=p>=90?"Sehr gut":p>=75?"Gut":p>=60?"Befriedigend":p>=50?"Genügend":"Nicht genügend";
-  document.getElementById("question").textContent=`📝 Test beendet: ${p}% – ${n}`;
+function endTest(){
+  q.textContent="Test beendet!";
+  f.textContent="Ergebnis: "+score+" von "+asked;
 }
-
-function updateStats(){
-  document.getElementById("score").textContent=score;
-
-  let stars="⭐".repeat(Math.min(5,Math.floor(score/3)));
-  document.getElementById("stars").textContent=stars;
-
-  let level = score<10?"Level 1 🐣":score<25?"Level 2 🐥":score<50?"Level 3 🦊":"Level 4 🦁";
-  document.getElementById("level").textContent=level;
-
-  localStorage.setItem("progress_"+unitSelect.value,score);
-}
-
-function speak(){
-  if(!currentWord) return;
-  let u=new SpeechSynthesisUtterance(currentWord.en);
-  u.lang="en-GB";
-  speechSynthesis.speak(u);
-}
-
-function printTest(){
-  let w=window.open("");
-  w.document.write("<h1>English Test – "+VOCAB[unitSelect.value].title+"</h1><ol>");
-  VOCAB[unitSelect.value].words.slice(0,15).forEach(v=>{
-    w.document.write(`<li>${v.de} = __________</li>`);
-  });
-  w.document.write("</ol>");
-  w.print();
-}
-
-start();
 </script>
-
 </body>
 </html>
