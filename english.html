@@ -9,12 +9,12 @@
       font-family: Arial, sans-serif; 
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       margin: 0; 
-      padding: 0;
+      padding: 10px;
       min-height: 100vh;
     }
     .box {
       max-width: 500px;
-      margin: 30px auto;
+      margin: 20px auto;
       background: #fff;
       padding: 25px;
       border-radius: 15px;
@@ -24,6 +24,7 @@
       color: #667eea;
       text-align: center;
       margin-bottom: 20px;
+      font-size: 24px;
     }
     select, button, input {
       width: 100%;
@@ -55,6 +56,11 @@
     button:active {
       transform: translateY(0);
     }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
     .btn-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -68,8 +74,16 @@
       grid-column: 1 / -1;
       background: #ff6b6b;
     }
-    .btn-error:hover {
+    .btn-error:hover:not(:disabled) {
       background: #ee5a52;
+    }
+    .btn-reset {
+      grid-column: 1 / -1;
+      background: #ffa500;
+      margin-top: 10px;
+    }
+    .btn-reset:hover {
+      background: #ff8c00;
     }
     .question {
       font-size: 22px;
@@ -99,6 +113,23 @@
     }
     .mc button:hover {
       background: #45a049;
+    }
+    .mc button.correct {
+      background: #28a745;
+      animation: pulse 0.5s;
+    }
+    .mc button.wrong {
+      background: #dc3545;
+      animation: shake 0.5s;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
     }
     #answer {
       display: block;
@@ -141,16 +172,82 @@
     }
     .progress-bar {
       width: 100%;
-      height: 8px;
+      height: 10px;
       background: #e0e0e0;
-      border-radius: 4px;
+      border-radius: 5px;
       overflow: hidden;
       margin: 10px 0;
     }
     .progress-fill {
       height: 100%;
       background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      transition: width 0.3s;
+      transition: width 0.5s ease;
+    }
+    .timer {
+      text-align: center;
+      font-size: 18px;
+      margin: 10px 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+    .streak {
+      text-align: center;
+      font-size: 20px;
+      margin: 10px 0;
+      padding: 10px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .final-screen {
+      text-align: center;
+      padding: 20px;
+    }
+    .final-screen h3 {
+      font-size: 32px;
+      margin: 20px 0;
+      color: #667eea;
+    }
+    .final-stats {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .final-stats div {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .sound-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: white;
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .sound-toggle:hover {
+      background: #667eea;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      .box {
+        margin: 10px;
+        padding: 15px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      .question {
+        font-size: 18px;
+        padding: 15px;
+      }
     }
   </style>
 </head>
@@ -158,6 +255,8 @@
 <body>
 
 <div class="box">
+  <button class="sound-toggle" onclick="toggleSound()" id="soundBtn">🔊</button>
+  
   <h2>🇬🇧 GB English Trainer – More! 1</h2>
 
   <select id="unit">
@@ -186,8 +285,11 @@
   <div class="btn-group">
     <button onclick="startTrainer()">▶️ Trainer</button>
     <button onclick="startTest()">📝 Test</button>
-    <button class="btn-error" onclick="startErrorTrainer()">🔁 Fehler-Trainer (<span id="errorCount">0</span>)</button>
+    <button class="btn-error" onclick="startErrorTrainer()" id="errorBtn" disabled>🔁 Fehler-Trainer (<span id="errorCount">0</span>)</button>
   </div>
+
+  <div class="timer hide" id="timer">⏱️ Zeit: <span id="timeDisplay">0:00</span></div>
+  <div class="streak hide" id="streak">🔥 Serie: <span id="streakCount">0</span> richtig in Folge!</div>
 
   <div class="progress-bar hide" id="progressBar">
     <div class="progress-fill" id="progressFill"></div>
@@ -197,7 +299,7 @@
 
   <div id="mc" class="mc"></div>
 
-  <input id="answer" placeholder="Antwort eingeben" class="hide">
+  <input id="answer" placeholder="Antwort eingeben (Enter zum Bestätigen)" class="hide" autocomplete="off">
   <button id="okBtn" onclick="checkAnswer()" class="hide">OK ✓</button>
 
   <div id="feedback"></div>
@@ -207,6 +309,8 @@
     <div>❌ Falsch: <span id="wrongCount">0</span></div>
     <div>📊 Quote: <span id="percentage">0%</span></div>
   </div>
+
+  <div id="finalScreen" class="hide"></div>
 </div>
 
 <script src="vocab.js"></script>
@@ -220,20 +324,93 @@ let wrong = [];
 let correct = 0;
 let incorrect = 0;
 let totalQuestions = 0;
+let streak = 0;
+let maxStreak = 0;
+let startTime = null;
+let timerInterval = null;
+let soundEnabled = true;
+let isActive = false;
+
+// Sound-Effekte (einfache Frequenzen)
+function playSound(type) {
+  if (!soundEnabled) return;
+  
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  if (type === 'correct') {
+    oscillator.frequency.value = 800;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  } else if (type === 'wrong') {
+    oscillator.frequency.value = 200;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } else if (type === 'finish') {
+    oscillator.frequency.value = 600;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    document.getElementById('timeDisplay').innerText = 
+      `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
 
 function updateStats() {
   document.getElementById("correctCount").innerText = correct;
   document.getElementById("wrongCount").innerText = incorrect;
   document.getElementById("errorCount").innerText = wrong.length;
   
+  // Fehler-Trainer Button aktivieren/deaktivieren
+  const errorBtn = document.getElementById("errorBtn");
+  errorBtn.disabled = wrong.length === 0;
+  
   const total = correct + incorrect;
   const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
   document.getElementById("percentage").innerText = percentage + "%";
   
-  // Fortschrittsbalken aktualisieren
+  // Fortschrittsbalken
   if (totalQuestions > 0) {
     const progress = ((totalQuestions - pool.length) / totalQuestions) * 100;
     document.getElementById("progressFill").style.width = progress + "%";
+  }
+  
+  // Streak anzeigen
+  if (streak >= 3) {
+    document.getElementById("streakCount").innerText = streak;
+    document.getElementById("streak").classList.remove("hide");
+  } else {
+    document.getElementById("streak").classList.add("hide");
   }
 }
 
@@ -241,24 +418,24 @@ function startTrainer() {
   wrong = [];
   correct = 0;
   incorrect = 0;
+  streak = 0;
+  maxStreak = 0;
+  isActive = true;
   preparePool();
   totalQuestions = pool.length;
+  
   document.getElementById("stats").classList.remove("hide");
   document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
   updateStats();
   nextQuestion();
 }
 
 function startTest() {
-  wrong = [];
-  correct = 0;
-  incorrect = 0;
-  preparePool();
-  totalQuestions = pool.length;
-  document.getElementById("stats").classList.remove("hide");
-  document.getElementById("progressBar").classList.remove("hide");
-  updateStats();
-  nextQuestion();
+  startTrainer();
 }
 
 function startErrorTrainer() {
@@ -268,11 +445,20 @@ function startErrorTrainer() {
   }
   
   pool = [...wrong];
+  wrong = [];
   totalQuestions = pool.length;
   correct = 0;
   incorrect = 0;
+  streak = 0;
+  maxStreak = 0;
+  isActive = true;
+  
   document.getElementById("stats").classList.remove("hide");
   document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
   updateStats();
   nextQuestion();
 }
@@ -334,7 +520,7 @@ function nextQuestion() {
   } else {
     document.getElementById("answer").classList.remove("hide");
     document.getElementById("okBtn").classList.remove("hide");
-    document.getElementById("answer").focus();
+    setTimeout(() => document.getElementById("answer").focus(), 100);
   }
 }
 
@@ -344,7 +530,7 @@ function showGrammarOptions(options, correct) {
   options.forEach(opt => {
     const b = document.createElement("button");
     b.innerText = opt;
-    b.onclick = () => checkAnswer(opt);
+    b.onclick = () => checkAnswer(opt, b);
     mc.appendChild(b);
   });
 }
@@ -368,76 +554,130 @@ function showMC(correct, dir) {
   options.forEach(o => {
     const b = document.createElement("button");
     b.innerText = o;
-    b.onclick = () => checkAnswer(o);
+    b.onclick = () => checkAnswer(o, b);
     mc.appendChild(b);
   });
 }
 
-function checkAnswer(value = null) {
+function checkAnswer(value = null, button = null) {
+  if (!isActive) return;
+  
   const input = value || document.getElementById("answer").value.trim();
   const solution = current.solution;
 
   if (!solution || !input) return;
 
   const feedback = document.getElementById("feedback");
+  const isCorrect = isSimilar(input, solution);
 
-  if (isSimilar(input, solution)) {
+  if (isCorrect) {
     feedback.innerText = "✅ Richtig!";
     feedback.className = "feedback-correct";
+    if (button) button.classList.add("correct");
     correct++;
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    playSound('correct');
     
-    // Frage aus Pool entfernen
     pool = pool.filter(item => item !== current);
   } else {
-    feedback.innerText = "❌ Falsch – Richtig wäre: " + solution;
+    feedback.innerText = "❌ Falsch – Richtig: " + solution;
     feedback.className = "feedback-wrong";
+    if (button) button.classList.add("wrong");
     incorrect++;
+    streak = 0;
+    playSound('wrong');
     
-    // Nur hinzufügen wenn noch nicht in wrong
     if (!wrong.includes(current)) {
       wrong.push(current);
     }
   }
 
   updateStats();
-  setTimeout(nextQuestion, 1200);
+  
+  // Buttons deaktivieren nach Antwort
+  if (button) {
+    const allButtons = document.querySelectorAll('.mc button');
+    allButtons.forEach(btn => btn.disabled = true);
+  }
+  
+  setTimeout(nextQuestion, 1500);
 }
 
 function showFinalResults() {
+  isActive = false;
+  stopTimer();
+  playSound('finish');
+  
   const total = correct + incorrect;
   const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
   
   let emoji = "🎉";
   let message = "Fertig!";
+  let comment = "";
   
   if (percentage === 100) {
     emoji = "🏆";
     message = "Perfekt!";
-  } else if (percentage >= 80) {
+    comment = "Du bist ein Star! 🌟";
+  } else if (percentage >= 90) {
     emoji = "🌟";
-    message = "Super gemacht!";
+    message = "Ausgezeichnet!";
+    comment = "Super Leistung!";
+  } else if (percentage >= 75) {
+    emoji = "😊";
+    message = "Sehr gut!";
+    comment = "Das läuft gut!";
   } else if (percentage >= 60) {
     emoji = "👍";
     message = "Gut gemacht!";
+    comment = "Weiter so!";
   } else {
     emoji = "💪";
     message = "Weiter üben!";
+    comment = "Übung macht den Meister!";
   }
   
-  document.getElementById("question").innerText = 
-    `${emoji} ${message}\n${correct} von ${total} richtig (${percentage}%)`;
+  const finalScreen = document.getElementById("finalScreen");
+  finalScreen.innerHTML = `
+    <div class="final-screen">
+      <h3>${emoji} ${message}</h3>
+      <p style="font-size: 18px; color: #666;">${comment}</p>
+      <div class="final-stats">
+        <div>📊 <strong>${correct}</strong> von <strong>${total}</strong> richtig</div>
+        <div>✅ Quote: <strong>${percentage}%</strong></div>
+        <div>⏱️ Zeit: <strong>${timeStr}</strong></div>
+        <div>🔥 Längste Serie: <strong>${maxStreak}</strong></div>
+        ${wrong.length > 0 ? `<div>📝 Zu wiederholen: <strong>${wrong.length}</strong></div>` : ''}
+      </div>
+      <button class="btn-reset" onclick="resetToStart()">🔄 Zurück zum Start</button>
+    </div>
+  `;
   
-  document.getElementById("mc").innerHTML = "";
-  document.getElementById("answer").classList.add("hide");
-  document.getElementById("okBtn").classList.add("hide");
+  document.getElementById("question").classList.add("hide");
+  document.getElementById("stats").classList.add("hide");
   document.getElementById("progressFill").style.width = "100%";
+  finalScreen.classList.remove("hide");
+}
+
+function resetToStart() {
+  document.getElementById("finalScreen").classList.add("hide");
+  document.getElementById("question").classList.remove("hide");
+  document.getElementById("question").innerText = "👆 Wähle einen Modus und klicke auf Start";
+  document.getElementById("progressBar").classList.add("hide");
+  document.getElementById("timer").classList.add("hide");
+  document.getElementById("streak").classList.add("hide");
+  document.getElementById("progressFill").style.width = "0%";
 }
 
 function isSimilar(a, b) {
   a = a.toLowerCase().trim();
   b = b.toLowerCase().trim();
   
-  // Exakte Übereinstimmung
   if (a === b) return true;
   
   let diff = Math.abs(a.length - b.length);
@@ -446,12 +686,19 @@ function isSimilar(a, b) {
     if (a[i] !== b[i]) diff++;
   }
   
-  // Erlaube 1 Tippfehler
   return diff <= 1;
 }
 
 document.getElementById("answer").addEventListener("keydown", e => {
   if (e.key === "Enter") checkAnswer();
+});
+
+// Verhindere versehentliches Verlassen
+window.addEventListener('beforeunload', (e) => {
+  if (isActive && pool.length > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
 });
 </script>
 
