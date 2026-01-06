@@ -2,267 +2,156 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>English Vocab Trainer – More! 1</title>
+<title>GB English Trainer – More! 1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="vocab.js"></script>
+<script src="grammar.js"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef2ff;
-  padding: 10px;
-}
-.card {
-  max-width: 520px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 14px;
-}
-h2 { text-align: center; }
-
-select, input, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  font-size: 16px;
-}
-
-button { cursor: pointer; }
-
-#mcArea button {
-  margin-top: 6px;
-}
-
-.correct { color: green; font-weight: bold; }
-.wrong { color: red; font-weight: bold; }
-
-.small {
-  font-size: 14px;
-  color: #555;
-  text-align: center;
-}
+body { font-family: Arial; background:#eef2ff; }
+.box { max-width:420px; margin:20px auto; background:#fff; padding:20px; border-radius:12px; }
+button, select, input { width:100%; padding:10px; margin:6px 0; font-size:16px; }
+.mc { background:#e0e7ff; margin:6px 0; }
 </style>
 </head>
 
 <body>
+<div class="box">
 
-<div class="card">
-<h2>🇬🇧 English Trainer – More! 1</h2>
+<h2>GB English Trainer – More! 1</h2>
 
-<!-- Unit -->
-<select id="unitSelect"></select>
+<select id="unit">
+  <option value="all">⭐ Alle Units gemischt</option>
+  <option value="1">Unit 1</option>
+  <option value="2">Unit 2</option>
+  <option value="3">Unit 3</option>
+  <option value="4">Unit 4</option>
+  <option value="5">Unit 5</option>
+  <option value="6">Unit 6</option>
+  <option value="7">Unit 7</option>
+</select>
 
-<!-- Richtung -->
 <select id="direction">
   <option value="de-en">Deutsch → Englisch</option>
   <option value="en-de">Englisch → Deutsch</option>
-  <option value="mixed">🔀 Gemischt</option>
+  <option value="mix">Gemischt</option>
 </select>
 
-<!-- Eingabeart -->
-<select id="modeSelect">
+<select id="mode">
   <option value="write">✍️ Schreiben</option>
-  <option value="mc">🟦 Multiple Choice</option>
+  <option value="mc">🎯 Multiple Choice</option>
+  <option value="grammar">📘 Grammatik</option>
 </select>
 
-<!-- Lernmodus -->
-<button onclick="setMode('trainer')">📘 Trainer</button>
-<button onclick="setMode('test')">📝 Test</button>
-<button onclick="setMode('errors')">🔁 Fehler-Trainer</button>
+<button onclick="startTrainer()">▶️ Trainer</button>
+<button onclick="startTest()">📝 Test</button>
+<button onclick="startErrors()">🔁 Fehler-Trainer</button>
 
 <hr>
 
-<p id="question"></p>
-
+<div id="question"></div>
 <input id="answer" placeholder="Antwort eingeben">
-
-<div id="mcArea" style="display:none">
-  <button onclick="choose(this)"></button>
-  <button onclick="choose(this)"></button>
-  <button onclick="choose(this)"></button>
-  <button onclick="choose(this)"></button>
-</div>
-
+<div id="choices"></div>
 <button onclick="check()">OK</button>
+<div id="feedback"></div>
 
-<p id="feedback"></p>
-<p class="small" id="score"></p>
 </div>
 
 <script>
-let words = [];
-let errorWords = [];
-let current;
-let score = 0;
-let asked = 0;
-let mode = "trainer";
+let current, correct, wrong = [];
 
-const unitSelect = document.getElementById("unitSelect");
-const direction = document.getElementById("direction");
-const modeSelect = document.getElementById("modeSelect");
-const q = document.getElementById("question");
-const a = document.getElementById("answer");
-const f = document.getElementById("feedback");
-const s = document.getElementById("score");
-const mcArea = document.getElementById("mcArea");
-
-/* ---------- Units ---------- */
-let allOpt = document.createElement("option");
-allOpt.value = "all";
-allOpt.textContent = "⭐ Alle Units gemischt";
-unitSelect.appendChild(allOpt);
-
-for (let u in VOCAB) {
-  let o = document.createElement("option");
-  o.value = u;
-  o.textContent = VOCAB[u].title;
-  unitSelect.appendChild(o);
+function allWords() {
+  if (unit.value === "all")
+    return Object.values(vocab).flat();
+  return vocab[unit.value];
 }
 
-/* ---------- Start ---------- */
-function setMode(m) {
-  mode = m;
-  score = 0;
-  asked = 0;
-  start();
+function levenshtein(a,b){
+  if(!a||!b) return 99;
+  const m=[...Array(a.length+1)].map(()=>Array(b.length+1).fill(0));
+  for(let i=0;i<=a.length;i++)m[i][0]=i;
+  for(let j=0;j<=b.length;j++)m[0][j]=j;
+  for(let i=1;i<=a.length;i++)
+    for(let j=1;j<=b.length;j++)
+      m[i][j]=Math.min(
+        m[i-1][j]+1,
+        m[i][j-1]+1,
+        m[i-1][j-1]+(a[i-1]==b[j-1]?0:1)
+      );
+  return m[a.length][b.length];
 }
 
-function start() {
-  words = [];
-  errorWords = [];
-
-  if (mode === "errors") {
-    if (window._errors && window._errors.length > 0) {
-      errorWords = [...window._errors];
-      words = errorWords;
-    } else {
-      q.textContent = "🎉 Keine Fehler vorhanden!";
-      return;
-    }
-  } else {
-    if (unitSelect.value === "all") {
-      for (let u in VOCAB) words = words.concat(VOCAB[u].words);
-    } else {
-      words = [...VOCAB[unitSelect.value].words];
-    }
-    window._errors = [];
-  }
-  next();
-}
-
-/* ---------- Nächste Frage ---------- */
 function next() {
-  if (words.length === 0) {
-    q.textContent = "🎉 Alles geschafft!";
+  feedback.innerHTML="";
+  answer.value="";
+  choices.innerHTML="";
+
+  if(mode.value==="grammar"){
+    const list = unit.value==="all"
+      ? Object.values(grammar).flat()
+      : grammar[unit.value];
+    current = list[Math.floor(Math.random()*list.length)];
+    question.innerText = current.q;
+    correct = current.a.toLowerCase();
     return;
   }
 
-  current = words[Math.floor(Math.random() * words.length)];
-  f.textContent = "";
-  a.value = "";
+  const list = allWords();
+  current = list[Math.floor(Math.random()*list.length)];
+  let dir = direction.value==="mix"
+    ? Math.random()<0.5?"de-en":"en-de"
+    : direction.value;
 
-  let dir = direction.value;
-  let askDe = true;
+  question.innerText = dir==="de-en"
+    ? "Übersetze: "+current.de
+    : "Translate: "+current.en;
 
-  if (dir === "mixed") askDe = Math.random() < 0.5;
-  else if (dir === "en-de") askDe = false;
+  correct = dir==="de-en"
+    ? current.en.toLowerCase()
+    : current.de.toLowerCase();
 
-  current.askDe = askDe;
-
-  q.textContent = askDe
-    ? "Übersetze: " + current.de
-    : "Translate: " + current.en;
-
-  if (modeSelect.value === "mc") {
-    a.style.display = "none";
-    mcArea.style.display = "block";
-    setupMC();
-  } else {
-    a.style.display = "block";
-    mcArea.style.display = "none";
-    a.focus();
+  if(mode.value==="mc"){
+    let opts=[correct];
+    while(opts.length<4){
+      let w=list[Math.floor(Math.random()*list.length)];
+      let o=dir==="de-en"?w.en:w.de;
+      if(!opts.includes(o))opts.push(o);
+    }
+    opts.sort(()=>Math.random()-0.5);
+    opts.forEach(o=>{
+      let b=document.createElement("button");
+      b.className="mc";
+      b.innerText=o;
+      b.onclick=()=>{answer.value=o;check();}
+      choices.appendChild(b);
+    });
   }
 }
 
-/* ---------- Schreiben ---------- */
-function check() {
-  if (modeSelect.value === "mc") return;
+function check(){
+  const val = answer.value.trim().toLowerCase();
+  const d = levenshtein(val, correct);
 
-  asked++;
-  let correct = current.askDe ? current.en : current.de;
-
-  if (a.value.trim().toLowerCase() === correct.toLowerCase()) {
-    f.textContent = "✔ Richtig";
-    f.className = "correct";
-    score++;
-    removeFromErrors();
+  if(d===0){
+    feedback.innerHTML="✅ Richtig";
+  } else if(d===1){
+    feedback.innerHTML="🟡 Fast richtig";
   } else {
-    f.textContent = "✖ Richtig wäre: " + correct;
-    f.className = "wrong";
-    addError();
+    feedback.innerHTML="❌ Falsch → "+correct;
+    wrong.push(current);
   }
-
-  s.textContent = `Punkte: ${score} / ${asked}`;
-  setTimeout(next, 800);
+  setTimeout(next,800);
 }
 
-/* ---------- ENTER ---------- */
-a.addEventListener("keydown", e => {
-  if (e.key === "Enter") check();
+answer.addEventListener("keydown",e=>{
+  if(e.key==="Enter")check();
 });
 
-/* ---------- Multiple Choice ---------- */
-function setupMC() {
-  let correct = current.askDe ? current.en : current.de;
-  let answers = [correct];
+function startTrainer(){ wrong=[]; next(); }
+function startTest(){ wrong=[]; next(); }
+function startErrors(){ vocab[0]=wrong; unit.value=0; next(); }
 
-  while (answers.length < 4) {
-    let r = current.askDe
-      ? words[Math.floor(Math.random() * words.length)].en
-      : words[Math.floor(Math.random() * words.length)].de;
-    if (!answers.includes(r)) answers.push(r);
-  }
-
-  answers.sort(() => Math.random() - 0.5);
-
-  [...mcArea.children].forEach((btn, i) => {
-    btn.textContent = answers[i];
-    btn.className = "";
-  });
-}
-
-function choose(btn) {
-  asked++;
-  let correct = current.askDe ? current.en : current.de;
-
-  if (btn.textContent === correct) {
-    btn.className = "correct";
-    score++;
-    removeFromErrors();
-  } else {
-    btn.className = "wrong";
-    addError();
-  }
-
-  s.textContent = `Punkte: ${score} / ${asked}`;
-  setTimeout(next, 800);
-}
-
-/* ---------- Fehlerverwaltung ---------- */
-function addError() {
-  window._errors = window._errors || [];
-  if (!window._errors.includes(current)) {
-    window._errors.push(current);
-  }
-}
-
-function removeFromErrors() {
-  if (window._errors) {
-    window._errors = window._errors.filter(w => w !== current);
-  }
-}
 </script>
-
 </body>
 </html>
