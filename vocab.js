@@ -162,3 +162,15 @@ const VOCAB = {
   }
 
 };
+
+// WICHTIG: Diese Funktion hat gefehlt!
+function getVocabForUnit(unit) {
+  if (unit === "all") {
+    // Alle Vokabeln aus allen Units sammeln
+    return Object.values(VOCAB).flatMap(u => u.words);
+  }
+  
+  // Spezifische Unit
+  const unitKey = "unit" + unit;
+  return VOCAB[unitKey] ? VOCAB[unitKey].words : [];
+}
