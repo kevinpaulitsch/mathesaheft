@@ -2,75 +2,205 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>English Trainer – More! 1</title>
+<title>English Vocab Trainer – More! 1 (Units 1–7)</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  max-width: 700px;
-  margin: auto;
-  background: #f4f6f8;
-  padding: 20px;
-}
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-}
-button {
-  padding: 10px;
-  margin-top: 10px;
-  font-size: 16px;
-}
-.correct { color: green; }
-.wrong { color: red; }
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;margin:0;padding:20px}
+h1{text-align:center}
+.container{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:8px}
+select,button,input{padding:8px;margin:5px}
+.card{margin-top:20px;padding:20px;border:1px solid #ddd;border-radius:6px}
+.correct{color:green;font-weight:bold}
+.wrong{color:red;font-weight:bold}
+.hidden{display:none}
 </style>
 </head>
 <body>
 
-<h1>🇬🇧 English Vocab Trainer – More! 1</h1>
+<h1>GB English Vocab Trainer – More! 1</h1>
 
-<div class="card">
-  <p id="question"></p>
-  <input id="answer" placeholder="englisches Wort eingeben">
-  <br>
-  <button onclick="check()">Prüfen</button>
-  <p id="feedback"></p>
+<div class="container">
+  <label>Modus:</label>
+  <select id="mode">
+    <option value="train-de-en">Training DE → EN</option>
+    <option value="train-en-de">Training EN → DE</option>
+    <option value="mc">Multiple Choice</option>
+    <option value="gap">Lückentext</option>
+    <option value="test">Test-Modus (20 Fragen)</option>
+  </select>
+
+  <button onclick="nextQuestion()">Start / Weiter</button>
+
+  <div id="card" class="card hidden">
+    <div id="question"></div>
+    <div id="answers"></div>
+    <input id="input" class="hidden" placeholder="Antwort eingeben">
+    <br>
+    <button id="checkBtn" onclick="checkAnswer()">Prüfen</button>
+    <div id="feedback"></div>
+  </div>
+
+  <div id="result" class="card hidden"></div>
 </div>
 
 <script>
+/* ========= ALLE VOKABELN UNITS 1–7 ========= */
 const vocab = [
-  { de: "Tür", en: "door" },
-  { de: "Fenster", en: "window" },
-  { de: "Tafel", en: "board" },
-  { de: "Tisch", en: "desk" },
-  { de: "Stuhl", en: "chair" }
+/* UNIT 1 */
+{de:"Tür",en:"door"},{de:"Fenster",en:"window"},{de:"Tafel",en:"board"},
+{de:"Schreibtisch",en:"desk"},{de:"Stuhl",en:"chair"},
+{de:"Boden",en:"floor"},{de:"Schere",en:"scissors"},
+{de:"Tablet",en:"tablet"},{de:"Mäppchen",en:"pencil case"},
+{de:"Stift",en:"pen"},{de:"Heft",en:"exercise book"},
+{de:"Schultasche",en:"school bag"},{de:"Lineal",en:"ruler"},
+{de:"Klebestift",en:"glue stick"},{de:"Spitzer",en:"pencil sharpener"},
+{de:"Wasserfarben",en:"watercolours"},
+{de:"Pinsel",en:"paintbrush"},
+{de:"Projektor",en:"projector"},
+{de:"Soundsystem",en:"sound system"},
+{de:"Pullover",en:"sweater"},{de:"Hut",en:"hat"},
+{de:"Rock",en:"skirt"},{de:"Socken",en:"socks"},
+{de:"Schuh",en:"shoe"},
+
+/* UNIT 2 */
+{de:"Zoo",en:"zoo"},{de:"Baum",en:"tree"},
+{de:"Giraffe",en:"giraffe"},{de:"Affe",en:"monkey"},
+{de:"Papagei",en:"parrot"},{de:"Zug",en:"train"},
+{de:"Pinguin",en:"penguin"},{de:"Führer",en:"guide"},
+{de:"Löwe",en:"lion"},
+{de:"neben",en:"next to"},{de:"in",en:"in"},
+{de:"hinter",en:"behind"},{de:"unter",en:"under"},
+{de:"auf",en:"on"},{de:"vor",en:"in front of"},
+
+/* UNIT 3 */
+{de:"Schiff",en:"ship"},{de:"Meer",en:"sea"},
+{de:"Schatz",en:"treasure"},{de:"Pirat",en:"pirate"},
+{de:"Haken",en:"hook"},{de:"Holzbein",en:"wooden leg"},
+{de:"berühmt",en:"famous"},{de:"stark",en:"strong"},
+{de:"Kapitän",en:"captain"},{de:"Bruder",en:"brother"},
+
+/* UNIT 4 */
+{de:"wütend",en:"angry"},{de:"glücklich",en:"happy"},
+{de:"ängstlich",en:"scared"},{de:"gelangweilt",en:"bored"},
+{de:"kalt",en:"cold"},{de:"heiß",en:"hot"},
+{de:"traurig",en:"sad"},{de:"aufgeregt",en:"excited"},
+{de:"nervös",en:"nervous"},{de:"müde",en:"tired"},
+{de:"hungrig",en:"hungry"},{de:"stolz",en:"proud"},
+{de:"Morgen",en:"morning"},{de:"Mittag",en:"lunchtime"},
+{de:"Abend",en:"evening"},{de:"Nacht",en:"night"},
+{de:"Montag",en:"Monday"},{de:"Dienstag",en:"Tuesday"},
+{de:"Mittwoch",en:"Wednesday"},{de:"Donnerstag",en:"Thursday"},
+{de:"Freitag",en:"Friday"},
+
+/* UNIT 5 */
+{de:"Keyboard",en:"keyboard"},{de:"Sänger",en:"singer"},
+{de:"Saxophon",en:"saxophone"},
+{de:"Freund",en:"boyfriend"},
+{de:"Konzert",en:"concert"},
+{de:"tanzen",en:"to dance"},
+{de:"Arbeit",en:"job"},
+{de:"perfekt",en:"perfect"},
+{de:"tragen",en:"to carry"},
+
+/* UNIT 6 */
+{de:"Stadt",en:"city"},{de:"Park",en:"park"},
+{de:"Markt",en:"market"},{de:"Straße",en:"street"},
+{de:"Fluss",en:"river"},{de:"Wald",en:"woods"},
+{de:"klettern",en:"to climb"},
+{de:"springen",en:"to jump"},
+{de:"gehen",en:"to leave"},
+{de:"suchen",en:"to look for"},
+{de:"ziehen",en:"to pull"},
+
+/* UNIT 7 */
+{de:"Huhn",en:"chicken"},{de:"Milch",en:"milk"},
+{de:"Käse",en:"cheese"},{de:"Ei",en:"egg"},
+{de:"Reis",en:"rice"},{de:"Nudeln",en:"noodles"},
+{de:"Suppe",en:"soup"},
+{de:"Frühstück",en:"breakfast"},
+{de:"Mittagessen",en:"lunch"},
+{de:"Abendessen",en:"dinner"},
+{de:"immer",en:"always"},{de:"oft",en:"often"},
+{de:"manchmal",en:"sometimes"},{de:"nie",en:"never"}
 ];
 
-let current = {};
+let current={}, correctAnswer="", score=0, total=0;
 
-function nextWord() {
-  current = vocab[Math.floor(Math.random() * vocab.length)];
-  document.getElementById("question").innerText =
-    "Übersetze ins Englische: " + current.de;
-  document.getElementById("answer").value = "";
-  document.getElementById("feedback").innerText = "";
-}
+/* ========= FUNKTIONEN ========= */
+function randomItem(arr){return arr[Math.floor(Math.random()*arr.length)]}
 
-function check() {
-  const input = document.getElementById("answer").value.toLowerCase().trim();
-  const feedback = document.getElementById("feedback");
+function nextQuestion(){
+  document.getElementById("card").classList.remove("hidden");
+  document.getElementById("feedback").innerHTML="";
+  document.getElementById("answers").innerHTML="";
+  document.getElementById("input").classList.add("hidden");
+  current=randomItem(vocab);
 
-  if (input === current.en) {
-    feedback.innerHTML = "✔ Richtig!";
-    feedback.className = "correct";
-    setTimeout(nextWord, 800);
-  } else {
-    feedback.innerHTML = "✘ Falsch – richtig ist: <b>" + current.en + "</b>";
-    feedback.className = "wrong";
+  const mode=document.getElementById("mode").value;
+  let q="";
+
+  if(mode==="train-de-en"){
+    q="Übersetze ins Englische: <b>"+current.de+"</b>";
+    correctAnswer=current.en;
+    document.getElementById("input").classList.remove("hidden");
   }
+  if(mode==="train-en-de"){
+    q="Übersetze ins Deutsche: <b>"+current.en+"</b>";
+    correctAnswer=current.de;
+    document.getElementById("input").classList.remove("hidden");
+  }
+  if(mode==="mc"){
+    q="Was heißt: <b>"+current.de+"</b> ?";
+    correctAnswer=current.en;
+    let opts=[current.en];
+    while(opts.length<4){
+      let r=randomItem(vocab).en;
+      if(!opts.includes(r))opts.push(r);
+    }
+    opts.sort(()=>Math.random()-0.5);
+    opts.forEach(o=>{
+      let b=document.createElement("button");
+      b.innerText=o;
+      b.onclick=()=>answer(o);
+      document.getElementById("answers").appendChild(b);
+    });
+  }
+  if(mode==="gap"){
+    q="Lückentext: <br>I like ___ for breakfast.";
+    correctAnswer=current.en;
+    document.getElementById("input").classList.remove("hidden");
+  }
+  if(mode==="test"){
+    if(total>=20){
+      document.getElementById("result").classList.remove("hidden");
+      document.getElementById("result").innerHTML=
+        "<h2>Test beendet</h2><p>Punkte: "+score+"/20</p>";
+      total=0;score=0;
+      return;
+    }
+    total++;
+    q="Test "+total+": <b>"+current.de+"</b>";
+    correctAnswer=current.en;
+    document.getElementById("input").classList.remove("hidden");
+  }
+
+  document.getElementById("question").innerHTML=q;
 }
 
-nextWord();
+function checkAnswer(){
+  let val=document.getElementById("input").value.trim();
+  answer(val);
+}
+
+function answer(val){
+  if(val.toLowerCase()===correctAnswer.toLowerCase()){
+    document.getElementById("feedback").innerHTML="<span class='correct'>Richtig!</span>";
+    if(document.getElementById("mode").value==="test")score++;
+  }else{
+    document.getElementById("feedback").innerHTML=
+      "<span class='wrong'>Falsch.</span> Richtig: "+correctAnswer;
+  }
+  document.getElementById("input").value="";
+}
 </script>
 
 </body>
