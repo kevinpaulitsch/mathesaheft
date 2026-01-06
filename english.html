@@ -5,211 +5,702 @@
   <title>GB English Trainer – More! 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);margin:0;padding:10px;min-height:100vh}
-    .box{max-width:500px;margin:20px auto;background:#fff;padding:25px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,.2)}
-    h2{text-align:center;color:#667eea}
-    select,button,input{width:100%;padding:12px;margin:8px 0;font-size:16px;border-radius:8px}
-    button{background:#667eea;color:#fff;border:none;font-weight:bold;cursor:pointer}
-    button:disabled{background:#ccc}
-    .btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .btn-error{grid-column:1/-1;background:#ff6b6b}
-    .question{font-size:22px;font-weight:bold;text-align:center;margin:15px 0}
-    .mc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .hide{display:none}
-    .stats{display:flex;justify-content:space-around;margin-top:10px}
-    .progress-bar{height:10px;background:#eee;border-radius:5px}
-    .progress-fill{height:100%;background:#667eea;width:0%}
-    .final-screen{text-align:center}
+    body { 
+      font-family: Arial, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0; 
+      padding: 10px;
+      min-height: 100vh;
+    }
+    .box {
+      max-width: 500px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h2 {
+      color: #667eea;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    select, button, input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      box-sizing: border-box;
+      transition: all 0.3s;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-group button {
+      margin: 0;
+    }
+    .btn-error {
+      grid-column: 1 / -1;
+      background: #ff6b6b;
+    }
+    .btn-error:hover:not(:disabled) {
+      background: #ee5a52;
+    }
+    .btn-reset {
+      grid-column: 1 / -1;
+      background: #ffa500;
+      margin-top: 10px;
+    }
+    .btn-reset:hover {
+      background: #ff8c00;
+    }
+    .question {
+      font-size: 22px;
+      margin: 20px 0;
+      padding: 20px;
+      font-weight: bold;
+      color: #333;
+      background: #f8f9fa;
+      border-radius: 10px;
+      text-align: center;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mc {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .mc button {
+      background: #4CAF50;
+      margin: 0;
+      padding: 15px;
+      font-size: 17px;
+    }
+    .mc button:hover {
+      background: #45a049;
+    }
+    .mc button.correct {
+      background: #28a745;
+      animation: pulse 0.5s;
+    }
+    .mc button.wrong {
+      background: #dc3545;
+      animation: shake 0.5s;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    #answer {
+      display: block;
+      font-size: 18px;
+    }
+    .hide {
+      display: none !important;
+    }
+    #feedback {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .feedback-correct {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+    .feedback-wrong {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .stats span {
+      font-weight: bold;
+      color: #667eea;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.5s ease;
+    }
+    .timer {
+      text-align: center;
+      font-size: 18px;
+      margin: 10px 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+    .streak {
+      text-align: center;
+      font-size: 20px;
+      margin: 10px 0;
+      padding: 10px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .final-screen {
+      text-align: center;
+      padding: 20px;
+    }
+    .final-screen h3 {
+      font-size: 32px;
+      margin: 20px 0;
+      color: #667eea;
+    }
+    .final-stats {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .final-stats div {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .sound-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: white;
+      border: 2px solid #667eea;
+      color: #667eea;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .sound-toggle:hover {
+      background: #667eea;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      .box {
+        margin: 10px;
+        padding: 15px;
+      }
+      h2 {
+        font-size: 20px;
+      }
+      .question {
+        font-size: 18px;
+        padding: 15px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
 <div class="box">
-<h2>🇬🇧 GB English Trainer – More! 1</h2>
+  <button class="sound-toggle" onclick="toggleSound()" id="soundBtn">🔊</button>
+  
+  <h2>🇬🇧 GB English Trainer – More! 1</h2>
 
-<select id="unit">
-  <option value="all">⭐ Alle Units</option>
-  <option value="1">Unit 1</option>
-  <option value="2">Unit 2</option>
-  <option value="3">Unit 3</option>
-  <option value="4">Unit 4</option>
-  <option value="5">Unit 5</option>
-  <option value="6">Unit 6</option>
-  <option value="7">Unit 7</option>
-</select>
+  <select id="unit">
+    <option value="all">⭐ Alle Units</option>
+    <option value="1">Unit 1 - Classroom & Clothes</option>
+    <option value="2">Unit 2 - Wildlife Park</option>
+    <option value="3">Unit 3 - Pirates</option>
+    <option value="4">Unit 4 - Feelings & Time</option>
+    <option value="5">Unit 5 - Music & People</option>
+    <option value="6">Unit 6 - Around Town</option>
+    <option value="7">Unit 7 - Food & Eating</option>
+  </select>
 
-<select id="direction">
-  <option value="de-en">Deutsch → Englisch</option>
-  <option value="en-de">Englisch → Deutsch</option>
-  <option value="mix">Gemischt</option>
-</select>
+  <select id="direction">
+    <option value="de-en">🇩🇪 Deutsch → 🇬🇧 Englisch</option>
+    <option value="en-de">🇬🇧 Englisch → 🇩🇪 Deutsch</option>
+    <option value="mix">🔀 Gemischt</option>
+  </select>
 
-<select id="mode">
-  <option value="write">✏️ Schreiben</option>
-  <option value="mc">🎯 Multiple Choice</option>
-</select>
+  <select id="mode">
+    <option value="write">✏️ Schreiben</option>
+    <option value="mc">🎯 Multiple Choice</option>
+    <option value="grammar">📘 Grammatik</option>
+  </select>
 
-<div class="btn-group">
-  <button onclick="startTrainer()">▶️ Trainer</button>
-  <button onclick="startTest()">📝 Test</button>
-  <button class="btn-error" onclick="startErrorTrainer()" id="errorBtn" disabled>
-    🔁 Fehler-Trainer (<span id="errorCount">0</span>)
-  </button>
-</div>
+  <div class="btn-group">
+    <button onclick="startTrainer()">▶️ Trainer</button>
+    <button onclick="startTest()">📝 Test</button>
+    <button class="btn-error" onclick="startErrorTrainer()" id="errorBtn" disabled>🔁 Fehler-Trainer (<span id="errorCount">0</span>)</button>
+  </div>
 
-<div class="question" id="question">Bereit?</div>
-<div class="mc" id="mc"></div>
-<input id="answer" class="hide" placeholder="Antwort eingeben (Enter)">
-<button id="okBtn" class="hide" onclick="checkAnswer()">OK</button>
+  <div class="timer hide" id="timer">⏱️ Zeit: <span id="timeDisplay">0:00</span></div>
+  <div class="streak hide" id="streak">🔥 Serie: <span id="streakCount">0</span> richtig in Folge!</div>
 
-<div class="stats hide" id="stats">
-  <div>✅ <span id="correctCount">0</span></div>
-  <div>❌ <span id="wrongCount">0</span></div>
-</div>
+  <div class="progress-bar hide" id="progressBar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
 
-<div class="progress-bar hide" id="progressBar">
-  <div class="progress-fill" id="progressFill"></div>
-</div>
+  <div class="question" id="question">👆 Wähle einen Modus und klicke auf Start</div>
 
-<div id="finalScreen" class="hide"></div>
+  <div id="mc" class="mc"></div>
+
+  <input id="answer" placeholder="Antwort eingeben (Enter zum Bestätigen)" class="hide" autocomplete="off">
+  <button id="okBtn" onclick="checkAnswer()" class="hide">OK ✓</button>
+
+  <div id="feedback"></div>
+
+  <div class="stats hide" id="stats">
+    <div>✅ Richtig: <span id="correctCount">0</span></div>
+    <div>❌ Falsch: <span id="wrongCount">0</span></div>
+    <div>📊 Quote: <span id="percentage">0%</span></div>
+  </div>
+
+  <div id="finalScreen" class="hide"></div>
 </div>
 
 <script src="vocab.js"></script>
 <script src="grammar.js"></script>
 
 <script>
-let pool=[],current=null,wrong=[],correct=0,incorrect=0,totalQuestions=0,isActive=false;
+let pool = [];
+let originalPool = [];
+let current = null;
+let wrong = [];
+let correct = 0;
+let incorrect = 0;
+let totalQuestions = 0;
+let streak = 0;
+let maxStreak = 0;
+let startTime = null;
+let timerInterval = null;
+let soundEnabled = true;
+let isActive = false;
 
-/* ================== TEST LOGIK ================== */
-
-function shuffle(a){return a.sort(()=>Math.random()-0.5)}
-
-function getMixedTestPool(){
-  const vocab=getVocabForUnit("all").map(v=>({type:"vocab",data:v}));
-  const grammar=getGrammarTasks(30).map(g=>({type:"grammar",data:g}));
-  return shuffle([...vocab,...grammar]).slice(0,30);
+// Sound-Effekte (einfache Frequenzen)
+function playSound(type) {
+  if (!soundEnabled) return;
+  
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  if (type === 'correct') {
+    oscillator.frequency.value = 800;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  } else if (type === 'wrong') {
+    oscillator.frequency.value = 200;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } else if (type === 'finish') {
+    oscillator.frequency.value = 600;
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  }
 }
 
-function getGrade(p){
-  if(p>=90)return"Sehr gut (1)";
-  if(p>=80)return"Gut (2)";
-  if(p>=65)return"Befriedigend (3)";
-  if(p>=50)return"Genügend (4)";
-  return"Nicht genügend (5)";
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
 }
 
-/* ================== START ================== */
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    document.getElementById('timeDisplay').innerText = 
+      `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, 1000);
+}
 
-function startTrainer(){
-  wrong=[];correct=0;incorrect=0;isActive=true;
-  pool=getVocabForUnit(document.getElementById("unit").value);
-  totalQuestions=pool.length;
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateStats() {
+  document.getElementById("correctCount").innerText = correct;
+  document.getElementById("wrongCount").innerText = incorrect;
+  document.getElementById("errorCount").innerText = wrong.length;
+  
+  // Fehler-Trainer Button aktivieren/deaktivieren
+  const errorBtn = document.getElementById("errorBtn");
+  errorBtn.disabled = wrong.length === 0;
+  
+  const total = correct + incorrect;
+  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+  document.getElementById("percentage").innerText = percentage + "%";
+  
+  // Fortschrittsbalken
+  if (totalQuestions > 0) {
+    const progress = ((totalQuestions - pool.length) / totalQuestions) * 100;
+    document.getElementById("progressFill").style.width = progress + "%";
+  }
+  
+  // Streak anzeigen
+  if (streak >= 3) {
+    document.getElementById("streakCount").innerText = streak;
+    document.getElementById("streak").classList.remove("hide");
+  } else {
+    document.getElementById("streak").classList.add("hide");
+  }
+}
+
+function startTrainer() {
+  wrong = [];
+  correct = 0;
+  incorrect = 0;
+  streak = 0;
+  maxStreak = 0;
+  isActive = true;
+  preparePool();
+  totalQuestions = pool.length;
+  
   document.getElementById("stats").classList.remove("hide");
   document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
+  updateStats();
   nextQuestion();
 }
 
-function startTest(){
-  wrong=[];correct=0;incorrect=0;isActive=true;
-  pool=getMixedTestPool();
-  totalQuestions=pool.length;
+function startTest() {
+  startTrainer();
+}
+
+function startErrorTrainer() {
+  if (wrong.length === 0) {
+    alert("Keine Fehler vorhanden! 🎉");
+    return;
+  }
+  
+  pool = [...wrong];
+  wrong = [];
+  totalQuestions = pool.length;
+  correct = 0;
+  incorrect = 0;
+  streak = 0;
+  maxStreak = 0;
+  isActive = true;
+  
   document.getElementById("stats").classList.remove("hide");
   document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
+  updateStats();
   nextQuestion();
 }
 
-function startErrorTrainer(){
-  pool=[...wrong];wrong=[];
-  correct=0;incorrect=0;
-  totalQuestions=pool.length;
-  nextQuestion();
+function preparePool() {
+  const unit = document.getElementById("unit").value;
+  const mode = document.getElementById("mode").value;
+
+  if (mode === "grammar") {
+    pool = [...getGrammarForUnit(unit)];
+  } else {
+    pool = [...getVocabForUnit(unit)];
+  }
+  
+  originalPool = [...pool];
 }
 
-/* ================== FRAGEN ================== */
-
-function nextQuestion(){
-  if(pool.length===0){showFinal();return}
-  document.getElementById("mc").innerHTML="";
-  document.getElementById("answer").value="";
-  current=pool[Math.floor(Math.random()*pool.length)];
-  document.getElementById("progressFill").style.width=
-    ((totalQuestions-pool.length)/totalQuestions*100)+"%";
-
-  if(current.q){
-    document.getElementById("question").innerText=current.q;
-    showMC(current.options,current.a,true);
+function nextQuestion() {
+  if (pool.length === 0) {
+    showFinalResults();
     return;
   }
 
-  let q=current.de,a=current.en;
-  const dir=document.getElementById("direction").value;
-  if(dir==="en-de")[q,a]=[a,q];
-  if(dir==="mix"&&Math.random()>0.5)[q,a]=[a,q];
-  current.solution=a;
-  document.getElementById("question").innerText=q;
+  current = pool[Math.floor(Math.random() * pool.length)];
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("feedback").className = "";
+  document.getElementById("answer").value = "";
+  document.getElementById("mc").innerHTML = "";
 
-  if(document.getElementById("mode").value==="mc"){
-    showMC(a);
-  }else{
+  const mode = document.getElementById("mode").value;
+
+  /* ===== GRAMMATIK ===== */
+  if (mode === "grammar") {
+    document.getElementById("question").innerText = current.q;
+    current.solution = current.a;
+    
+    document.getElementById("answer").classList.add("hide");
+    document.getElementById("okBtn").classList.add("hide");
+    showGrammarOptions(current.options, current.a);
+    return;
+  }
+
+  /* ===== VOKABELN ===== */
+  const dir = document.getElementById("direction").value;
+
+  let q = current.de;
+  let a = current.en;
+
+  if (dir === "en-de") [q, a] = [a, q];
+  if (dir === "mix" && Math.random() > 0.5) [q, a] = [a, q];
+
+  current.solution = a;
+  document.getElementById("question").innerText = q;
+
+  if (mode === "mc") {
+    document.getElementById("answer").classList.add("hide");
+    document.getElementById("okBtn").classList.add("hide");
+    showMC(a, dir);
+  } else {
     document.getElementById("answer").classList.remove("hide");
     document.getElementById("okBtn").classList.remove("hide");
-    document.getElementById("answer").focus();
+    setTimeout(() => document.getElementById("answer").focus(), 100);
   }
 }
 
-function showMC(correct,isGrammar=false){
-  const mc=document.getElementById("mc");
-  let opts=[correct];
-  while(opts.length<4){
-    const r=pool[Math.floor(Math.random()*pool.length)];
-    const c=r.en||r;
-    if(!opts.includes(c))opts.push(c);
-  }
-  shuffle(opts).forEach(o=>{
-    const b=document.createElement("button");
-    b.innerText=o;
-    b.onclick=()=>checkAnswer(o,isGrammar?correct:null);
+function showGrammarOptions(options, correct) {
+  const mc = document.getElementById("mc");
+  
+  options.forEach(opt => {
+    const b = document.createElement("button");
+    b.innerText = opt;
+    b.onclick = () => checkAnswer(opt, b);
     mc.appendChild(b);
   });
 }
 
-function checkAnswer(val=null,solution=null){
-  const input=val||document.getElementById("answer").value.trim();
-  const sol=solution||current.solution;
-  if(!input)return;
+function showMC(correct, dir) {
+  const mc = document.getElementById("mc");
+  let options = [correct];
 
-  if(input.toLowerCase()===sol.toLowerCase()){
-    correct++;
-    pool=pool.filter(x=>x!==current);
-  }else{
-    incorrect++;
-    if(!wrong.includes(current))wrong.push(current);
+  while (options.length < 4 && pool.length >= 4) {
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    let candidate = r.en;
+
+    if (dir === "en-de") candidate = r.de;
+    if (!options.includes(candidate) && candidate !== correct) {
+      options.push(candidate);
+    }
   }
-  document.getElementById("correctCount").innerText=correct;
-  document.getElementById("wrongCount").innerText=incorrect;
-  document.getElementById("errorCount").innerText=wrong.length;
-  document.getElementById("errorBtn").disabled=wrong.length===0;
-  nextQuestion();
+
+  options.sort(() => Math.random() - 0.5);
+
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.innerText = o;
+    b.onclick = () => checkAnswer(o, b);
+    mc.appendChild(b);
+  });
 }
 
-/* ================== ERGEBNIS ================== */
+function checkAnswer(value = null, button = null) {
+  if (!isActive) return;
+  
+  const input = value || document.getElementById("answer").value.trim();
+  const solution = current.solution;
 
-function showFinal(){
-  const total=correct+incorrect;
-  const percent=Math.round(correct/total*100);
-  const grade=getGrade(percent);
-  document.getElementById("finalScreen").innerHTML=`
+  if (!solution || !input) return;
+
+  const feedback = document.getElementById("feedback");
+  const isCorrect = isSimilar(input, solution);
+
+  if (isCorrect) {
+    feedback.innerText = "✅ Richtig!";
+    feedback.className = "feedback-correct";
+    if (button) button.classList.add("correct");
+    correct++;
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    playSound('correct');
+    
+    pool = pool.filter(item => item !== current);
+  } else {
+    feedback.innerText = "❌ Falsch – Richtig: " + solution;
+    feedback.className = "feedback-wrong";
+    if (button) button.classList.add("wrong");
+    incorrect++;
+    streak = 0;
+    playSound('wrong');
+    
+    if (!wrong.includes(current)) {
+      wrong.push(current);
+    }
+  }
+
+  updateStats();
+  
+  // Buttons deaktivieren nach Antwort
+  if (button) {
+    const allButtons = document.querySelectorAll('.mc button');
+    allButtons.forEach(btn => btn.disabled = true);
+  }
+  
+  setTimeout(nextQuestion, 1500);
+}
+
+function showFinalResults() {
+  isActive = false;
+  stopTimer();
+  playSound('finish');
+  
+  const total = correct + incorrect;
+  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+  let emoji = "🎉";
+  let message = "Fertig!";
+  let comment = "";
+  
+  if (percentage === 100) {
+    emoji = "🏆";
+    message = "Perfekt!";
+    comment = "Du bist ein Star! 🌟";
+  } else if (percentage >= 90) {
+    emoji = "🌟";
+    message = "Ausgezeichnet!";
+    comment = "Super Leistung!";
+  } else if (percentage >= 75) {
+    emoji = "😊";
+    message = "Sehr gut!";
+    comment = "Das läuft gut!";
+  } else if (percentage >= 60) {
+    emoji = "👍";
+    message = "Gut gemacht!";
+    comment = "Weiter so!";
+  } else {
+    emoji = "💪";
+    message = "Weiter üben!";
+    comment = "Übung macht den Meister!";
+  }
+  
+  const finalScreen = document.getElementById("finalScreen");
+  finalScreen.innerHTML = `
     <div class="final-screen">
-      <h3>Ergebnis</h3>
-      <p>${correct}/${total} richtig (${percent}%)</p>
-      <p><strong>Note: ${grade}</strong></p>
-      <button onclick="location.reload()">Neu starten</button>
-    </div>`;
-  document.getElementById("finalScreen").classList.remove("hide");
+      <h3>${emoji} ${message}</h3>
+      <p style="font-size: 18px; color: #666;">${comment}</p>
+      <div class="final-stats">
+        <div>📊 <strong>${correct}</strong> von <strong>${total}</strong> richtig</div>
+        <div>✅ Quote: <strong>${percentage}%</strong></div>
+        <div>⏱️ Zeit: <strong>${timeStr}</strong></div>
+        <div>🔥 Längste Serie: <strong>${maxStreak}</strong></div>
+        ${wrong.length > 0 ? `<div>📝 Zu wiederholen: <strong>${wrong.length}</strong></div>` : ''}
+      </div>
+      <button class="btn-reset" onclick="resetToStart()">🔄 Zurück zum Start</button>
+    </div>
+  `;
+  
+  document.getElementById("question").classList.add("hide");
+  document.getElementById("stats").classList.add("hide");
+  document.getElementById("progressFill").style.width = "100%";
+  finalScreen.classList.remove("hide");
 }
-document.getElementById("answer").addEventListener("keydown",e=>{
-  if(e.key==="Enter")checkAnswer();
+
+function resetToStart() {
+  document.getElementById("finalScreen").classList.add("hide");
+  document.getElementById("question").classList.remove("hide");
+  document.getElementById("question").innerText = "👆 Wähle einen Modus und klicke auf Start";
+  document.getElementById("progressBar").classList.add("hide");
+  document.getElementById("timer").classList.add("hide");
+  document.getElementById("streak").classList.add("hide");
+  document.getElementById("progressFill").style.width = "0%";
+}
+
+function isSimilar(a, b) {
+  a = a.toLowerCase().trim();
+  b = b.toLowerCase().trim();
+  
+  if (a === b) return true;
+  
+  let diff = Math.abs(a.length - b.length);
+
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    if (a[i] !== b[i]) diff++;
+  }
+  
+  return diff <= 1;
+}
+
+document.getElementById("answer").addEventListener("keydown", e => {
+  if (e.key === "Enter") checkAnswer();
+});
+
+// Verhindere versehentliches Verlassen
+window.addEventListener('beforeunload', (e) => {
+  if (isActive && pool.length > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
 });
 </script>
+
 </body>
 </html>
