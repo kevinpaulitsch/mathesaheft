@@ -28,9 +28,7 @@ select, input, button {
   font-size: 16px;
 }
 
-button {
-  cursor: pointer;
-}
+button { cursor: pointer; }
 
 #mcArea button {
   margin-top: 6px;
@@ -52,7 +50,7 @@ button {
 <div class="card">
 <h2>🇬🇧 English Trainer – More! 1</h2>
 
-<!-- Unit-Auswahl -->
+<!-- Unit -->
 <select id="unitSelect"></select>
 
 <!-- Richtung -->
@@ -62,15 +60,16 @@ button {
   <option value="mixed">🔀 Gemischt</option>
 </select>
 
-<!-- Modus -->
+<!-- Eingabeart -->
 <select id="modeSelect">
   <option value="write">✍️ Schreiben</option>
   <option value="mc">🟦 Multiple Choice</option>
 </select>
 
-<!-- Trainer / Test -->
+<!-- Lernmodus -->
 <button onclick="setMode('trainer')">📘 Trainer</button>
 <button onclick="setMode('test')">📝 Test</button>
+<button onclick="setMode('errors')">🔁 Fehler-Trainer</button>
 
 <hr>
 
@@ -93,6 +92,7 @@ button {
 
 <script>
 let words = [];
+let errorWords = [];
 let current;
 let score = 0;
 let asked = 0;
@@ -107,7 +107,7 @@ const f = document.getElementById("feedback");
 const s = document.getElementById("score");
 const mcArea = document.getElementById("mcArea");
 
-/* ---------- Dropdown füllen ---------- */
+/* ---------- Units ---------- */
 let allOpt = document.createElement("option");
 allOpt.value = "all";
 allOpt.textContent = "⭐ Alle Units gemischt";
@@ -123,26 +123,41 @@ for (let u in VOCAB) {
 /* ---------- Start ---------- */
 function setMode(m) {
   mode = m;
+  score = 0;
+  asked = 0;
   start();
 }
 
 function start() {
-  score = 0;
-  asked = 0;
   words = [];
+  errorWords = [];
 
-  if (unitSelect.value === "all") {
-    for (let u in VOCAB) {
-      words = words.concat(VOCAB[u].words);
+  if (mode === "errors") {
+    if (window._errors && window._errors.length > 0) {
+      errorWords = [...window._errors];
+      words = errorWords;
+    } else {
+      q.textContent = "🎉 Keine Fehler vorhanden!";
+      return;
     }
   } else {
-    words = [...VOCAB[unitSelect.value].words];
+    if (unitSelect.value === "all") {
+      for (let u in VOCAB) words = words.concat(VOCAB[u].words);
+    } else {
+      words = [...VOCAB[unitSelect.value].words];
+    }
+    window._errors = [];
   }
   next();
 }
 
 /* ---------- Nächste Frage ---------- */
 function next() {
+  if (words.length === 0) {
+    q.textContent = "🎉 Alles geschafft!";
+    return;
+  }
+
   current = words[Math.floor(Math.random() * words.length)];
   f.textContent = "";
   a.value = "";
@@ -150,11 +165,8 @@ function next() {
   let dir = direction.value;
   let askDe = true;
 
-  if (dir === "mixed") {
-    askDe = Math.random() < 0.5;
-  } else if (dir === "en-de") {
-    askDe = false;
-  }
+  if (dir === "mixed") askDe = Math.random() < 0.5;
+  else if (dir === "en-de") askDe = false;
 
   current.askDe = askDe;
 
@@ -184,27 +196,20 @@ function check() {
     f.textContent = "✔ Richtig";
     f.className = "correct";
     score++;
+    removeFromErrors();
   } else {
     f.textContent = "✖ Richtig wäre: " + correct;
     f.className = "wrong";
+    addError();
   }
 
   s.textContent = `Punkte: ${score} / ${asked}`;
-
-  if (mode === "trainer") {
-    setTimeout(next, 800);
-  } else if (asked >= 10) {
-    endTest();
-  } else {
-    setTimeout(next, 800);
-  }
+  setTimeout(next, 800);
 }
 
-/* ---------- ENTER-Taste ---------- */
-a.addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    check();
-  }
+/* ---------- ENTER ---------- */
+a.addEventListener("keydown", e => {
+  if (e.key === "Enter") check();
 });
 
 /* ---------- Multiple Choice ---------- */
@@ -234,28 +239,29 @@ function choose(btn) {
   if (btn.textContent === correct) {
     btn.className = "correct";
     score++;
+    removeFromErrors();
   } else {
     btn.className = "wrong";
+    addError();
   }
 
   s.textContent = `Punkte: ${score} / ${asked}`;
+  setTimeout(next, 800);
+}
 
-  if (mode === "trainer") {
-    setTimeout(next, 800);
-  } else if (asked >= 10) {
-    endTest();
-  } else {
-    setTimeout(next, 800);
+/* ---------- Fehlerverwaltung ---------- */
+function addError() {
+  window._errors = window._errors || [];
+  if (!window._errors.includes(current)) {
+    window._errors.push(current);
   }
 }
 
-/* ---------- Test Ende ---------- */
-function endTest() {
-  q.textContent = "📝 Test beendet";
-  f.textContent = `Ergebnis: ${score} von ${asked}`;
+function removeFromErrors() {
+  if (window._errors) {
+    window._errors = window._errors.filter(w => w !== current);
+  }
 }
-
-start();
 </script>
 
 </body>
