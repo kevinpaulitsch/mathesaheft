@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>English Trainer – More! 1</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  max-width: 700px;
+  margin: auto;
+  background: #f4f6f8;
+  padding: 20px;
+}
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+button {
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 16px;
+}
+.correct { color: green; }
+.wrong { color: red; }
+</style>
+</head>
+<body>
+
+<h1>🇬🇧 English Vocab Trainer – More! 1</h1>
+
+<div class="card">
+  <p id="question"></p>
+  <input id="answer" placeholder="englisches Wort eingeben">
+  <br>
+  <button onclick="check()">Prüfen</button>
+  <p id="feedback"></p>
+</div>
+
+<script>
+const vocab = [
+  { de: "Tür", en: "door" },
+  { de: "Fenster", en: "window" },
+  { de: "Tafel", en: "board" },
+  { de: "Tisch", en: "desk" },
+  { de: "Stuhl", en: "chair" }
+];
+
+let current = {};
+
+function nextWord() {
+  current = vocab[Math.floor(Math.random() * vocab.length)];
+  document.getElementById("question").innerText =
+    "Übersetze ins Englische: " + current.de;
+  document.getElementById("answer").value = "";
+  document.getElementById("feedback").innerText = "";
+}
+
+function check() {
+  const input = document.getElementById("answer").value.toLowerCase().trim();
+  const feedback = document.getElementById("feedback");
+
+  if (input === current.en) {
+    feedback.innerHTML = "✔ Richtig!";
+    feedback.className = "correct";
+    setTimeout(nextWord, 800);
+  } else {
+    feedback.innerHTML = "✘ Falsch – richtig ist: <b>" + current.en + "</b>";
+    feedback.className = "wrong";
+  }
+}
+
+nextWord();
+</script>
+
+</body>
+</html>
