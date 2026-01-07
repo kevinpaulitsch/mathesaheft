@@ -33,4 +33,156 @@ button{background:#667eea;color:white;border:none;font-weight:bold;cursor:pointe
   background:#f8f9fa; border-radius:10px;
   text-align:center; min-height:60px;
 }
-.mc{display:g
+.mc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mc button{background:#4CAF50}
+.hide{display:none}
+.stats{display:flex;justify-content:space-between;margin-top:10px;font-weight:bold}
+</style>
+</head>
+
+<body>
+<div class="box">
+<h2>🇬🇧 GB English Trainer – More! 1</h2>
+
+<select id="unit">
+<option value="all">⭐ Alle Units</option>
+<option value="1">Unit 1</option><option value="2">Unit 2</option>
+<option value="3">Unit 3</option><option value="4">Unit 4</option>
+<option value="5">Unit 5</option><option value="6">Unit 6</option>
+<option value="7">Unit 7</option>
+</select>
+
+<select id="direction">
+<option value="de-en">Deutsch → Englisch</option>
+<option value="en-de">Englisch → Deutsch</option>
+<option value="mix">Gemischt</option>
+</select>
+
+<select id="mode">
+<option value="write">✏️ Schreiben</option>
+<option value="mc">🎯 Multiple Choice</option>
+<option value="grammar">📘 Grammatik</option>
+</select>
+
+<div class="btn-group">
+<button onclick="startTrainer()">▶️ Trainer</button>
+<button class="btn-test" onclick="startTest()">📝 Test</button>
+</div>
+
+<div class="question" id="question">Modus wählen & starten</div>
+<div class="mc" id="mc"></div>
+
+<input id="answer" class="hide" placeholder="Antwort eingeben">
+<button id="okBtn" class="hide" onclick="checkAnswer()">OK ✓</button>
+
+<div class="stats hide" id="stats">
+<div>✅ <span id="correct">0</span></div>
+<div>❌ <span id="wrong">0</span></div>
+</div>
+</div>
+
+<!-- 🔴 WICHTIG: Dateien VOR Hauptlogik -->
+<script src="vocab.js"></script>
+<script src="grammar.js"></script>
+
+<script>
+/* ===== Sicherheits-Checks ===== */
+if(typeof getVocabForUnit !== "function"){
+  alert("FEHLER: vocab.js wurde nicht geladen!");
+}
+if(typeof getGrammarTasks !== "function"){
+  alert("FEHLER: grammar.js wurde nicht geladen!");
+}
+
+/* ===== State ===== */
+let pool=[], current=null, correct=0, wrong=0;
+
+/* ===== Start ===== */
+function startTrainer(){
+  correct=0; wrong=0;
+  document.getElementById("stats").classList.remove("hide");
+  buildPool(false);
+  next();
+}
+
+function startTest(){
+  correct=0; wrong=0;
+  document.getElementById("stats").classList.remove("hide");
+  buildPool(true);
+  next();
+}
+
+/* ===== Pool ===== */
+function buildPool(isTest){
+  const unit=document.getElementById("unit").value;
+  const mode=document.getElementById("mode").value;
+
+  if(mode==="grammar"){
+    pool=getGrammarTasks(isTest?20:30);
+  }else{
+    pool=getVocabForUnit(unit).map(v=>({type:"vocab",...v}));
+    shuffle(pool);
+    if(isTest) pool=pool.slice(0,20);
+  }
+}
+
+/* ===== Questions ===== */
+function next(){
+  document.getElementById("mc").innerHTML="";
+  document.getElementById("answer").classList.add("hide");
+  document.getElementById("okBtn").classList.add("hide");
+
+  if(!pool.length){
+    document.getElementById("question").innerText="Fertig 🎉";
+    return;
+  }
+
+  current=pool.shift();
+  if(current.q) showGrammar(current);
+  else showVocab(current);
+}
+
+function showGrammar(g){
+  document.getElementById("question").innerText=g.q;
+  g.options.forEach(o=>{
+    const b=document.createElement("button");
+    b.innerText=o;
+    b.onclick=()=>check(o,g.a);
+    document.getElementById("mc").appendChild(b);
+  });
+}
+
+function showVocab(v){
+  const dir=document.getElementById("direction").value==="mix"
+    ? Math.random()<0.5?"de-en":"en-de"
+    : document.getElementById("direction").value;
+
+  const q=dir==="de-en"?v.de:v.en;
+  const a=dir==="de-en"?v.en:v.de;
+  current.solution=a;
+
+  document.getElementById("question").innerText=q;
+  document.getElementById("answer").classList.remove("hide");
+  document.getElementById("okBtn").classList.remove("hide");
+}
+
+/* ===== Check ===== */
+function check(user,sol){
+  if(user===sol) correct++; else wrong++;
+  update();
+  next();
+}
+
+function checkAnswer(){
+  check(document.getElementById("answer").value.trim(),current.solution);
+}
+
+/* ===== Helpers ===== */
+function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+function update(){
+  document.getElementById("correct").innerText=correct;
+  document.getElementById("wrong").innerText=wrong;
+}
+</script>
+</body>
+</html>
