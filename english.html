@@ -104,6 +104,27 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+    }
+    .speak-btn {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.3s;
+      width: auto;
+      margin: 0;
+    }
+    .speak-btn:hover {
+      background: #45a049;
+      transform: translateY(-50%) scale(1.1);
     }
     .mc {
       display: grid;
@@ -238,7 +259,7 @@
     .sound-toggle {
       position: absolute;
       top: 15px;
-      right: 15px;
+      right: 65px;
       background: white;
       border: 2px solid #667eea;
       color: #667eea;
@@ -252,6 +273,119 @@
       background: #667eea;
       color: white;
     }
+    .achievements-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: white;
+      border: 2px solid #ffa500;
+      color: #ffa500;
+      padding: 8px 12px;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .achievements-btn:hover {
+      background: #ffa500;
+      color: white;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .modal-close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #999;
+    }
+    .modal-close:hover {
+      color: #333;
+    }
+    .achievement {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .achievement.unlocked {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+      box-shadow: 0 4px 12px rgba(253, 203, 110, 0.4);
+    }
+    .achievement-icon {
+      font-size: 48px;
+    }
+    .achievement.locked .achievement-icon {
+      filter: grayscale(100%);
+      opacity: 0.3;
+    }
+    .achievement-info {
+      flex: 1;
+      text-align: left;
+    }
+    .achievement-title {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    .achievement-desc {
+      font-size: 14px;
+      color: #666;
+    }
+    .progress-overview {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 15px 0;
+    }
+    .progress-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .progress-item strong {
+      color: #667eea;
+    }
+    .new-badge {
+      display: inline-block;
+      background: #ff6b6b;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
     @media (max-width: 600px) {
       .box {
         margin: 10px;
@@ -264,6 +398,18 @@
         font-size: 18px;
         padding: 15px;
       }
+      .sound-toggle {
+        top: 10px;
+        right: 60px;
+        padding: 6px 10px;
+        font-size: 18px;
+      }
+      .achievements-btn {
+        top: 10px;
+        right: 10px;
+        padding: 6px 10px;
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -272,6 +418,7 @@
 
 <div class="box">
   <button class="sound-toggle" onclick="toggleSound()" id="soundBtn">🔊</button>
+  <button class="achievements-btn" onclick="showAchievements()" id="achieveBtn">🏆</button>
   
   <h2>🇬🇧 GB English Trainer – More! 1</h2>
 
@@ -311,7 +458,9 @@
     <div class="progress-fill" id="progressFill"></div>
   </div>
 
-  <div class="question" id="question">👆 Wähle einen Modus und klicke auf Start</div>
+  <div class="question" id="question">
+    👆 Wähle einen Modus und klicke auf Start
+  </div>
 
   <div id="mc" class="mc"></div>
 
@@ -327,6 +476,37 @@
   </div>
 
   <div id="finalScreen" class="hide"></div>
+</div>
+
+<!-- Achievements Modal -->
+<div id="achievementsModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeAchievements()">&times;</span>
+    <h2 style="color: #667eea; text-align: center;">🏆 Erfolge & Fortschritt</h2>
+    
+    <div class="progress-overview">
+      <h3 style="margin-top: 0;">📊 Deine Statistiken</h3>
+      <div class="progress-item">
+        <span>Gesamte Fragen beantwortet:</span>
+        <strong><span id="totalAnswered">0</span></strong>
+      </div>
+      <div class="progress-item">
+        <span>Richtig beantwortet:</span>
+        <strong><span id="totalCorrect">0</span></strong>
+      </div>
+      <div class="progress-item">
+        <span>Erfolgsquote:</span>
+        <strong><span id="totalPercentage">0%</span></strong>
+      </div>
+      <div class="progress-item">
+        <span>Tests absolviert:</span>
+        <strong><span id="testsCompleted">0</span></strong>
+      </div>
+    </div>
+
+    <h3 style="color: #667eea;">🏅 Erfolge</h3>
+    <div id="achievementsList"></div>
+  </div>
 </div>
 
 <script src="vocab.js"></script>
@@ -347,6 +527,176 @@ let timerInterval = null;
 let soundEnabled = true;
 let isActive = false;
 let isTestMode = false;
+let speechEnabled = true;
+
+// Fortschritts-Speicherung
+let progress = {
+  totalAnswered: 0,
+  totalCorrect: 0,
+  totalIncorrect: 0,
+  testsCompleted: 0,
+  unlockedAchievements: [],
+  newAchievements: []
+};
+
+// Achievements Definition
+const ACHIEVEMENTS = [
+  { id: 'first_correct', icon: '🎯', title: 'Erste Schritte', desc: '1 Frage richtig', requirement: 1, type: 'correct' },
+  { id: 'ten_correct', icon: '⭐', title: 'Gut dabei!', desc: '10 Fragen richtig', requirement: 10, type: 'correct' },
+  { id: 'fifty_correct', icon: '🌟', title: 'Super Lerner', desc: '50 Fragen richtig', requirement: 50, type: 'correct' },
+  { id: 'hundred_correct', icon: '💫', title: 'Jahrhundert!', desc: '100 Fragen richtig', requirement: 100, type: 'correct' },
+  { id: 'streak_5', icon: '🔥', title: 'Heiße Serie', desc: '5 richtig in Folge', requirement: 5, type: 'streak' },
+  { id: 'streak_10', icon: '🔥🔥', title: 'Unaufhaltbar', desc: '10 richtig in Folge', requirement: 10, type: 'streak' },
+  { id: 'first_test', icon: '📝', title: 'Testpilot', desc: 'Ersten Test absolviert', requirement: 1, type: 'tests' },
+  { id: 'five_tests', icon: '📚', title: 'Fleißig!', desc: '5 Tests absolviert', requirement: 5, type: 'tests' },
+  { id: 'perfect_test', icon: '🏆', title: 'Perfekt!', desc: 'Test mit 100% bestanden', requirement: 1, type: 'perfect' },
+  { id: 'grade_1', icon: '🥇', title: 'Sehr gut!', desc: 'Note 1 im Test', requirement: 1, type: 'grade1' }
+];
+
+// Fortschritt laden
+function loadProgress() {
+  const saved = localStorage.getItem('englishTrainerProgress');
+  if (saved) {
+    progress = JSON.parse(saved);
+  }
+}
+
+// Fortschritt speichern
+function saveProgress() {
+  localStorage.setItem('englishTrainerProgress', JSON.stringify(progress));
+}
+
+// Achievement prüfen
+function checkAchievements() {
+  progress.newAchievements = [];
+  
+  ACHIEVEMENTS.forEach(achievement => {
+    if (progress.unlockedAchievements.includes(achievement.id)) return;
+    
+    let unlocked = false;
+    
+    switch(achievement.type) {
+      case 'correct':
+        unlocked = progress.totalCorrect >= achievement.requirement;
+        break;
+      case 'streak':
+        unlocked = maxStreak >= achievement.requirement;
+        break;
+      case 'tests':
+        unlocked = progress.testsCompleted >= achievement.requirement;
+        break;
+      case 'perfect':
+        unlocked = isTestMode && correct === 20 && incorrect === 0;
+        break;
+      case 'grade1':
+        unlocked = isTestMode && ((correct / (correct + incorrect)) * 100) >= 90;
+        break;
+    }
+    
+    if (unlocked) {
+      progress.unlockedAchievements.push(achievement.id);
+      progress.newAchievements.push(achievement);
+    }
+  });
+  
+  saveProgress();
+}
+
+// Achievement-Benachrichtigung
+function showAchievementNotification(achievement) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 2000;
+    animation: slideIn 0.5s;
+    max-width: 300px;
+  `;
+  notification.innerHTML = `
+    <div style="font-size: 48px; text-align: center;">${achievement.icon}</div>
+    <div style="font-weight: bold; font-size: 18px; margin: 10px 0; text-align: center;">Erfolg freigeschaltet!</div>
+    <div style="font-size: 16px; text-align: center;">${achievement.title}</div>
+    <div style="font-size: 14px; color: #666; text-align: center; margin-top: 5px;">${achievement.desc}</div>
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.5s';
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
+
+// Achievements Modal
+function showAchievements() {
+  document.getElementById('totalAnswered').innerText = progress.totalAnswered;
+  document.getElementById('totalCorrect').innerText = progress.totalCorrect;
+  const totalPerc = progress.totalAnswered > 0 
+    ? Math.round((progress.totalCorrect / progress.totalAnswered) * 100) 
+    : 0;
+  document.getElementById('totalPercentage').innerText = totalPerc + '%';
+  document.getElementById('testsCompleted').innerText = progress.testsCompleted;
+  
+  const list = document.getElementById('achievementsList');
+  list.innerHTML = '';
+  
+  ACHIEVEMENTS.forEach(achievement => {
+    const unlocked = progress.unlockedAchievements.includes(achievement.id);
+    const div = document.createElement('div');
+    div.className = 'achievement ' + (unlocked ? 'unlocked' : 'locked');
+    div.innerHTML = `
+      <div class="achievement-icon">${achievement.icon}</div>
+      <div class="achievement-info">
+        <div class="achievement-title">${achievement.title}</div>
+        <div class="achievement-desc">${achievement.desc}</div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+  
+  document.getElementById('achievementsModal').classList.add('show');
+}
+
+function closeAchievements() {
+  document.getElementById('achievementsModal').classList.remove('show');
+}
+
+// Sprachausgabe
+function speak(text) {
+  if (!speechEnabled || !text) return;
+  
+  // Nur englische Wörter vorlesen
+  if (/[äöüß]/.test(text)) return; // Deutsche Umlaute ignorieren
+  
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // Vorherige Ausgabe stoppen
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-GB';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function addSpeakButton() {
+  // Nur bei englischen Vokabeln
+  if (current && current.en && !current.options) {
+    const questionDiv = document.getElementById('question');
+    const btn = document.createElement('button');
+    btn.className = 'speak-btn';
+    btn.innerHTML = '🔊';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      speak(current.solution);
+    };
+    questionDiv.appendChild(btn);
+  }
+}
+
+loadProgress();
 
 function playSound(type) {
   if (!soundEnabled) return;
@@ -415,8 +765,8 @@ function updateStats() {
   document.getElementById("percentage").innerText = percentage + "%";
   
   if (totalQuestions > 0) {
-    const progress = ((totalQuestions - pool.length) / totalQuestions) * 100;
-    document.getElementById("progressFill").style.width = progress + "%";
+    const progressVal = ((totalQuestions - pool.length) / totalQuestions) * 100;
+    document.getElementById("progressFill").style.width = progressVal + "%";
   }
   
   if (streak >= 3) {
@@ -457,11 +807,8 @@ function startTest() {
   isActive = true;
   isTestMode = true;
   
-  // TEST: 20 Fragen gemischt aus Vokabeln und Grammatik
   const unit = document.getElementById("unit").value;
-  const dir = document.getElementById("direction").value;
   
-  // 10 Vokabeln
   let vocabPool = getVocabForUnit(unit);
   let selectedVocab = [];
   for (let i = 0; i < 10 && vocabPool.length > 0; i++) {
@@ -470,314 +817,10 @@ function startTest() {
     vocabPool.splice(randomIndex, 1);
   }
   
-  // 10 Grammatik
   let grammarPool = getGrammarTasks(10);
   
-  // Mischen
   pool = [...selectedVocab, ...grammarPool].sort(() => Math.random() - 0.5);
   totalQuestions = pool.length;
   
   document.getElementById("stats").classList.remove("hide");
-  document.getElementById("progressBar").classList.remove("hide");
-  document.getElementById("timer").classList.remove("hide");
-  document.getElementById("finalScreen").classList.add("hide");
-  
-  startTimer();
-  updateStats();
-  nextQuestion();
-}
-
-function startErrorTrainer() {
-  if (wrong.length === 0) {
-    alert("Keine Fehler vorhanden! 🎉");
-    return;
-  }
-  
-  pool = [...wrong];
-  wrong = [];
-  totalQuestions = pool.length;
-  correct = 0;
-  incorrect = 0;
-  streak = 0;
-  maxStreak = 0;
-  isActive = true;
-  isTestMode = false;
-  
-  document.getElementById("stats").classList.remove("hide");
-  document.getElementById("progressBar").classList.remove("hide");
-  document.getElementById("timer").classList.remove("hide");
-  document.getElementById("finalScreen").classList.add("hide");
-  
-  startTimer();
-  updateStats();
-  nextQuestion();
-}
-
-function preparePool() {
-  const unit = document.getElementById("unit").value;
-  const mode = document.getElementById("mode").value;
-
-  if (mode === "grammar") {
-    pool = getGrammarTasks(20);
-  } else {
-    pool = [...getVocabForUnit(unit)];
-  }
-  
-  originalPool = [...pool];
-}
-
-function nextQuestion() {
-  if (pool.length === 0) {
-    showFinalResults();
-    return;
-  }
-
-  current = pool[Math.floor(Math.random() * pool.length)];
-  document.getElementById("feedback").innerText = "";
-  document.getElementById("feedback").className = "";
-  document.getElementById("answer").value = "";
-  document.getElementById("mc").innerHTML = "";
-
-  const mode = document.getElementById("mode").value;
-
-  // Prüfe ob es eine Grammatik-Frage ist (hat 'options' property)
-  if (current.options) {
-    // GRAMMATIK
-    document.getElementById("question").innerText = current.q;
-    current.solution = current.a;
-    
-    document.getElementById("answer").classList.add("hide");
-    document.getElementById("okBtn").classList.add("hide");
-    showGrammarOptions(current.options, current.a);
-    return;
-  }
-
-  // VOKABELN
-  const dir = document.getElementById("direction").value;
-
-  let q = current.de;
-  let a = current.en;
-
-  if (dir === "en-de") [q, a] = [a, q];
-  if (dir === "mix" && Math.random() > 0.5) [q, a] = [a, q];
-
-  current.solution = a;
-  document.getElementById("question").innerText = q;
-
-  if (mode === "mc" || isTestMode) {
-    document.getElementById("answer").classList.add("hide");
-    document.getElementById("okBtn").classList.add("hide");
-    showMC(a, dir);
-  } else {
-    document.getElementById("answer").classList.remove("hide");
-    document.getElementById("okBtn").classList.remove("hide");
-    setTimeout(() => document.getElementById("answer").focus(), 100);
-  }
-}
-
-function showGrammarOptions(options, correct) {
-  const mc = document.getElementById("mc");
-  
-  options.forEach(opt => {
-    const b = document.createElement("button");
-    b.innerText = opt;
-    b.onclick = () => checkAnswer(opt, b);
-    mc.appendChild(b);
-  });
-}
-
-function showMC(correct, dir) {
-  const mc = document.getElementById("mc");
-  let options = [correct];
-
-  // Für Grammatik im Test-Modus
-  if (current.options) {
-    current.options.forEach(opt => {
-      if (!options.includes(opt)) options.push(opt);
-    });
-  } else {
-    // Für Vokabeln
-    let attempts = 0;
-    while (options.length < 4 && attempts < 50) {
-      attempts++;
-      const allVocab = getVocabForUnit(document.getElementById("unit").value);
-      const r = allVocab[Math.floor(Math.random() * allVocab.length)];
-      let candidate = r.en;
-
-      if (dir === "en-de") candidate = r.de;
-      if (!options.includes(candidate) && candidate !== correct) {
-        options.push(candidate);
-      }
-    }
-  }
-
-  options.sort(() => Math.random() - 0.5);
-
-  options.forEach(o => {
-    const b = document.createElement("button");
-    b.innerText = o;
-    b.onclick = () => checkAnswer(o, b);
-    mc.appendChild(b);
-  });
-}
-
-function checkAnswer(value = null, button = null) {
-  if (!isActive) return;
-  
-  const input = value || document.getElementById("answer").value.trim();
-  const solution = current.solution;
-
-  if (!solution || !input) return;
-
-  const feedback = document.getElementById("feedback");
-  const isCorrect = isSimilar(input, solution);
-
-  if (isCorrect) {
-    feedback.innerText = "✅ Richtig!";
-    feedback.className = "feedback-correct";
-    if (button) button.classList.add("correct");
-    correct++;
-    streak++;
-    if (streak > maxStreak) maxStreak = streak;
-    playSound('correct');
-    
-    pool = pool.filter(item => item !== current);
-  } else {
-    feedback.innerText = "❌ Falsch – Richtig: " + solution;
-    feedback.className = "feedback-wrong";
-    if (button) button.classList.add("wrong");
-    incorrect++;
-    streak = 0;
-    playSound('wrong');
-    
-    if (!wrong.includes(current)) {
-      wrong.push(current);
-    }
-  }
-
-  updateStats();
-  
-  if (button) {
-    const allButtons = document.querySelectorAll('.mc button');
-    allButtons.forEach(btn => btn.disabled = true);
-  }
-  
-  setTimeout(nextQuestion, 1500);
-}
-
-function calculateGrade(percentage) {
-  if (percentage >= 90) return { grade: "Sehr gut (1)", color: "#28a745" };
-  if (percentage >= 80) return { grade: "Gut (2)", color: "#4CAF50" };
-  if (percentage >= 70) return { grade: "Befriedigend (3)", color: "#ffa500" };
-  if (percentage >= 60) return { grade: "Genügend (4)", color: "#ff6b6b" };
-  if (percentage >= 50) return { grade: "Nicht genügend (5)", color: "#dc3545" };
-  return { grade: "Nicht genügend (5)", color: "#dc3545" };
-}
-
-function showFinalResults() {
-  isActive = false;
-  stopTimer();
-  playSound('finish');
-  
-  const total = correct + incorrect;
-  const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const elapsed = Math.floor((Date.now() - startTime) / 1000);
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
-  const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  
-  let emoji = "🎉";
-  let message = "Fertig!";
-  let comment = "";
-  
-  if (percentage === 100) {
-    emoji = "🏆";
-    message = "Perfekt!";
-    comment = "Du bist ein Star! 🌟";
-  } else if (percentage >= 90) {
-    emoji = "🌟";
-    message = "Ausgezeichnet!";
-    comment = "Super Leistung!";
-  } else if (percentage >= 75) {
-    emoji = "😊";
-    message = "Sehr gut!";
-    comment = "Das läuft gut!";
-  } else if (percentage >= 60) {
-    emoji = "👍";
-    message = "Gut gemacht!";
-    comment = "Weiter so!";
-  } else {
-    emoji = "💪";
-    message = "Weiter üben!";
-    comment = "Übung macht den Meister!";
-  }
-  
-  const finalScreen = document.getElementById("finalScreen");
-  
-  let gradeHTML = "";
-  if (isTestMode) {
-    const gradeInfo = calculateGrade(percentage);
-    gradeHTML = `<div class="grade-display" style="background: ${gradeInfo.color};">${gradeInfo.grade}</div>`;
-  }
-  
-  finalScreen.innerHTML = `
-    <div class="final-screen">
-      <h3>${emoji} ${message}</h3>
-      <p style="font-size: 18px; color: #666;">${comment}</p>
-      ${gradeHTML}
-      <div class="final-stats">
-        <div>📊 <strong>${correct}</strong> von <strong>${total}</strong> richtig</div>
-        <div>✅ Quote: <strong>${percentage}%</strong></div>
-        <div>⏱️ Zeit: <strong>${timeStr}</strong></div>
-        <div>🔥 Längste Serie: <strong>${maxStreak}</strong></div>
-        ${wrong.length > 0 ? `<div>📝 Zu wiederholen: <strong>${wrong.length}</strong></div>` : ''}
-      </div>
-      <button class="btn-reset" onclick="resetToStart()">🔄 Zurück zum Start</button>
-    </div>
-  `;
-  
-  document.getElementById("question").classList.add("hide");
-  document.getElementById("stats").classList.add("hide");
-  document.getElementById("progressFill").style.width = "100%";
-  finalScreen.classList.remove("hide");
-}
-
-function resetToStart() {
-  document.getElementById("finalScreen").classList.add("hide");
-  document.getElementById("question").classList.remove("hide");
-  document.getElementById("question").innerText = "👆 Wähle einen Modus und klicke auf Start";
-  document.getElementById("progressBar").classList.add("hide");
-  document.getElementById("timer").classList.add("hide");
-  document.getElementById("streak").classList.add("hide");
-  document.getElementById("progressFill").style.width = "0%";
-}
-
-function isSimilar(a, b) {
-  a = a.toLowerCase().trim();
-  b = b.toLowerCase().trim();
-  
-  if (a === b) return true;
-  
-  let diff = Math.abs(a.length - b.length);
-
-  for (let i = 0; i < Math.min(a.length, b.length); i++) {
-    if (a[i] !== b[i]) diff++;
-  }
-  
-  return diff <= 1;
-}
-
-document.getElementById("answer").addEventListener("keydown", e => {
-  if (e.key === "Enter") checkAnswer();
-});
-
-window.addEventListener('beforeunload', (e) => {
-  if (isActive && pool.length > 0) {
-    e.preventDefault();
-    e.returnValue = '';
-  }
-});
-</script>
-
-</body>
-</html>
+  document.getElementById("progressBar").classList.remove("hide
