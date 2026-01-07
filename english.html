@@ -4,373 +4,57 @@
   <meta charset="UTF-8">
   <title>GB English Trainer – More! 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    /* --- (gleiche Styles wie vorher, gekürzt hier für die Übersicht) --- */
-    body { font-family: Arial, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); margin:0; padding:10px; min-height:100vh; }
-    .box{max-width:500px;margin:20px auto;background:#fff;padding:25px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.2);}
-    h2{color:#667eea;text-align:center;margin-bottom:20px;font-size:24px;}
-    select,button,input{width:100%;padding:12px;margin:8px 0;font-size:16px;border:2px solid #e0e0e0;border-radius:8px;box-sizing:border-box;transition:all 0.3s;}
-    button{background:#667eea;color:white;border:none;cursor:pointer;font-weight:bold;}
-    .btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      margin:0;
+      padding:10px;
+      min-height:100vh;
+    }
+    .box{
+      max-width:500px;
+      margin:20px auto;
+      background:#fff;
+      padding:25px;
+      border-radius:15px;
+      box-shadow:0 10px 40px rgba(0,0,0,0.2);
+    }
+    h2{
+      color:#667eea;
+      text-align:center;
+      margin-bottom:20px;
+      font-size:24px;
+    }
+    select,button,input{
+      width:100%;
+      padding:12px;
+      margin:8px 0;
+      font-size:16px;
+      border:2px solid #e0e0e0;
+      border-radius:8px;
+      box-sizing:border-box;
+    }
+    button{
+      background:#667eea;
+      color:white;
+      border:none;
+      cursor:pointer;
+      font-weight:bold;
+    }
+    .btn-group{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:20px;
+    }
     .btn-test{background:#ff6b6b;}
-    .question{font-size:22px;margin:20px 0;padding:20px;font-weight:bold;color:#333;background:#f8f9fa;border-radius:10px;text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;position:relative;}
-    .mc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;}
-    .mc button{background:#4CAF50;margin:0;padding:15px;font-size:17px;color:white;border-radius:8px;border:none;cursor:pointer;}
-    .mc button.correct{background:#28a745;}
-    .mc button.wrong{background:#dc3545;}
-    .hide{display:none !important;}
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>🇬🇧 GB English Trainer – More! 1</h2>
-
-    <select id="unit">
-      <option value="all">⭐ Alle Units</option>
-      <option value="1">Unit 1 - Classroom & Clothes</option>
-      <option value="2">Unit 2 - Wildlife Park</option>
-      <option value="3">Unit 3 - Pirates</option>
-      <option value="4">Unit 4 - Feelings & Time</option>
-      <option value="5">Unit 5 - Music & People</option>
-      <option value="6">Unit 6 - Around Town</option>
-      <option value="7">Unit 7 - Food & Eating</option>
-    </select>
-
-    <select id="direction">
-      <option value="de-en">🇩🇪 Deutsch → 🇬🇧 Englisch</option>
-      <option value="en-de">🇬🇧 Englisch → 🇩🇪 Deutsch</option>
-      <option value="mix">🔀 Gemischt</option>
-    </select>
-
-    <select id="mode">
-      <option value="write">✏️ Schreiben</option>
-      <option value="mc">🎯 Multiple Choice</option>
-      <option value="grammar">📘 Grammatik</option>
-    </select>
-
-    <div class="btn-group">
-      <button onclick="startTrainer()">▶️ Trainer</button>
-      <button class="btn-test" onclick="startTest()">📝 Test (20 Fragen)</button>
-      <button id="errorBtn" onclick="startErrorTrainer()" disabled>🔁 Fehler-Trainer (<span id="errorCount">0</span>)</button>
-    </div>
-
-    <div class="question" id="question">👆 Wähle einen Modus und klicke auf Start</div>
-
-    <div id="mc" class="mc"></div>
-
-    <input id="answer" placeholder="Antwort eingeben (Enter zum Bestätigen)" class="hide" autocomplete="off">
-    <button id="okBtn" onclick="checkAnswer()" class="hide">OK ✓</button>
-
-    <div id="feedback"></div>
-
-    <div class="stats hide" id="stats">
-      <div>✅ Richtig: <span id="correctCount">0</span></div>
-      <div>❌ Falsch: <span id="wrongCount">0</span></div>
-      <div>📊 Quote: <span id="percentage">0%</span></div>
-    </div>
-
-    <div id="finalScreen" class="hide"></div>
-  </div>
-
-  <!-- externe Skripte -->
-  <script src="vocab.js"></script>
-  <script src="grammar.js"></script>
-
-  <script>
-    // main logic
-    let pool = [];
-    let current = null;
-    let wrong = [];
-    let correct = 0;
-    let incorrect = 0;
-    let totalQuestions = 0;
-    let isTestMode = false;
-    let soundEnabled = true;
-
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    function preparePool() {
-      const unit = document.getElementById("unit").value;
-      const mode = document.getElementById("mode").value;
-      const direction = document.getElementById("direction").value;
-
-      pool = [];
-
-      if (mode === "grammar") {
-        pool = getGrammarTasks(20);
-      } else {
-        // vocab pool (all or single unit)
-        let vocabPool = getVocabForUnit(unit);
-        // convert to uniform objects {type:'vocab', en, de}
-        pool = vocabPool.map(w => ({ type: "vocab", en: w.en, de: w.de }));
-      }
-
-      // in Trainer mode: full pool, shuffled
-      pool = shuffle(pool.slice());
-      totalQuestions = pool.length;
-    }
-
-    function startTrainer() {
-      wrong = [];
-      correct = 0;
-      incorrect = 0;
-      isTestMode = false;
-      preparePool();
-      if (!pool.length) {
-        alert("Kein Material gefunden. Bitte überprüfe die Units/Dateien.");
-        return;
-      }
-      document.getElementById("stats").classList.remove("hide");
-      document.getElementById("finalScreen").classList.add("hide");
-      nextQuestion();
-    }
-
-    function startTest() {
-      wrong = [];
-      correct = 0;
-      incorrect = 0;
-      isTestMode = true;
-
-      const unit = document.getElementById("unit").value;
-      // 10 Vokabel + 10 Grammatik
-      let vocabPool = getVocabForUnit(unit);
-      shuffle(vocabPool);
-      const selectedVocab = vocabPool.slice(0, 10).map(w => ({ type: "vocab", en: w.en, de: w.de }));
-
-      const grammarPool = getGrammarTasks(10);
-      const grammarWrapped = grammarPool.map(g => ({ type: "grammar", q: g.q, options: g.options, a: g.a }));
-
-      pool = shuffle([...selectedVocab, ...grammarWrapped]);
-      totalQuestions = pool.length;
-
-      document.getElementById("stats").classList.remove("hide");
-      document.getElementById("finalScreen").classList.add("hide");
-      nextQuestion();
-    }
-
-    function startErrorTrainer() {
-      if (!wrong.length) {
-        alert("Keine Fehler vorhanden.");
-        return;
-      }
-      pool = shuffle(wrong.slice());
-      wrong = [];
-      correct = 0;
-      incorrect = 0;
-      totalQuestions = pool.length;
-      document.getElementById("stats").classList.remove("hide");
-      document.getElementById("finalScreen").classList.add("hide");
-      nextQuestion();
-    }
-
-    function nextQuestion() {
-      // clear UI
-      document.getElementById("feedback").innerText = "";
-      const mcDiv = document.getElementById("mc");
-      mcDiv.innerHTML = "";
-      document.getElementById("answer").classList.add("hide");
-      document.getElementById("okBtn").classList.add("hide");
-
-      if (!pool || pool.length === 0) {
-        finishSession();
-        return;
-      }
-
-      current = pool.shift();
-
-      // if current is plain grammar generator object (from grammar.js) it may have q/options/a
-      if (current.type === "grammar" || (current.q && current.options && current.a)) {
-        showGrammarQuestion(current);
-      } else if (current.type === "vocab") {
-        showVocabQuestion(current);
-      } else {
-        // fallback: treat as grammar-like object
-        if (current.q && current.a) {
-          showGrammarQuestion(current);
-        } else {
-          // unknown format, skip
-          nextQuestion();
-        }
-      }
-
-      updateStatsDisplay();
-    }
-
-    function showGrammarQuestion(item) {
-      const questionDiv = document.getElementById("question");
-      questionDiv.innerText = item.q;
-      const mcDiv = document.getElementById("mc");
-
-      // render options as MC buttons
-      const options = item.options && item.options.length ? item.options.slice() : [item.a];
-      // ensure at least 2 options
-      if (options.length === 1) {
-        // add a dummy wrong option
-        options.push(item.a === "is" ? "are" : "is");
-      }
-      shuffle(options);
-
-      options.forEach(opt => {
-        const btn = document.createElement("button");
-        btn.innerText = opt;
-        btn.onclick = () => {
-          current.solution = item.a;
-          checkAnswerSelected(opt);
-        };
-        mcDiv.appendChild(btn);
-      });
-      // hide text input
-      document.getElementById("answer").classList.add("hide");
-      document.getElementById("okBtn").classList.add("hide");
-    }
-
-    function showVocabQuestion(item) {
-      const mode = document.getElementById("mode").value;
-      const direction = document.getElementById("direction").value;
-      const questionDiv = document.getElementById("question");
-      const mcDiv = document.getElementById("mc");
-
-      // decide direction for this vocab item
-      let useDirection = direction;
-      if (direction === "mix") {
-        useDirection = Math.random() < 0.5 ? "de-en" : "en-de";
-      }
-
-      if (mode === "mc") {
-        // create MC options (correct + 3 distractors)
-        const allVocab = getVocabForUnit(document.getElementById("unit").value);
-        const options = [];
-        let correctOption = useDirection === "de-en" ? item.en : item.de;
-        // Build distractors
-        const distractPool = allVocab.filter(w => {
-          if (useDirection === "de-en") return w.en !== item.en;
-          return w.de !== item.de;
-        }).slice();
-        shuffle(distractPool);
-        options.push(correctOption);
-        for (let i = 0; i < 3 && distractPool.length; i++) {
-          const d = distractPool.shift();
-          options.push(useDirection === "de-en" ? d.en : d.de);
-        }
-        shuffle(options);
-        questionDiv.innerText = useDirection === "de-en" ? item.de : item.en;
-        options.forEach(opt => {
-          const btn = document.createElement("button");
-          btn.innerText = opt;
-          btn.onclick = () => {
-            current.solution = correctOption;
-            checkAnswerSelected(opt);
-          };
-          mcDiv.appendChild(btn);
-        });
-        document.getElementById("answer").classList.add("hide");
-        document.getElementById("okBtn").classList.add("hide");
-      } else {
-        // write mode: show question and text input
-        questionDiv.innerText = useDirection === "de-en" ? item.de : item.en;
-        current.solution = useDirection === "de-en" ? item.en : item.de;
-        const answerInput = document.getElementById("answer");
-        answerInput.value = "";
-        answerInput.classList.remove("hide");
-        answerInput.focus();
-        document.getElementById("okBtn").classList.remove("hide");
-        // allow Enter key
-        answerInput.onkeydown = function(e) {
-          if (e.key === "Enter") checkAnswer();
-        };
-      }
-    }
-
-    function checkAnswerSelected(selected) {
-      const isCorrect = normalize(selected) === normalize(current.solution);
-      handleAnswerResult(isCorrect, selected);
-    }
-
-    function checkAnswer() {
-      const answerInput = document.getElementById("answer");
-      const user = answerInput.value.trim();
-      if (!user) return;
-      const isCorrect = normalize(user) === normalize(current.solution);
-      handleAnswerResult(isCorrect, user);
-    }
-
-    function normalize(s) {
-      if (!s && s !== "") return "";
-      return s.toString().trim().toLowerCase().replace(/\s+/g,' ');
-    }
-
-    function handleAnswerResult(isCorrect, given) {
-      const feedback = document.getElementById("feedback");
-      if (isCorrect) {
-        correct++;
-        feedback.innerText = "✅ Richtig";
-        feedback.className = "";
-      } else {
-        incorrect++;
-        feedback.innerText = "❌ Falsch — richtige Antwort: " + current.solution;
-        feedback.className = "";
-        // save to wrong list (keep enough info to repeat)
-        wrong.push(current);
-      }
-      updateStatsDisplay();
-      // tiny delay then next question to allow user to see feedback
-      setTimeout(nextQuestion, 650);
-    }
-
-    function updateStatsDisplay() {
-      document.getElementById("correctCount").innerText = correct;
-      document.getElementById("wrongCount").innerText = incorrect;
-      document.getElementById("errorCount").innerText = wrong.length;
-      document.getElementById("percentage").innerText = (correct + incorrect) > 0 ? Math.round((correct/(correct+incorrect))*100) + "%" : "0%";
-      // enable error trainer button
-      document.getElementById("errorBtn").disabled = wrong.length === 0;
-    }
-
-    function finishSession() {
-      const fs = document.getElementById("finalScreen");
-      const total = correct + incorrect;
-      const perc = total > 0 ? Math.round((correct/total)*100) : 0;
-      fs.innerHTML = `
-        <div class="final-screen">
-          <h3>Ergebnis</h3>
-          <div class="final-stats">
-            <div>Richtig: ${correct}</div>
-            <div>Falsch: ${incorrect}</div>
-            <div>Quote: ${perc}%</div>
-            <div>Fehlerkarten für Wiederholung: ${wrong.length}</div>
-          </div>
-          <button onclick="resetAll()">Neu starten</button>
-        </div>
-      `;
-      fs.classList.remove("hide");
-      document.getElementById("stats").classList.add("hide");
-      // If it was a test, you may want to track testsCompleted — kept minimal to avoid overwriting user data
-    }
-
-    function resetAll() {
-      pool = [];
-      current = null;
-      wrong = [];
-      correct = 0;
-      incorrect = 0;
-      totalQuestions = 0;
-      document.getElementById("question").innerText = "👆 Wähle einen Modus und klicke auf Start";
-      document.getElementById("mc").innerHTML = "";
-      document.getElementById("feedback").innerText = "";
-      document.getElementById("answer").classList.add("hide");
-      document.getElementById("okBtn").classList.add("hide");
-      document.getElementById("finalScreen").classList.add("hide");
-      updateStatsDisplay();
-    }
-
-    // initial update
-    updateStatsDisplay();
-  </script>
-</body>
-</html>
+    .question{
+      font-size:22px;
+      margin:20px 0;
+      padding:20px;
+      font-weight:bold;
+      color:#333;
+      background:#f8f9fa;
+      borde
