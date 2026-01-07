@@ -1,9 +1,9 @@
+// vocab.js
 const VOCAB = {
 
   unit1: {
     title: "Unit 1 – Classroom & Clothes",
     words: [
-      // classroom
       { en: "door", de: "Tür" },
       { en: "window", de: "Fenster" },
       { en: "board", de: "Tafel" },
@@ -19,7 +19,6 @@ const VOCAB = {
       { en: "glue stick", de: "Klebestift" },
       { en: "pencil sharpener", de: "Spitzer" },
 
-      // clothes
       { en: "shirt", de: "Hemd" },
       { en: "skirt", de: "Rock" },
       { en: "sweater", de: "Pullover" },
@@ -43,7 +42,6 @@ const VOCAB = {
       { en: "train", de: "Zug" },
       { en: "guide", de: "Führer" },
 
-      // prepositions
       { en: "in", de: "in" },
       { en: "on", de: "auf" },
       { en: "under", de: "unter" },
@@ -76,7 +74,6 @@ const VOCAB = {
   unit4: {
     title: "Unit 4 – Feelings & Time",
     words: [
-      // feelings
       { en: "happy", de: "glücklich" },
       { en: "sad", de: "traurig" },
       { en: "angry", de: "wütend" },
@@ -86,14 +83,12 @@ const VOCAB = {
       { en: "hungry", de: "hungrig" },
       { en: "tired", de: "müde" },
 
-      // time
       { en: "morning", de: "Morgen" },
       { en: "lunchtime", de: "Mittag" },
       { en: "afternoon", de: "Nachmittag" },
       { en: "evening", de: "Abend" },
       { en: "night", de: "Nacht" },
 
-      // days
       { en: "Monday", de: "Montag" },
       { en: "Tuesday", de: "Dienstag" },
       { en: "Wednesday", de: "Mittwoch" },
@@ -131,7 +126,6 @@ const VOCAB = {
       { en: "market", de: "Markt" },
       { en: "woods", de: "Wald" },
 
-      // verbs
       { en: "to climb", de: "klettern" },
       { en: "to jump", de: "springen" },
       { en: "to leave", de: "verlassen" },
@@ -163,14 +157,11 @@ const VOCAB = {
 
 };
 
-// WICHTIG: Diese Funktion hat gefehlt!
+// Rückgabe-Funktion: Unit oder alle
 function getVocabForUnit(unit) {
-  if (unit === "all") {
-    // Alle Vokabeln aus allen Units sammeln
+  if (!unit || unit === "all") {
     return Object.values(VOCAB).flatMap(u => u.words);
   }
-  
-  // Spezifische Unit
   const unitKey = "unit" + unit;
-  return VOCAB[unitKey] ? VOCAB[unitKey].words : [];
+  return VOCAB[unitKey] ? VOCAB[unitKey].words.slice() : [];
 }
