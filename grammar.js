@@ -1,167 +1,239 @@
-// Grammatik-Aufgaben nach Themen strukturiert
-const GRAMMAR_RULES = {
+// ========================================
+// DYNAMISCHE GRAMMATIK-AUFGABEN GENERATOR
+// ========================================
+// Jede Aufgabe wird zufällig generiert aus Wortlisten
+// → Quasi unendliche Übungsmöglichkeiten!
+
+// Wortlisten für dynamische Satz-Generierung
+const WORD_POOLS = {
+  subjects_singular: ["Tom", "Sarah", "Lisa", "Max", "Emma", "Paul", "Anna", "Ben", "Maria", "Tim"],
+  subjects_plural: ["Tom and Sarah", "my friends", "the students", "my parents", "the children", "they", "we"],
+  subjects_he: ["Tom", "Max", "Paul", "Ben", "Tim", "my father", "my brother", "the boy", "he"],
+  subjects_she: ["Sarah", "Lisa", "Emma", "Anna", "Maria", "my mother", "my sister", "the girl", "she"],
+  subjects_it: ["the dog", "the cat", "the book", "the pen", "the car", "the bird", "it"],
   
-  // 1. to be – affirmative
-  to_be_affirmative: [
-    { q: "She ___ happy.", options: ["is", "are"], a: "is" },
-    { q: "They ___ at school.", options: ["is", "are"], a: "are" },
-    { q: "I ___ tired.", options: ["am", "is"], a: "am" },
-    { q: "He ___ my friend.", options: ["is", "are"], a: "is" },
-    { q: "We ___ in the park.", options: ["is", "are"], a: "are" },
-    { q: "You ___ very tall.", options: ["is", "are"], a: "are" },
-    { q: "It ___ cold today.", options: ["is", "are"], a: "is" },
-    { q: "The dog ___ brown.", options: ["is", "are"], a: "is" },
-    { q: "My parents ___ teachers.", options: ["is", "are"], a: "are" },
-    { q: "The book ___ on the table.", options: ["is", "are"], a: "is" }
-  ],
-
-  // 2. to be – negative
-  to_be_negative: [
-    { q: "He ___ tired today.", options: ["isn't", "aren't"], a: "isn't" },
-    { q: "They ___ hungry now.", options: ["isn't", "aren't"], a: "aren't" },
-    { q: "I ___ happy about this.", options: ["am not", "isn't"], a: "am not" },
-    { q: "She ___ at home right now.", options: ["isn't", "aren't"], a: "isn't" },
-    { q: "We ___ late for school.", options: ["isn't", "aren't"], a: "aren't" },
-    { q: "You ___ wrong about that.", options: ["isn't", "aren't"], a: "aren't" },
-    { q: "It ___ sunny today.", options: ["isn't", "aren't"], a: "isn't" },
-    { q: "The cat ___ black. It's white.", options: ["isn't", "aren't"], a: "isn't" },
-    { q: "My friends ___ here yet.", options: ["isn't", "aren't"], a: "aren't" },
-    { q: "The door ___ open. It's closed.", options: ["isn't", "aren't"], a: "isn't" }
-  ],
-
-  // 3. there is / there are
-  there_is_are: [
-    { q: "There ___ two books on the desk.", options: ["is", "are"], a: "are" },
-    { q: "There ___ a cat under the table.", options: ["is", "are"], a: "is" },
-    { q: "There ___ many students in class.", options: ["is", "are"], a: "are" },
-    { q: "There ___ one apple left.", options: ["is", "are"], a: "is" },
-    { q: "There ___ three chairs here.", options: ["is", "are"], a: "are" },
-    { q: "There ___ a dog in the garden.", options: ["is", "are"], a: "is" },
-    { q: "There ___ five people waiting.", options: ["is", "are"], a: "are" },
-    { q: "There ___ a problem with this.", options: ["is", "are"], a: "is" },
-    { q: "There ___ two windows in the room.", options: ["is", "are"], a: "are" },
-    { q: "There ___ a teacher at the door.", options: ["is", "are"], a: "is" }
-  ],
-
-  // 4. plural nouns + irregular plurals
-  plurals: [
-    { q: "Two ___ (child)", options: ["children", "childs"], a: "children" },
-    { q: "Three ___ (man)", options: ["men", "mans"], a: "men" },
-    { q: "Many ___ (woman)", options: ["women", "womans"], a: "women" },
-    { q: "Five ___ (tooth)", options: ["teeth", "tooths"], a: "teeth" },
-    { q: "Two ___ (foot)", options: ["feet", "foots"], a: "feet" },
-    { q: "Four ___ (mouse)", options: ["mice", "mouses"], a: "mice" },
-    { q: "Three ___ (box)", options: ["boxes", "boxs"], a: "boxes" },
-    { q: "Two ___ (baby)", options: ["babies", "babys"], a: "babies" },
-    { q: "Many ___ (fish)", options: ["fish", "fishes"], a: "fish" },
-    { q: "Five ___ (sheep)", options: ["sheep", "sheeps"], a: "sheep" }
-  ],
-
-  // 5. have got / haven't got
-  have_got: [
-    { q: "She ___ got a new bike.", options: ["has", "have"], a: "has" },
-    { q: "They ___ got a big car.", options: ["has", "have"], a: "have" },
-    { q: "I ___ got a brown dog.", options: ["has", "have"], a: "have" },
-    { q: "He ___ got two cats at home.", options: ["has", "have"], a: "has" },
-    { q: "We ___ got a nice garden.", options: ["has", "have"], a: "have" },
-    { q: "She ___ got a brother. She's an only child.", options: ["hasn't", "haven't"], a: "hasn't" },
-    { q: "They ___ got time now. They're busy.", options: ["hasn't", "haven't"], a: "haven't" },
-    { q: "I ___ got money with me.", options: ["hasn't", "haven't"], a: "haven't" },
-    { q: "You ___ got a red pen here.", options: ["has", "have"], a: "have" },
-    { q: "The cat ___ got a long tail.", options: ["has", "have"], a: "has" }
-  ],
-
-  // 6. have / has
-  have_has: [
-    { q: "She ___ a new book.", options: ["has", "have"], a: "has" },
-    { q: "They ___ homework today.", options: ["has", "have"], a: "have" },
-    { q: "He ___ a little sister.", options: ["has", "have"], a: "has" },
-    { q: "I ___ two big dogs.", options: ["has", "have"], a: "have" },
-    { q: "We ___ a test tomorrow.", options: ["has", "have"], a: "have" },
-    { q: "The cat ___ blue eyes.", options: ["has", "have"], a: "has" },
-    { q: "My parents ___ a red car.", options: ["has", "have"], a: "have" },
-    { q: "Tom ___ a new guitar.", options: ["has", "have"], a: "has" },
-    { q: "You ___ nice shoes today.", options: ["has", "have"], a: "have" },
-    { q: "The teacher ___ a question for us.", options: ["has", "have"], a: "has" }
-  ],
-
-  // 7. possessives (my, your, his, her)
-  possessives: [
-    { q: "This is ___ bag. (Tom = boy)", options: ["his", "her"], a: "his" },
-    { q: "This is ___ book. (Anna = girl)", options: ["his", "her"], a: "her" },
-    { q: "___ name is Max. (I am speaking)", options: ["My", "Your"], a: "My" },
-    { q: "What is ___ name? (I am asking you)", options: ["your", "my"], a: "your" },
-    { q: "This is ___ dog. (Peter = boy)", options: ["his", "her"], a: "his" },
-    { q: "___ cat is black. (Sarah = girl)", options: ["His", "Her"], a: "Her" },
-    { q: "I love ___ family. (my family)", options: ["my", "your"], a: "my" },
-    { q: "___ teacher is nice. (we students)", options: ["Our", "Their"], a: "Our" },
-    { q: "___ house is big. (those people)", options: ["Our", "Their"], a: "Their" },
-    { q: "Where is ___ pen? (I'm asking you)", options: ["your", "his"], a: "your" }
-  ],
-
-  // 8. can / can't (mit EINDEUTIGEM Kontext!)
-  can_cant: [
-    { q: "The bag is very heavy. He ___ carry it.", options: ["can", "can't"], a: "can't" },
-    { q: "She is only 2 years old. She ___ read.", options: ["can", "can't"], a: "can't" },
-    { q: "I broke my leg. I ___ run.", options: ["can", "can't"], a: "can't" },
-    { q: "Birds have wings. They ___ fly.", options: ["can", "can't"], a: "can" },
-    { q: "Fish live in water. They ___ swim.", options: ["can", "can't"], a: "can" },
-    { q: "He has no bike. He ___ ride to school.", options: ["can", "can't"], a: "can't" },
-    { q: "She is very strong. She ___ lift it.", options: ["can", "can't"], a: "can" },
-    { q: "Dogs are good swimmers. They ___ swim.", options: ["can", "can't"], a: "can" },
-    { q: "I have no money. I ___ buy it.", options: ["can", "can't"], a: "can't" },
-    { q: "We know the answer. We ___ help you.", options: ["can", "can't"], a: "can" },
-    { q: "Cats have no wings. They ___ fly.", options: ["can", "can't"], a: "can't" },
-    { q: "He is deaf. He ___ hear you.", options: ["can", "can't"], a: "can't" },
-    { q: "The door is locked. We ___ open it.", options: ["can", "can't"], a: "can't" },
-    { q: "She has a key. She ___ unlock the door.", options: ["can", "can't"], a: "can" }
-  ],
-
-  // 9. a / an
-  a_an: [
-    { q: "This is ___ apple.", options: ["a", "an"], a: "an" },
-    { q: "This is ___ book.", options: ["a", "an"], a: "a" },
-    { q: "I have ___ umbrella.", options: ["a", "an"], a: "an" },
-    { q: "She has ___ cat.", options: ["a", "an"], a: "a" },
-    { q: "It is ___ orange.", options: ["a", "an"], a: "an" },
-    { q: "This is ___ egg.", options: ["a", "an"], a: "an" },
-    { q: "I see ___ elephant.", options: ["a", "an"], a: "an" },
-    { q: "He has ___ dog.", options: ["a", "an"], a: "a" },
-    { q: "This is ___ hour.", options: ["a", "an"], a: "an" },
-    { q: "I want ___ ice cream.", options: ["a", "an"], a: "an" },
-    { q: "She is ___ teacher.", options: ["a", "an"], a: "a" },
-    { q: "He is ___ uncle of mine.", options: ["a", "an"], a: "an" }
-  ]
+  adjectives: ["happy", "sad", "tired", "hungry", "angry", "cold", "hot", "bored", "excited", "scared", "sleepy", "thirsty"],
+  places: ["at school", "at home", "in the park", "in the garden", "at the shop", "in the classroom"],
+  
+  animals: ["dog", "cat", "bird", "fish", "mouse", "elephant", "lion", "tiger"],
+  things: ["book", "pen", "desk", "chair", "bag", "box", "car", "bike"],
+  foods: ["apple", "banana", "egg", "orange", "ice cream"],
+  
+  actions: ["run", "jump", "swim", "fly", "read", "write", "dance", "sing"],
+  
+  body_parts: ["hand", "foot", "eye", "ear", "nose", "mouth", "head", "arm"],
+  
+  family: ["brother", "sister", "mother", "father", "uncle", "aunt"],
+  
+  nouns_a: ["book", "cat", "dog", "car", "pen", "desk", "chair", "bag", "bike", "house"],
+  nouns_an: ["apple", "orange", "elephant", "egg", "umbrella", "hour", "ice cream", "uncle", "island"]
 };
 
-// Alle Grammatik-Regeln in einem flachen Array sammeln
-function getAllGrammarRules() {
-  let allRules = [];
-  for (let category in GRAMMAR_RULES) {
-    allRules = allRules.concat(GRAMMAR_RULES[category]);
+// Grammatik-Regel-Generatoren
+const GRAMMAR_GENERATORS = {
+  
+  // 1. TO BE - AFFIRMATIVE
+  to_be_affirmative: () => {
+    const type = Math.random() < 0.5 ? 'singular' : 'plural';
+    
+    if (type === 'singular') {
+      const subj = WORD_POOLS.subjects_singular[Math.floor(Math.random() * WORD_POOLS.subjects_singular.length)];
+      const adj = WORD_POOLS.adjectives[Math.floor(Math.random() * WORD_POOLS.adjectives.length)];
+      return { q: `${subj} ___ ${adj}.`, options: ["is", "are"], a: "is" };
+    } else {
+      const subj = WORD_POOLS.subjects_plural[Math.floor(Math.random() * WORD_POOLS.subjects_plural.length)];
+      const adj = WORD_POOLS.adjectives[Math.floor(Math.random() * WORD_POOLS.adjectives.length)];
+      return { q: `${subj} ___ ${adj}.`, options: ["is", "are"], a: "are" };
+    }
+  },
+  
+  // 2. TO BE - NEGATIVE
+  to_be_negative: () => {
+    const type = Math.random() < 0.5 ? 'singular' : 'plural';
+    
+    if (type === 'singular') {
+      const subj = WORD_POOLS.subjects_singular[Math.floor(Math.random() * WORD_POOLS.subjects_singular.length)];
+      const place = WORD_POOLS.places[Math.floor(Math.random() * WORD_POOLS.places.length)];
+      return { q: `${subj} ___ ${place}.`, options: ["isn't", "aren't"], a: "isn't" };
+    } else {
+      const subj = WORD_POOLS.subjects_plural[Math.floor(Math.random() * WORD_POOLS.subjects_plural.length)];
+      const adj = WORD_POOLS.adjectives[Math.floor(Math.random() * WORD_POOLS.adjectives.length)];
+      return { q: `${subj} ___ ${adj}.`, options: ["isn't", "aren't"], a: "aren't" };
+    }
+  },
+  
+  // 3. THERE IS / THERE ARE
+  there_is_are: () => {
+    const type = Math.random() < 0.5 ? 'singular' : 'plural';
+    
+    if (type === 'singular') {
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      const place = WORD_POOLS.places[Math.floor(Math.random() * WORD_POOLS.places.length)];
+      return { q: `There ___ a ${thing} ${place}.`, options: ["is", "are"], a: "is" };
+    } else {
+      const num = Math.floor(Math.random() * 5) + 2; // 2-6
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      return { q: `There ___ ${num} ${thing}s here.`, options: ["is", "are"], a: "are" };
+    }
+  },
+  
+  // 4. PLURAL NOUNS
+  plurals: () => {
+    const irregular = [
+      { singular: "child", plural: "children", wrong: "childs" },
+      { singular: "man", plural: "men", wrong: "mans" },
+      { singular: "woman", plural: "women", wrong: "womans" },
+      { singular: "tooth", plural: "teeth", wrong: "tooths" },
+      { singular: "foot", plural: "feet", wrong: "foots" },
+      { singular: "mouse", plural: "mice", wrong: "mouses" },
+      { singular: "fish", plural: "fish", wrong: "fishes" },
+      { singular: "sheep", plural: "sheep", wrong: "sheeps" }
+    ];
+    
+    const item = irregular[Math.floor(Math.random() * irregular.length)];
+    const num = Math.floor(Math.random() * 5) + 2; // 2-6
+    
+    return { 
+      q: `${num} ___ (${item.singular})`, 
+      options: [item.plural, item.wrong], 
+      a: item.plural 
+    };
+  },
+  
+  // 5. HAVE GOT / HAVEN'T GOT
+  have_got: () => {
+    const type = Math.random() < 0.5 ? 'has' : 'have';
+    
+    if (type === 'has') {
+      const subj = WORD_POOLS.subjects_he[Math.floor(Math.random() * WORD_POOLS.subjects_he.length)];
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      return { q: `${subj} ___ got a ${thing}.`, options: ["has", "have"], a: "has" };
+    } else {
+      const subj = WORD_POOLS.subjects_plural[Math.floor(Math.random() * WORD_POOLS.subjects_plural.length)];
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      return { q: `${subj} ___ got a ${thing}.`, options: ["has", "have"], a: "have" };
+    }
+  },
+  
+  // 6. HAVE / HAS
+  have_has: () => {
+    const type = Math.random() < 0.5 ? 'has' : 'have';
+    
+    if (type === 'has') {
+      const subj = WORD_POOLS.subjects_she[Math.floor(Math.random() * WORD_POOLS.subjects_she.length)];
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      return { q: `${subj} ___ a new ${thing}.`, options: ["has", "have"], a: "has" };
+    } else {
+      const subj = WORD_POOLS.subjects_plural[Math.floor(Math.random() * WORD_POOLS.subjects_plural.length)];
+      const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+      return { q: `${subj} ___ a ${thing}.`, options: ["has", "have"], a: "have" };
+    }
+  },
+  
+  // 7. POSSESSIVES
+  possessives: () => {
+    const types = [
+      { name: "Tom", gender: "his" },
+      { name: "Sarah", gender: "her" },
+      { name: "Max", gender: "his" },
+      { name: "Anna", gender: "her" },
+      { name: "Paul", gender: "his" },
+      { name: "Lisa", gender: "her" }
+    ];
+    
+    const person = types[Math.floor(Math.random() * types.length)];
+    const thing = WORD_POOLS.things[Math.floor(Math.random() * WORD_POOLS.things.length)];
+    const wrongGender = person.gender === "his" ? "her" : "his";
+    
+    return { 
+      q: `This is ___ ${thing}. (${person.name})`, 
+      options: [person.gender, wrongGender], 
+      a: person.gender 
+    };
+  },
+  
+  // 8. CAN / CAN'T (mit eindeutigem Kontext!)
+  can_cant: () => {
+    const contexts = [
+      { context: "The bag is very heavy.", subject: "He", answer: "can't", action: "carry it" },
+      { context: "She is only 2 years old.", subject: "She", answer: "can't", action: "read" },
+      { context: "I broke my leg.", subject: "I", answer: "can't", action: "run" },
+      { context: "Birds have wings.", subject: "They", answer: "can", action: "fly" },
+      { context: "Fish live in water.", subject: "They", answer: "can", action: "swim" },
+      { context: "He has no bike.", subject: "He", answer: "can't", action: "ride to school" },
+      { context: "She is very strong.", subject: "She", answer: "can", action: "lift it" },
+      { context: "Dogs are good swimmers.", subject: "They", answer: "can", action: "swim" },
+      { context: "I have no money.", subject: "I", answer: "can't", action: "buy it" },
+      { context: "We know the answer.", subject: "We", answer: "can", action: "help you" },
+      { context: "Cats have no wings.", subject: "They", answer: "can't", action: "fly" },
+      { context: "He is deaf.", subject: "He", answer: "can't", action: "hear you" },
+      { context: "The door is locked.", subject: "We", answer: "can't", action: "open it" },
+      { context: "She has a key.", subject: "She", answer: "can", action: "unlock the door" },
+      { context: "It's very dark.", subject: "I", answer: "can't", action: "see" },
+      { context: "He is a doctor.", subject: "He", answer: "can", action: "help sick people" }
+    ];
+    
+    const ctx = contexts[Math.floor(Math.random() * contexts.length)];
+    return { 
+      q: `${ctx.context} ${ctx.subject} ___ ${ctx.action}.`, 
+      options: ["can", "can't"], 
+      a: ctx.answer 
+    };
+  },
+  
+  // 9. A / AN
+  a_an: () => {
+    const type = Math.random() < 0.5 ? 'a' : 'an';
+    
+    if (type === 'a') {
+      const noun = WORD_POOLS.nouns_a[Math.floor(Math.random() * WORD_POOLS.nouns_a.length)];
+      return { q: `This is ___ ${noun}.`, options: ["a", "an"], a: "a" };
+    } else {
+      const noun = WORD_POOLS.nouns_an[Math.floor(Math.random() * WORD_POOLS.nouns_an.length)];
+      return { q: `This is ___ ${noun}.`, options: ["a", "an"], a: "an" };
+    }
   }
-  return allRules;
-}
+};
 
-// Generiere randomisierte Grammatik-Aufgaben OHNE Wiederholungen
+// Hauptfunktion: Generiere zufällige Grammatik-Aufgaben
 function getGrammarTasks(amount = 20) {
-  const allRules = getAllGrammarRules();
-  let availableRules = [...allRules]; // Kopie erstellen
+  const generators = Object.keys(GRAMMAR_GENERATORS);
   let tasks = [];
   
-  // Mische die verfügbaren Regeln
-  availableRules.sort(() => Math.random() - 0.5);
-  
-  // Nimm die ersten 'amount' Aufgaben (keine Duplikate möglich)
-  for (let i = 0; i < Math.min(amount, availableRules.length); i++) {
-    tasks.push(availableRules[i]);
+  for (let i = 0; i < amount; i++) {
+    // Wähle zufälligen Generator
+    const randomGenerator = generators[Math.floor(Math.random() * generators.length)];
+    // Generiere Aufgabe
+    const task = GRAMMAR_GENERATORS[randomGenerator]();
+    tasks.push(task);
   }
   
   return tasks;
 }
 
-// Für Kompatibilität mit alter Funktion
+// Für Kompatibilität
 function getGrammarForUnit(unit) {
-  // Grammatik ist nicht mehr an Units gebunden
   return getGrammarTasks(20);
 }
+
+// ========================================
+// ERWEITERUNGS-ANLEITUNG
+// ========================================
+// Um neue Grammatik-Regeln hinzuzufügen:
+//
+// 1. Füge neue Wortlisten zu WORD_POOLS hinzu (falls nötig)
+// 2. Erstelle neuen Generator in GRAMMAR_GENERATORS:
+//
+//    new_rule: () => {
+//      // Deine Logik hier
+//      return { q: "Frage", options: ["opt1", "opt2"], a: "opt1" };
+//    }
+//
+// 3. Fertig! Der Generator wird automatisch verwendet
+//
+// Beispiel für Simple Present:
+//    simple_present: () => {
+//      const subj = ["he", "she", "it"][Math.floor(Math.random() * 3)];
+//      const verb = ["play", "work", "study"][Math.floor(Math.random() * 3)];
+//      return { q: `${subj} ___ football.`, options: [verb+"s", verb], a: verb+"s" };
+//    }
