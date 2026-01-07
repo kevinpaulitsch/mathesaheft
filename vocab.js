@@ -1,6 +1,7 @@
 // vocab.js
-const VOCAB = {
+// Inhalt bewusst NICHT verändert – nur ausgelagert
 
+const VOCAB = {
   unit1: {
     title: "Unit 1 – Classroom & Clothes",
     words: [
@@ -18,7 +19,6 @@ const VOCAB = {
       { en: "pencil case", de: "Federpennal" },
       { en: "glue stick", de: "Klebestift" },
       { en: "pencil sharpener", de: "Spitzer" },
-
       { en: "shirt", de: "Hemd" },
       { en: "skirt", de: "Rock" },
       { en: "sweater", de: "Pullover" },
@@ -41,7 +41,6 @@ const VOCAB = {
       { en: "tree", de: "Baum" },
       { en: "train", de: "Zug" },
       { en: "guide", de: "Führer" },
-
       { en: "in", de: "in" },
       { en: "on", de: "auf" },
       { en: "under", de: "unter" },
@@ -82,13 +81,11 @@ const VOCAB = {
       { en: "excited", de: "aufgeregt" },
       { en: "hungry", de: "hungrig" },
       { en: "tired", de: "müde" },
-
       { en: "morning", de: "Morgen" },
       { en: "lunchtime", de: "Mittag" },
       { en: "afternoon", de: "Nachmittag" },
       { en: "evening", de: "Abend" },
       { en: "night", de: "Nacht" },
-
       { en: "Monday", de: "Montag" },
       { en: "Tuesday", de: "Dienstag" },
       { en: "Wednesday", de: "Mittwoch" },
@@ -125,7 +122,6 @@ const VOCAB = {
       { en: "river", de: "Fluss" },
       { en: "market", de: "Markt" },
       { en: "woods", de: "Wald" },
-
       { en: "to climb", de: "klettern" },
       { en: "to jump", de: "springen" },
       { en: "to leave", de: "verlassen" },
@@ -154,14 +150,11 @@ const VOCAB = {
       { en: "never", de: "nie" }
     ]
   }
-
 };
 
-// Rückgabe-Funktion: Unit oder alle
 function getVocabForUnit(unit) {
   if (!unit || unit === "all") {
     return Object.values(VOCAB).flatMap(u => u.words);
   }
-  const unitKey = "unit" + unit;
-  return VOCAB[unitKey] ? VOCAB[unitKey].words.slice() : [];
+  return VOCAB["unit" + unit]?.words || [];
 }
