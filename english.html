@@ -4,35 +4,15 @@
 <meta charset="UTF-8">
 <title>GB English Trainer – More! 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-  margin:0; padding:10px; min-height:100vh;
-}
-.box{
-  max-width:500px;
-  margin:20px auto;
-  background:#fff;
-  padding:25px;
-  border-radius:15px;
-  box-shadow:0 10px 40px rgba(0,0,0,0.2);
-}
+body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);margin:0;padding:10px}
+.box{max-width:500px;margin:20px auto;background:#fff;padding:25px;border-radius:15px}
 h2{text-align:center;color:#667eea}
-select,button,input{
-  width:100%; padding:12px; margin:8px 0;
-  font-size:16px; border-radius:8px; border:2px solid #e0e0e0;
-}
-button{background:#667eea;color:white;border:none;font-weight:bold;cursor:pointer}
+select,button,input{width:100%;padding:12px;margin:8px 0;font-size:16px}
+button{background:#667eea;color:#fff;border:none;font-weight:bold}
 .btn-test{background:#ff6b6b}
 .btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.question{
-  margin:20px 0; padding:20px;
-  font-size:22px; font-weight:bold;
-  background:#f8f9fa; border-radius:10px;
-  text-align:center; min-height:60px;
-}
+.question{margin:20px 0;padding:20px;font-size:22px;background:#f8f9fa;border-radius:10px;text-align:center}
 .mc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mc button{background:#4CAF50}
 .hide{display:none}
@@ -45,7 +25,7 @@ button{background:#667eea;color:white;border:none;font-weight:bold;cursor:pointe
 <h2>🇬🇧 GB English Trainer – More! 1</h2>
 
 <select id="unit">
-<option value="all">⭐ Alle Units</option>
+<option value="all">Alle Units</option>
 <option value="1">Unit 1</option><option value="2">Unit 2</option>
 <option value="3">Unit 3</option><option value="4">Unit 4</option>
 <option value="5">Unit 5</option><option value="6">Unit 6</option>
@@ -59,130 +39,68 @@ button{background:#667eea;color:white;border:none;font-weight:bold;cursor:pointe
 </select>
 
 <select id="mode">
-<option value="write">✏️ Schreiben</option>
-<option value="mc">🎯 Multiple Choice</option>
-<option value="grammar">📘 Grammatik</option>
+<option value="write">Schreiben</option>
+<option value="mc">Multiple Choice</option>
+<option value="grammar">Grammatik</option>
 </select>
 
 <div class="btn-group">
-<button onclick="startTrainer()">▶️ Trainer</button>
-<button class="btn-test" onclick="startTest()">📝 Test</button>
+<button onclick="start(false)">Trainer</button>
+<button class="btn-test" onclick="start(true)">Test</button>
 </div>
 
-<div class="question" id="question">Modus wählen & starten</div>
+<div class="question" id="question">Start wählen</div>
 <div class="mc" id="mc"></div>
 
-<input id="answer" class="hide" placeholder="Antwort eingeben">
-<button id="okBtn" class="hide" onclick="checkAnswer()">OK ✓</button>
+<input id="answer" class="hide">
+<button id="okBtn" class="hide" onclick="submit()">OK</button>
 
 <div class="stats hide" id="stats">
-<div>✅ <span id="correct">0</span></div>
-<div>❌ <span id="wrong">0</span></div>
+<div>✅ <span id="c">0</span></div>
+<div>❌ <span id="w">0</span></div>
 </div>
 </div>
 
-<!-- 🔴 WICHTIG: Dateien VOR Hauptlogik -->
 <script src="vocab.js"></script>
 <script src="grammar.js"></script>
 
 <script>
-/* ===== Sicherheits-Checks ===== */
-if(typeof getVocabForUnit !== "function"){
-  alert("FEHLER: vocab.js wurde nicht geladen!");
-}
-if(typeof getGrammarTasks !== "function"){
-  alert("FEHLER: grammar.js wurde nicht geladen!");
-}
+let pool=[],cur=null,c=0,w=0;
 
-/* ===== State ===== */
-let pool=[], current=null, correct=0, wrong=0;
-
-/* ===== Start ===== */
-function startTrainer(){
-  correct=0; wrong=0;
+function start(test){
+  c=0;w=0;
   document.getElementById("stats").classList.remove("hide");
-  buildPool(false);
+  const m=mode.value,u=unit.value;
+  pool=m==="grammar"?getGrammarTasks(test?20:30)
+      :getVocabForUnit(u).map(v=>({...v,type:"v"}));
+  pool.sort(()=>Math.random()-0.5);
   next();
 }
 
-function startTest(){
-  correct=0; wrong=0;
-  document.getElementById("stats").classList.remove("hide");
-  buildPool(true);
-  next();
-}
-
-/* ===== Pool ===== */
-function buildPool(isTest){
-  const unit=document.getElementById("unit").value;
-  const mode=document.getElementById("mode").value;
-
-  if(mode==="grammar"){
-    pool=getGrammarTasks(isTest?20:30);
-  }else{
-    pool=getVocabForUnit(unit).map(v=>({type:"vocab",...v}));
-    shuffle(pool);
-    if(isTest) pool=pool.slice(0,20);
-  }
-}
-
-/* ===== Questions ===== */
 function next(){
-  document.getElementById("mc").innerHTML="";
-  document.getElementById("answer").classList.add("hide");
-  document.getElementById("okBtn").classList.add("hide");
-
-  if(!pool.length){
-    document.getElementById("question").innerText="Fertig 🎉";
-    return;
+  mc.innerHTML=""; answer.classList.add("hide"); okBtn.classList.add("hide");
+  if(!pool.length){question.innerText="Fertig 🎉";return;}
+  cur=pool.shift();
+  if(cur.q){
+    question.innerText=cur.q;
+    cur.options.forEach(o=>{
+      const b=document.createElement("button");
+      b.innerText=o; b.onclick=()=>check(o,cur.a);
+      mc.appendChild(b);
+    });
+  }else{
+    const d=direction.value==="mix"?(Math.random()<.5?"de-en":"en-de"):direction.value;
+    const q=d==="de-en"?cur.de:cur.en;
+    cur.a=d==="de-en"?cur.en:cur.de;
+    question.innerText=q;
+    answer.value=""; answer.classList.remove("hide");
+    okBtn.classList.remove("hide");
   }
-
-  current=pool.shift();
-  if(current.q) showGrammar(current);
-  else showVocab(current);
 }
 
-function showGrammar(g){
-  document.getElementById("question").innerText=g.q;
-  g.options.forEach(o=>{
-    const b=document.createElement("button");
-    b.innerText=o;
-    b.onclick=()=>check(o,g.a);
-    document.getElementById("mc").appendChild(b);
-  });
-}
-
-function showVocab(v){
-  const dir=document.getElementById("direction").value==="mix"
-    ? Math.random()<0.5?"de-en":"en-de"
-    : document.getElementById("direction").value;
-
-  const q=dir==="de-en"?v.de:v.en;
-  const a=dir==="de-en"?v.en:v.de;
-  current.solution=a;
-
-  document.getElementById("question").innerText=q;
-  document.getElementById("answer").classList.remove("hide");
-  document.getElementById("okBtn").classList.remove("hide");
-}
-
-/* ===== Check ===== */
-function check(user,sol){
-  if(user===sol) correct++; else wrong++;
-  update();
-  next();
-}
-
-function checkAnswer(){
-  check(document.getElementById("answer").value.trim(),current.solution);
-}
-
-/* ===== Helpers ===== */
-function shuffle(a){return a.sort(()=>Math.random()-0.5);}
-function update(){
-  document.getElementById("correct").innerText=correct;
-  document.getElementById("wrong").innerText=wrong;
-}
+function submit(){check(answer.value.trim(),cur.a);}
+function check(u,a){u===a?c++:w++;update();next();}
+function update(){cEl.innerText=c;wEl.innerText=w;}
 </script>
 </body>
 </html>
