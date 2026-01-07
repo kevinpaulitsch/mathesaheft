@@ -70,12 +70,18 @@
     .btn-group button {
       margin: 0;
     }
-    .btn-error {
-      grid-column: 1 / -1;
+    .btn-test {
       background: #ff6b6b;
     }
-    .btn-error:hover:not(:disabled) {
+    .btn-test:hover {
       background: #ee5a52;
+    }
+    .btn-error {
+      grid-column: 1 / -1;
+      background: #ffa500;
+    }
+    .btn-error:hover:not(:disabled) {
+      background: #ff8c00;
     }
     .btn-reset {
       grid-column: 1 / -1;
@@ -219,6 +225,16 @@
       margin: 10px 0;
       font-size: 18px;
     }
+    .grade-display {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 20px 0;
+      padding: 30px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
     .sound-toggle {
       position: absolute;
       top: 15px;
@@ -284,7 +300,7 @@
 
   <div class="btn-group">
     <button onclick="startTrainer()">▶️ Trainer</button>
-    <button onclick="startTest()">📝 Test</button>
+    <button class="btn-test" onclick="startTest()">📝 Test (20 Fragen)</button>
     <button class="btn-error" onclick="startErrorTrainer()" id="errorBtn" disabled>🔁 Fehler-Trainer (<span id="errorCount">0</span>)</button>
   </div>
 
@@ -330,8 +346,8 @@ let startTime = null;
 let timerInterval = null;
 let soundEnabled = true;
 let isActive = false;
+let isTestMode = false;
 
-// Sound-Effekte (einfache Frequenzen)
 function playSound(type) {
   if (!soundEnabled) return;
   
@@ -391,7 +407,6 @@ function updateStats() {
   document.getElementById("wrongCount").innerText = incorrect;
   document.getElementById("errorCount").innerText = wrong.length;
   
-  // Fehler-Trainer Button aktivieren/deaktivieren
   const errorBtn = document.getElementById("errorBtn");
   errorBtn.disabled = wrong.length === 0;
   
@@ -399,13 +414,11 @@ function updateStats() {
   const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
   document.getElementById("percentage").innerText = percentage + "%";
   
-  // Fortschrittsbalken
   if (totalQuestions > 0) {
     const progress = ((totalQuestions - pool.length) / totalQuestions) * 100;
     document.getElementById("progressFill").style.width = progress + "%";
   }
   
-  // Streak anzeigen
   if (streak >= 3) {
     document.getElementById("streakCount").innerText = streak;
     document.getElementById("streak").classList.remove("hide");
@@ -421,6 +434,7 @@ function startTrainer() {
   streak = 0;
   maxStreak = 0;
   isActive = true;
+  isTestMode = false;
   preparePool();
   totalQuestions = pool.length;
   
@@ -435,7 +449,42 @@ function startTrainer() {
 }
 
 function startTest() {
-  startTrainer();
+  wrong = [];
+  correct = 0;
+  incorrect = 0;
+  streak = 0;
+  maxStreak = 0;
+  isActive = true;
+  isTestMode = true;
+  
+  // TEST: 20 Fragen gemischt aus Vokabeln und Grammatik
+  const unit = document.getElementById("unit").value;
+  const dir = document.getElementById("direction").value;
+  
+  // 10 Vokabeln
+  let vocabPool = getVocabForUnit(unit);
+  let selectedVocab = [];
+  for (let i = 0; i < 10 && vocabPool.length > 0; i++) {
+    const randomIndex = Math.floor(Math.random() * vocabPool.length);
+    selectedVocab.push(vocabPool[randomIndex]);
+    vocabPool.splice(randomIndex, 1);
+  }
+  
+  // 10 Grammatik
+  let grammarPool = getGrammarTasks(10);
+  
+  // Mischen
+  pool = [...selectedVocab, ...grammarPool].sort(() => Math.random() - 0.5);
+  totalQuestions = pool.length;
+  
+  document.getElementById("stats").classList.remove("hide");
+  document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
+  updateStats();
+  nextQuestion();
 }
 
 function startErrorTrainer() {
@@ -452,6 +501,7 @@ function startErrorTrainer() {
   streak = 0;
   maxStreak = 0;
   isActive = true;
+  isTestMode = false;
   
   document.getElementById("stats").classList.remove("hide");
   document.getElementById("progressBar").classList.remove("hide");
@@ -468,7 +518,7 @@ function preparePool() {
   const mode = document.getElementById("mode").value;
 
   if (mode === "grammar") {
-    pool = [...getGrammarForUnit(unit)];
+    pool = getGrammarTasks(20);
   } else {
     pool = [...getVocabForUnit(unit)];
   }
@@ -490,8 +540,9 @@ function nextQuestion() {
 
   const mode = document.getElementById("mode").value;
 
-  /* ===== GRAMMATIK ===== */
-  if (mode === "grammar") {
+  // Prüfe ob es eine Grammatik-Frage ist (hat 'options' property)
+  if (current.options) {
+    // GRAMMATIK
     document.getElementById("question").innerText = current.q;
     current.solution = current.a;
     
@@ -501,7 +552,7 @@ function nextQuestion() {
     return;
   }
 
-  /* ===== VOKABELN ===== */
+  // VOKABELN
   const dir = document.getElementById("direction").value;
 
   let q = current.de;
@@ -513,7 +564,7 @@ function nextQuestion() {
   current.solution = a;
   document.getElementById("question").innerText = q;
 
-  if (mode === "mc") {
+  if (mode === "mc" || isTestMode) {
     document.getElementById("answer").classList.add("hide");
     document.getElementById("okBtn").classList.add("hide");
     showMC(a, dir);
@@ -539,13 +590,24 @@ function showMC(correct, dir) {
   const mc = document.getElementById("mc");
   let options = [correct];
 
-  while (options.length < 4 && pool.length >= 4) {
-    const r = pool[Math.floor(Math.random() * pool.length)];
-    let candidate = r.en;
+  // Für Grammatik im Test-Modus
+  if (current.options) {
+    current.options.forEach(opt => {
+      if (!options.includes(opt)) options.push(opt);
+    });
+  } else {
+    // Für Vokabeln
+    let attempts = 0;
+    while (options.length < 4 && attempts < 50) {
+      attempts++;
+      const allVocab = getVocabForUnit(document.getElementById("unit").value);
+      const r = allVocab[Math.floor(Math.random() * allVocab.length)];
+      let candidate = r.en;
 
-    if (dir === "en-de") candidate = r.de;
-    if (!options.includes(candidate) && candidate !== correct) {
-      options.push(candidate);
+      if (dir === "en-de") candidate = r.de;
+      if (!options.includes(candidate) && candidate !== correct) {
+        options.push(candidate);
+      }
     }
   }
 
@@ -595,13 +657,21 @@ function checkAnswer(value = null, button = null) {
 
   updateStats();
   
-  // Buttons deaktivieren nach Antwort
   if (button) {
     const allButtons = document.querySelectorAll('.mc button');
     allButtons.forEach(btn => btn.disabled = true);
   }
   
   setTimeout(nextQuestion, 1500);
+}
+
+function calculateGrade(percentage) {
+  if (percentage >= 90) return { grade: "Sehr gut (1)", color: "#28a745" };
+  if (percentage >= 80) return { grade: "Gut (2)", color: "#4CAF50" };
+  if (percentage >= 70) return { grade: "Befriedigend (3)", color: "#ffa500" };
+  if (percentage >= 60) return { grade: "Genügend (4)", color: "#ff6b6b" };
+  if (percentage >= 50) return { grade: "Nicht genügend (5)", color: "#dc3545" };
+  return { grade: "Nicht genügend (5)", color: "#dc3545" };
 }
 
 function showFinalResults() {
@@ -643,10 +713,18 @@ function showFinalResults() {
   }
   
   const finalScreen = document.getElementById("finalScreen");
+  
+  let gradeHTML = "";
+  if (isTestMode) {
+    const gradeInfo = calculateGrade(percentage);
+    gradeHTML = `<div class="grade-display" style="background: ${gradeInfo.color};">${gradeInfo.grade}</div>`;
+  }
+  
   finalScreen.innerHTML = `
     <div class="final-screen">
       <h3>${emoji} ${message}</h3>
       <p style="font-size: 18px; color: #666;">${comment}</p>
+      ${gradeHTML}
       <div class="final-stats">
         <div>📊 <strong>${correct}</strong> von <strong>${total}</strong> richtig</div>
         <div>✅ Quote: <strong>${percentage}%</strong></div>
@@ -693,7 +771,6 @@ document.getElementById("answer").addEventListener("keydown", e => {
   if (e.key === "Enter") checkAnswer();
 });
 
-// Verhindere versehentliches Verlassen
 window.addEventListener('beforeunload', (e) => {
   if (isActive && pool.length > 0) {
     e.preventDefault();
