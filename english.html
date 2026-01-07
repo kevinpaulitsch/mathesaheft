@@ -138,7 +138,7 @@
       padding: 15px;
       font-size: 17px;
     }
-    .mc button:hover {
+    .mc button:hover:not(:disabled) {
       background: #45a049;
     }
     .mc button.correct {
@@ -268,10 +268,12 @@
       cursor: pointer;
       border-radius: 8px;
       transition: all 0.3s;
+      width: auto;
     }
     .sound-toggle:hover {
       background: #667eea;
       color: white;
+      transform: none;
     }
     .achievements-btn {
       position: absolute;
@@ -285,10 +287,12 @@
       cursor: pointer;
       border-radius: 8px;
       transition: all 0.3s;
+      width: auto;
     }
     .achievements-btn:hover {
       background: #ffa500;
       color: white;
+      transform: none;
     }
     .modal {
       display: none;
@@ -371,20 +375,6 @@
     }
     .progress-item strong {
       color: #667eea;
-    }
-    .new-badge {
-      display: inline-block;
-      background: #ff6b6b;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: bold;
-      animation: bounce 1s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
     }
     @media (max-width: 600px) {
       .box {
@@ -514,7 +504,6 @@
 
 <script>
 let pool = [];
-let originalPool = [];
 let current = null;
 let wrong = [];
 let correct = 0;
@@ -527,7 +516,6 @@ let timerInterval = null;
 let soundEnabled = true;
 let isActive = false;
 let isTestMode = false;
-let speechEnabled = true;
 
 // Fortschritts-Speicherung
 let progress = {
@@ -553,7 +541,6 @@ const ACHIEVEMENTS = [
   { id: 'grade_1', icon: '🥇', title: 'Sehr gut!', desc: 'Note 1 im Test', requirement: 1, type: 'grade1' }
 ];
 
-// Fortschritt laden
 function loadProgress() {
   const saved = localStorage.getItem('englishTrainerProgress');
   if (saved) {
@@ -561,12 +548,10 @@ function loadProgress() {
   }
 }
 
-// Fortschritt speichern
 function saveProgress() {
   localStorage.setItem('englishTrainerProgress', JSON.stringify(progress));
 }
 
-// Achievement prüfen
 function checkAchievements() {
   progress.newAchievements = [];
   
@@ -602,7 +587,6 @@ function checkAchievements() {
   saveProgress();
 }
 
-// Achievement-Benachrichtigung
 function showAchievementNotification(achievement) {
   const notification = document.createElement('div');
   notification.style.cssText = `
@@ -626,12 +610,10 @@ function showAchievementNotification(achievement) {
   document.body.appendChild(notification);
   
   setTimeout(() => {
-    notification.style.animation = 'slideOut 0.5s';
-    setTimeout(() => notification.remove(), 500);
+    notification.remove();
   }, 3000);
 }
 
-// Achievements Modal
 function showAchievements() {
   document.getElementById('totalAnswered').innerText = progress.totalAnswered;
   document.getElementById('totalCorrect').innerText = progress.totalCorrect;
@@ -665,15 +647,12 @@ function closeAchievements() {
   document.getElementById('achievementsModal').classList.remove('show');
 }
 
-// Sprachausgabe
 function speak(text) {
-  if (!speechEnabled || !text) return;
-  
-  // Nur englische Wörter vorlesen
-  if (/[äöüß]/.test(text)) return; // Deutsche Umlaute ignorieren
+  if (!soundEnabled || !text) return;
+  if (/[äöüß]/.test(text)) return;
   
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel(); // Vorherige Ausgabe stoppen
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-GB';
     utterance.rate = 0.9;
@@ -682,9 +661,11 @@ function speak(text) {
 }
 
 function addSpeakButton() {
-  // Nur bei englischen Vokabeln
   if (current && current.en && !current.options) {
     const questionDiv = document.getElementById('question');
+    const existing = questionDiv.querySelector('.speak-btn');
+    if (existing) existing.remove();
+    
     const btn = document.createElement('button');
     btn.className = 'speak-btn';
     btn.innerHTML = '🔊';
@@ -701,31 +682,35 @@ loadProgress();
 function playSound(type) {
   if (!soundEnabled) return;
   
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  if (type === 'correct') {
-    oscillator.frequency.value = 800;
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.2);
-  } else if (type === 'wrong') {
-    oscillator.frequency.value = 200;
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
-  } else if (type === 'finish') {
-    oscillator.frequency.value = 600;
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    if (type === 'correct') {
+      oscillator.frequency.value = 800;
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } else if (type === 'wrong') {
+      oscillator.frequency.value = 200;
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } else if (type === 'finish') {
+      oscillator.frequency.value = 600;
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+  } catch(e) {
+    console.log('Audio not supported');
   }
 }
 
@@ -823,4 +808,25 @@ function startTest() {
   totalQuestions = pool.length;
   
   document.getElementById("stats").classList.remove("hide");
-  document.getElementById("progressBar").classList.remove("hide
+  document.getElementById("progressBar").classList.remove("hide");
+  document.getElementById("timer").classList.remove("hide");
+  document.getElementById("finalScreen").classList.add("hide");
+  
+  startTimer();
+  updateStats();
+  nextQuestion();
+}
+
+function startErrorTrainer() {
+  if (wrong.length === 0) {
+    alert("Keine Fehler vorhanden! 🎉");
+    return;
+  }
+  
+  pool = [...wrong];
+  wrong = [];
+  totalQuestions = pool.length;
+  correct = 0;
+  incorrect = 0;
+  streak = 0;
+  maxStreak
