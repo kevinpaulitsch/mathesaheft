@@ -495,6 +495,7 @@ function displayQuestion() {
   }
 }
 
+/* ===== GEÄNDERTE displayMCOptions() - mischt Option-Objekte und markiert korrekt via isCorrect ===== */
 function displayMCOptions() {
   mcAnswered = false;
   const optionsDiv = document.getElementById("mcOptions");
@@ -511,33 +512,30 @@ function displayMCOptions() {
     return;
   }
   
-  // Erstelle Array mit Optionen und ihrer ursprünglichen Position
-  const optionsWithIndex = currentQuestion.mc.map((option, index) => ({
+  // Erstelle Array mit Optionen + isCorrect-Flag
+  const options = currentQuestion.mc.map((option, index) => ({
     text: option,
-    originalIndex: index
+    isCorrect: index === currentQuestion.c
   }));
   
-  // Mische die Optionen zufällig (Fisher-Yates Shuffle)
-  for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+  // Fisher-Yates Shuffle
+  for (let i = options.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+    [options[i], options[j]] = [options[j], options[i]];
   }
   
-  // Speichere die gemischten Optionen und finde die neue Position der richtigen Antwort
-  const shuffledOptions = optionsWithIndex.map(item => item.text);
-  const correctNewIndex = optionsWithIndex.findIndex(item => item.originalIndex === currentQuestion.c);
-  
-  // Erstelle die Antwortoptionen
-  shuffledOptions.forEach((option, index) => {
+  // Erstelle die Antwortoptionen (onclick übergibt isCorrect)
+  options.forEach(opt => {
     const optionDiv = document.createElement('div');
     optionDiv.className = 'mc-option';
-    optionDiv.textContent = option;
-    optionDiv.onclick = () => checkMCAnswer(index, correctNewIndex, optionDiv);
+    optionDiv.textContent = opt.text;
+    optionDiv.onclick = () => checkMCAnswer(opt.isCorrect, optionDiv);
     optionsDiv.appendChild(optionDiv);
   });
 }
 
-function checkMCAnswer(selected, correctIndex, element) {
+/* ===== GEÄNDERTE checkMCAnswer(isCorrect, element) - markiert correct über isCorrect und hebt richtige Antwort hervor über originaldaten ===== */
+function checkMCAnswer(isCorrect, element) {
   if (mcAnswered) return;
   mcAnswered = true;
   
@@ -547,14 +545,19 @@ function checkMCAnswer(selected, correctIndex, element) {
   
   options.forEach(opt => opt.classList.add('disabled'));
   
-  if (selected === correctIndex) {
+  if (isCorrect) {
     element.classList.add('correct');
     feedbackDiv.className = 'mc-feedback correct show';
     feedbackDiv.textContent = '✓ Richtig! ' + currentQuestion.a;
     if (currentQuestion.l < 2) currentQuestion.l++;
   } else {
     element.classList.add('wrong');
-    options[correctIndex].classList.add('correct');
+    // richtige Option hervorheben (Vergleich mit originaler mc-Array-Position)
+    options.forEach(opt => {
+      if (opt.textContent === currentQuestion.mc[currentQuestion.c]) {
+        opt.classList.add('correct');
+      }
+    });
     feedbackDiv.className = 'mc-feedback wrong show';
     feedbackDiv.textContent = '✗ Leider falsch. Richtige Antwort: ' + currentQuestion.a;
     if (currentQuestion.l > 0) currentQuestion.l--;
