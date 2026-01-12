@@ -5,129 +5,672 @@
 <title>Biologie Fehlertrainer – Komplett</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: Arial, sans-serif; background:#eef1f4; padding:15px; }
-.box { background:#fff; max-width:720px; margin:auto; padding:20px; border-radius:12px; }
-h1 { text-align:center; }
-.level { font-weight:bold; margin-bottom:10px; }
-button {
-  width:100%; padding:14px; margin-top:10px;
-  font-size:16px; border:none; border-radius:8px;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px;
 }
-.correct { background:#2ecc71; color:white; }
-.wrong { background:#e74c3c; color:white; }
-.stats { margin-top:15px; font-size:14px; }
-small { color:#666; }
+
+.container { max-width: 800px; margin: 0 auto; }
+.header { text-align: center; color: white; margin-bottom: 30px; }
+.header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+
+.progress-overview {
+  background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.progress-bars { display: grid; gap: 12px; margin-top: 15px; }
+.progress-item { display: flex; align-items: center; gap: 12px; }
+.progress-label { min-width: 140px; font-weight: 600; font-size: 14px; }
+.progress-bar {
+  flex: 1; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; transition: width 0.5s ease; display: flex; align-items: center;
+  justify-content: center; color: white; font-weight: bold; font-size: 13px;
+}
+.level-a .progress-fill { background: #e74c3c; }
+.level-b .progress-fill { background: #f39c12; }
+.level-c .progress-fill { background: #2ecc71; }
+
+.card {
+  background: white; border-radius: 15px; padding: 30px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px;
+}
+
+.level-badge {
+  display: inline-block; padding: 8px 16px; border-radius: 20px;
+  font-weight: bold; font-size: 14px; margin-bottom: 20px;
+}
+.badge-a { background: #fee; color: #e74c3c; }
+.badge-b { background: #fef5e7; color: #f39c12; }
+.badge-c { background: #eafaf1; color: #2ecc71; }
+
+.mode-switch {
+  display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;
+}
+
+.mode-btn {
+  padding: 10px 24px; border: 2px solid #667eea; border-radius: 8px;
+  font-weight: 600; cursor: pointer; transition: all 0.3s;
+  background: white; color: #667eea;
+}
+
+.mode-btn.active {
+  background: #667eea; color: white;
+}
+
+.question-box {
+  background: #f8f9fa; padding: 20px; border-radius: 10px;
+  margin-bottom: 20px; border-left: 4px solid #667eea;
+}
+
+.question-text {
+  font-size: 1.2em; font-weight: 600; color: #2c3e50;
+}
+
+.answer-box {
+  background: #fff; border: 2px solid #e0e0e0; border-radius: 10px;
+  padding: 15px; margin-bottom: 20px;
+}
+
+.answer-toggle {
+  cursor: pointer; color: #667eea; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.answer-content {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e0e0;
+  color: #27ae60; font-weight: 500; line-height: 1.6; display: none;
+}
+
+.answer-content.show { display: block; }
+.arrow { transition: transform 0.3s; display: inline-block; }
+.arrow.rotated { transform: rotate(90deg); }
+
+.button-group {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;
+}
+
+button {
+  padding: 16px; font-size: 1.1em; font-weight: bold; border: none;
+  border-radius: 10px; cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+button:hover {
+  transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.btn-correct { background: #2ecc71; color: white; }
+.btn-correct:hover { background: #27ae60; }
+.btn-wrong { background: #e74c3c; color: white; }
+.btn-wrong:hover { background: #c0392b; }
+.btn-reset { background: #95a5a6; color: white; width: 100%; }
+.btn-reset:hover { background: #7f8c8d; }
+
+.mc-options { display: grid; gap: 12px; margin-bottom: 20px; }
+
+.mc-option {
+  padding: 15px 20px; background: #f8f9fa; border: 2px solid #e0e0e0;
+  border-radius: 10px; cursor: pointer; transition: all 0.3s;
+  font-size: 1.05em; text-align: left;
+}
+
+.mc-option:hover { background: #e8eaf6; border-color: #667eea; }
+.mc-option.correct { background: #d4edda; border-color: #28a745; }
+.mc-option.wrong { background: #f8d7da; border-color: #dc3545; }
+.mc-option.disabled { pointer-events: none; opacity: 0.7; }
+
+.mc-feedback {
+  padding: 15px; border-radius: 10px; margin-top: 15px;
+  font-weight: 600; display: none;
+}
+.mc-feedback.show { display: block; }
+.mc-feedback.correct {
+  background: #d4edda; color: #155724; border-left: 4px solid #28a745;
+}
+.mc-feedback.wrong {
+  background: #f8d7da; color: #721c24; border-left: 4px solid #e74c3c;
+}
+
+.mc-next-btn {
+  width: 100%; padding: 16px; background: #667eea; color: white;
+  border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold;
+  cursor: pointer; margin-top: 15px; display: none;
+}
+.mc-next-btn.show { display: block; }
+
+.category-filter {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;
+}
+
+.filter-btn {
+  padding: 8px 16px; background: #ecf0f1; border: 2px solid transparent;
+  border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-btn:hover { background: #bdc3c7; transform: none; box-shadow: none; }
+.filter-btn.active { background: #667eea; color: white; border-color: #667eea; }
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px; margin-top: 20px;
+}
+
+.stat-card {
+  background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;
+}
+
+.stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
+.stat-label { font-size: 0.9em; color: #7f8c8d; margin-top: 5px; }
+
+.hint {
+  background: #e8f4f8; padding: 12px; border-radius: 8px; font-size: 0.9em;
+  color: #34495e; margin-top: 15px; border-left: 4px solid #3498db;
+}
+
+@media (max-width: 600px) {
+  .header h1 { font-size: 1.8em; }
+  .button-group { grid-template-columns: 1fr; }
+  .mode-switch { flex-direction: column; }
+}
 </style>
 </head>
-
 <body>
-<div class="box">
-<h1>🧠 Biologie Fehler-Trainer</h1>
-<div id="level" class="level"></div>
-<div id="question"></div>
-<div id="answer"></div>
-<button class="correct" onclick="mark(true)">Richtig</button>
-<button class="wrong" onclick="mark(false)">Falsch</button>
-<div id="stats" class="stats"></div>
-<small>Regel: richtig → Stufe hoch | falsch → Stufe runter</small>
+
+<div class="container">
+  <div class="header">
+    <h1>🧠 Biologie Fehler-Trainer</h1>
+    <p>Vollständige Prüfungsvorbereitung mit 90+ Fragen</p>
+  </div>
+
+  <div class="progress-overview">
+    <h3 style="margin-bottom: 15px;">📊 Dein Lernfortschritt</h3>
+    <div class="progress-bars" id="progressBars"></div>
+    
+    <div class="category-filter" id="categoryFilter"></div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalQuestions">0</div>
+        <div class="stat-label">Fragen gesamt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="masteredCount">0</div>
+        <div class="stat-label">Beherrscht</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="percentMastered">0%</div>
+        <div class="stat-label">Fortschritt</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+      <div id="levelBadge"></div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="normalModeBtn" onclick="switchMode('normal')">Normal</button>
+        <button class="mode-btn" id="mcModeBtn" onclick="switchMode('mc')">Multiple Choice</button>
+      </div>
+    </div>
+    
+    <div class="question-box">
+      <div class="question-text" id="question"></div>
+    </div>
+
+    <div id="normalMode">
+      <div class="answer-box">
+        <div class="answer-toggle" id="answerToggle">
+          <span class="arrow">▶</span>
+          <span>Antwort anzeigen</span>
+        </div>
+        <div class="answer-content" id="answerContent"></div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-correct" onclick="markNormal(true)">✓ Richtig gewusst</button>
+        <button class="btn-wrong" onclick="markNormal(false)">✗ Falsch / Unsicher</button>
+      </div>
+    </div>
+
+    <div id="mcMode" style="display: none;">
+      <div class="mc-options" id="mcOptions"></div>
+      <div class="mc-feedback" id="mcFeedback"></div>
+      <button class="mc-next-btn" id="mcNextBtn" onclick="nextMC()">Nächste Frage →</button>
+    </div>
+
+    <button class="btn-reset" onclick="resetProgress()">Fortschritt zurücksetzen</button>
+
+    <div class="hint">
+      💡 <strong>Tipp:</strong> Fragen auf Stufe A werden häufiger wiederholt. 
+      <span id="modeHint">Bei richtiger Antwort steigt die Frage eine Stufe auf.</span>
+    </div>
+  </div>
 </div>
 
 <script>
-let questions = JSON.parse(localStorage.getItem("bioTrainer")) || [
+const categories = {
+  "Wolf": "Wolf",
+  "Hund - Grundlagen": "Hund-Grund",
+  "Hund - Körperbau": "Hund-Körper",
+  "Hund - Österreich": "Hund-AT",
+  "Zähmung & Zucht": "Zucht",
+  "Körpersprache": "Körpersprache",
+  "Katze - Grundlagen": "Katze-Grund",
+  "Katze - Körperbau": "Katze-Körper",
+  "Gebisse": "Gebisse",
+  "Gebisse - Vergleich": "Gebisse-Vergleich",
+  "Ernährung": "Ernährung",
+  "Transfer": "Transfer"
+};
 
-/* WOLF */
-{q:"Von welchem Tier stammen alle Haushunde ab?", a:"Vom Wolf.", l:0},
-{q:"Warum ist der Wolf ein Hetzjäger?", a:"Er verfolgt Beute über lange Strecken, bis sie erschöpft ist.", l:0},
-{q:"Warum ist Ausdauer für den Wolf wichtiger als Schnelligkeit?", a:"Weil die Beute müde wird.", l:0},
-{q:"Warum lebt der Wolf im Rudel?", a:"Höherer Jagderfolg und gemeinsame Jungenaufzucht.", l:0},
-{q:"Welche Sinnesleistung ist beim Wolf besonders stark?", a:"Der Geruchssinn.", l:0},
-{q:"Warum wäre Einzeljagd für Wölfe meist erfolglos?", a:"Beute ist oft größer oder schneller.", l:0},
-{q:"Welche Rolle spielt das Rudel für Jungtiere?", a:"Gemeinsame Versorgung und Schutz.", l:0},
-
-/* ZÄHMUNG & ZUCHT */
-{q:"Was bedeutet Zähmung?", a:"Verhaltensänderung durch den Menschen.", l:0},
-{q:"Was bedeutet Zucht?", a:"Gezielte Auswahl bestimmter Merkmale.", l:0},
-{q:"Was wird durch Zucht nicht verändert?", a:"Die Artzugehörigkeit.", l:0},
-{q:"Warum konnte der Wolf gezähmt werden?", a:"Wegen seines Rudel- und Sozialverhaltens.", l:0},
-{q:"Warum ist der Husky dem Wolf ähnlicher als der Pekinese?", a:"Weniger extreme Zucht.", l:0},
-{q:"Warum kann extreme Zucht gesundheitliche Probleme verursachen?", a:"Extreme Körpermerkmale schaden der Gesundheit.", l:0},
-
-/* HUND & ARBEIT */
-{q:"Warum eignen sich Hunde als Drogenspürhunde?", a:"Sehr guter Geruchssinn.", l:0},
-{q:"Warum eignen sich Hunde als Familienhunde?", a:"Sie sind Rudeltiere.", l:0},
-{q:"Warum sind nicht alle Hunde für jede Aufgabe geeignet?", a:"Unterschiedliche Zuchtziele.", l:0},
-
-/* KÖRPERSPRACHE */
-{q:"Was bedeutet ein eingezogener Schwanz beim Hund?", a:"Angst oder Unterwerfung.", l:0},
-{q:"Was zeigen gefletschte Zähne und aufgerichtete Ohren?", a:"Aggression.", l:0},
-{q:"Warum ist das Erkennen von Körpersprache wichtig?", a:"Zur Vermeidung von gefährlichen Situationen.", l:0},
-
-/* KATZE */
-{q:"Welche Jagdart nutzt die Katze?", a:"Schleichjagd.", l:0},
-{q:"Warum jagen Katzen meist allein?", a:"Überraschung ist entscheidend.", l:0},
-{q:"Welche Schritte gehören zur Katzenjagd?", a:"Anschleichen – Lauern – Sprung.", l:0},
-{q:"Warum wäre Rudeljagd für Katzen ungeeignet?", a:"Überraschung geht verloren.", l:0},
-{q:"Hauptunterschied Wolf- vs. Katzenjagd?", a:"Ausdauerjagd vs. Überraschungsjagd.", l:0},
-
-/* GEBISSE */
-{q:"Merkmal eines Fleischfressergebisses?", a:"Große Eck- und Reißzähne.", l:0},
-{q:"Funktion der Reißzähne?", a:"Zerschneiden von Fleisch.", l:0},
-{q:"Warum haben Pflanzenfresser breite Mahlzähne?", a:"Zum Zerkleinern pflanzlicher Nahrung.", l:0},
-{q:"Merkmal eines Nagergebisses?", a:"Lebenslang wachsende Schneidezähne.", l:0},
-{q:"Warum wachsen Nagerzähne lebenslang?", a:"Starke Abnutzung.", l:0},
-{q:"Warum ist der Mensch ein Allesfresser?", a:"Mischgebiss aus verschiedenen Zahnarten.", l:0},
-
-/* ERNÄHRUNG */
-{q:"Welche drei Hauptnährstoffe gibt es?", a:"Kohlenhydrate, Fette, Eiweiß.", l:0},
-{q:"Welcher Nährstoff liefert am meisten Energie?", a:"Fette.", l:0},
-{q:"Wofür braucht der Körper Eiweiß?", a:"Aufbau von Zellen und Muskeln.", l:0},
-{q:"Aufgabe der Kohlenhydrate?", a:"Energie liefern.", l:0},
-{q:"Warum sind Vitamine wichtig?", a:"Regeln Körperfunktionen.", l:0},
-{q:"Warum sind Mineralstoffe wichtig?", a:"Aufbau von Knochen und Zähnen.", l:0},
-{q:"Warum ist Wasser lebensnotwendig?", a:"Transport- und Stoffwechselprozesse.", l:0},
-{q:"Warum sind Ballaststoffe wichtig?", a:"Fördern die Verdauung.", l:0},
-
-/* SCHWIERIG / TRANSFER */
-{q:"Warum wäre ein Hund ohne Rudelverhalten kaum erziehbar?", a:"Keine soziale Orientierung.", l:0},
-{q:"Warum sind Hetzjäger ausdauernd gebaut?", a:"Lange Verfolgung der Beute.", l:0},
-{q:"Warum ist das Gebiss ein Hinweis auf die Ernährungsweise?", a:"Anpassung an Nahrung.", l:0},
-{q:"Warum führt falsche Zucht langfristig zu Problemen?", a:"Gesundheit leidet.", l:0}
-
+let questions = [
+  // ===== WOLF (15 Fragen) =====
+  {q:"Von welchem Tier stammen alle Haushunde ab?", a:"Vom Wolf.", l:0, cat:"Wolf", mc:["Vom Fuchs","Vom Wolf","Vom Kojoten","Vom Schakal"], c:1},
+  {q:"Warum ist der Wolf ein Hetzjäger?", a:"Er verfolgt Beute über lange Strecken, bis sie erschöpft ist.", l:0, cat:"Wolf", mc:["Er schleicht sich an","Er verfolgt Beute über lange Strecken","Er lauert im Versteck","Er springt aus Bäumen"], c:1},
+  {q:"Warum ist Ausdauer für den Wolf wichtiger als Schnelligkeit?", a:"Weil die Beute müde wird und der Wolf lange Strecken verfolgen kann.", l:0, cat:"Wolf", mc:["Wolf ist am schnellsten","Beute wird müde bei langer Verfolgung","Wolf kann nicht schnell laufen","Wolf jagt nur nachts"], c:1},
+  {q:"Warum lebt der Wolf im Rudel?", a:"Höherer Jagderfolg und gemeinsame Jungenaufzucht.", l:0, cat:"Wolf", mc:["Um schneller zu laufen","Höherer Jagderfolg und gemeinsame Jungenaufzucht","Nur zur Fortpflanzung","Um alleine zu jagen"], c:1},
+  {q:"Welche Sinnesleistung ist beim Wolf besonders stark?", a:"Der Geruchssinn.", l:0, cat:"Wolf", mc:["Das Sehvermögen","Der Geruchssinn","Der Geschmackssinn","Der Tastsinn"], c:1},
+  {q:"Warum wäre Einzeljagd für Wölfe meist erfolglos?", a:"Beute ist oft größer oder schneller.", l:0, cat:"Wolf", mc:["Wolf ist zu langsam","Beute ist oft größer oder schneller","Wolf kann nicht jagen","Wolf ist zu klein"], c:1},
+  {q:"Welche Rolle spielt das Rudel für Jungtiere?", a:"Gemeinsame Versorgung und Schutz.", l:0, cat:"Wolf", mc:["Keine Rolle","Gemeinsame Versorgung und Schutz","Nur Fütterung","Nur Schutz vor Kälte"], c:1},
+  {q:"Nenne die Körpermaße des Wolfs (Länge, Gewicht).", a:"Körperlänge: 100-150 cm, Schwanzlänge: 31-51 cm, Schulterhöhe: 66-100 cm, Gewicht: 12-75 kg.", l:0, cat:"Wolf", mc:["50-80 cm, 5-20 kg","100-150 cm, 12-75 kg","200-250 cm, 100-150 kg","80-100 cm, 8-15 kg"], c:1},
+  {q:"Wie schnell kann ein Wolf laufen und wie weit pro Tag?", a:"Bis zu 45 km/h, Laufstrecke pro Tag bis 60 km.", l:0, cat:"Wolf", mc:["30 km/h, 20 km","45 km/h, 60 km","60 km/h, 100 km","70 km/h, 80 km"], c:1},
+  {q:"Welche Fellfarben haben Wölfe?", a:"Meist grau (im hohen Norden) bis rot, braun und schwarz. Bauchseite hell.", l:0, cat:"Wolf", mc:["Nur grau","Grau, rot, braun, schwarz","Nur schwarz","Nur weiß"], c:1},
+  {q:"Wie lange ist die Tragzeit beim Wolf?", a:"61-63 Tage.", l:0, cat:"Wolf", mc:["30-40 Tage","61-63 Tage","90-100 Tage","120 Tage"], c:1},
+  {q:"Wie alt können Wölfe werden?", a:"8-16 Jahre (in Gefangenschaft bis 20 Jahre).", l:0, cat:"Wolf", mc:["3-5 Jahre","8-16 Jahre","20-30 Jahre","1-3 Jahre"], c:1},
+  {q:"Warum markieren Wölfe ihr Revier?", a:"Akustisch mit Heulen, um den Zusammenhalt des Rudels zu stärken und mit anderen Wölfen in Kontakt zu treten.", l:0, cat:"Wolf", mc:["Nur zum Kämpfen","Mit Heulen für Zusammenhalt","Um Beute anzulocken","Aus Langeweile"], c:1},
+  {q:"Wo war der Wolf früher verbreitet und wo heute?", a:"Früher: weltweit am weitesten verbreitet. Heute: Rückkehr nach Europa und Österreich. In Österreich vor ca. 150 Jahren ausgerottet.", l:0, cat:"Wolf", mc:["Nur in Asien","Weltweit, heute Rückkehr nach Europa","Nur in Afrika","Nie in Europa"], c:1},
+  {q:"Warum wurde der Wolf fast ausgerottet?", a:"Durch Bevölkerungszunahme, Verkleinerung des Lebensraums und Jagd. Der Wolf wurde als 'böser Wolf' gnadenlos gejagt.", l:0, cat:"Wolf", mc:["Zu viele Wölfe","Bevölkerungswachstum und Jagd","Naturkatastrophen","Klimawandel"], c:1},
+  
+  // ===== HUND GRUNDLAGEN (10 Fragen) =====
+  {q:"Warum eignen sich Hunde als Drogenspürhunde?", a:"Sehr guter Geruchssinn (130 Millionen Riechzellen).", l:0, cat:"Hund-Grund", mc:["Gutes Sehvermögen","Sehr guter Geruchssinn","Schnelligkeit","Größe"], c:1},
+  {q:"Warum eignen sich Hunde als Familienhunde?", a:"Sie sind Rudeltiere und akzeptieren den Menschen als Rudelführer.", l:0, cat:"Hund-Grund", mc:["Sie sind Einzelgänger","Sie sind Rudeltiere","Sie sind aggressiv","Sie brauchen kein Futter"], c:1},
+  {q:"Warum sind nicht alle Hunde für jede Aufgabe geeignet?", a:"Unterschiedliche Zuchtziele.", l:0, cat:"Hund-Grund", mc:["Alle Hunde sind gleich","Unterschiedliche Zuchtziele","Hunde können nicht lernen","Nur große Hunde arbeiten"], c:1},
+  {q:"Ordne die Hunderassen zu: Drogenspürhund, Jagdhund, Familienhund, Hirtenhund.", a:"Drogenspürhund: ausdauernde Läufer; Jagdhund: Rudeltier; Familienhund: guter Geruchssinn; Hirtenhund: Hetzjäger.", l:0, cat:"Hund-Grund", mc:["Alle für alles","Nach speziellen Eigenschaften","Nur nach Größe","Zufällig"], c:1},
+  {q:"Was übernimmt der Mensch bei der Hundehaltung?", a:"Die Rolle des 'Leittieres' (Alpha). Der Hund nimmt den Menschen als 'Ersatzleittier' an.", l:0, cat:"Hund-Grund", mc:["Diener-Rolle","Leitier-Rolle (Alpha)","Freund-Rolle","Keine Rolle"], c:1},
+  {q:"Welche Arbeitshunde kennst du?", a:"Blindenführhunde, Spürhunde, Drogenspürhunde, Rettungshunde, Hirtenhunde, Jagdhunde.", l:0, cat:"Hund-Grund", mc:["Nur Wachhunde","Viele verschiedene Arbeitshunde","Nur Jagdhunde","Keine Arbeitshunde"], c:1},
+  {q:"Wie viele Riechzellen hat ein Hund im Vergleich zum Menschen?", a:"Hund: 130 Millionen Riechzellen, Mensch: 20-30 Millionen.", l:0, cat:"Hund-Grund", mc:["50 Mio. vs. 10 Mio.","130 Mio. vs. 20-30 Mio.","200 Mio. vs. 50 Mio.","Gleich viele"], c:1},
+  {q:"Warum verwenden Hunde beim Training Hundepfeifen mit hohen Tönen?", a:"Hunde haben einen ausgezeichneten Hörsinn und können hohe Töne hören, die Menschen nicht hören.", l:0, cat:"Hund-Grund", mc:["Menschen mögen hohe Töne","Hunde hören hohe Töne besser","Sieht cool aus","Ist billiger"], c:1},
+  {q:"Ist der Sehsinn beim Hund gut ausgeprägt?", a:"Nein, der Sehsinn ist nicht so gut ausgeprägt wie beim Menschen.", l:0, cat:"Hund-Grund", mc:["Ja, perfekt","Nein, schlechter als beim Menschen","Besser als beim Menschen","Hunde sind blind"], c:1},
+  {q:"Nenne Beispiele für Hunderassen.", a:"Pekinese, Sibirischer Husky, Golden Retriever, Boxer, Bernhardiner, Rauhhaardackel, Cockerspaniel.", l:0, cat:"Hund-Grund", mc:["Nur Pudel","Viele verschiedene Rassen","Nur Schäferhunde","Es gibt nur 3 Rassen"], c:1},
+  
+  // ===== HUND KÖRPERBAU (8 Fragen) =====
+  {q:"Was sind Zehengänger?", a:"Hunde gehen auf den Zehen, nicht auf der ganzen Fußsohle.", l:0, cat:"Hund-Körper", mc:["Gehen auf ganzer Sohle","Gehen auf den Zehen","Gehen auf Fersen","Gehen auf Krallen"], c:1},
+  {q:"Wie viele Zehen haben Hunde?", a:"Vier Zehen mit kurzen, stumpfen Krallen, die nicht eingezogen werden können.", l:0, cat:"Hund-Körper", mc:["Drei Zehen","Vier Zehen","Fünf Zehen","Sechs Zehen"], c:1},
+  {q:"Warum haben Hunde Zehenballen mit Hornhaut?", a:"Zum Schutz der Pfote.", l:0, cat:"Hund-Körper", mc:["Für Dekoration","Zum Schutz der Pfote","Um besser zu riechen","Keine Funktion"], c:1},
+  {q:"Welches Gebiss haben Hunde?", a:"Fleischfressergebiss mit großen Eckzähnen und Reißzähnen.", l:0, cat:"Hund-Körper", mc:["Pflanzenfressergebiss","Fleischfressergebiss","Nagergebiss","Keine Zähne"], c:1},
+  {q:"Haben Hunde Schweißdrüsen am Körper?", a:"Nein, keine Schweißdrüsen am Körper.", l:0, cat:"Hund-Körper", mc:["Ja, überall","Nein, keine Schweißdrüsen","Nur an den Pfoten","Nur am Bauch"], c:1},
+  {q:"Wie kühlen Hunde ihren Körper?", a:"Durch Hecheln (Verdunstung des Speichels auf der Zunge).", l:0, cat:"Hund-Körper", mc:["Durch Schwitzen","Durch Hecheln","Durch Baden","Gar nicht"], c:1},
+  {q:"Was bedeuten die Begriffe Rüde und Hündin?", a:"Rüde = männlicher Hund, Hündin = weiblicher Hund.", l:0, cat:"Hund-Körper", mc:["Beide männlich","Rüde = männlich, Hündin = weiblich","Beide weiblich","Rassen-Bezeichnungen"], c:1},
+  {q:"Nenne Daten zur Fortpflanzung beim Hund.", a:"Tragzeit: ca. 63 Tage. Junge: 4-10 (bei Geburt blind, taub, hilflos = Nesthocker).", l:0, cat:"Hund-Körper", mc:["30 Tage, 1-2 Junge","63 Tage, 4-10 Junge","100 Tage, 20 Junge","20 Tage, 2 Junge"], c:1},
+  
+  // ===== HUND ÖSTERREICH (5 Fragen) =====
+  {q:"Welche Pflichten haben Hundehalter in Österreich?", a:"Tollwut-Impfung, Hund anmelden, Beißkorb/Leine in Öffentlichkeit, Mikrochip, jährliche Hundeabgabe.", l:0, cat:"Hund-AT", mc:["Keine Pflichten","Viele Pflichten (Impfung, Anmeldung, etc.)","Nur Füttern","Nur Gassi gehen"], c:1},
+  {q:"Warum müssen Hunde gegen Tollwut geimpft sein?", a:"Tollwut wird durch Biss eines infizierten Tieres übertragen und ist gefährlich.", l:0, cat:"Hund-AT", mc:["Ist nicht gefährlich","Übertragung durch Biss, sehr gefährlich","Nur für Katzen gefährlich","Gibt es nicht mehr"], c:1},
+  {q:"Was muss eine Hundehalterin bei der Gemeinde tun?", a:"Den Hund anmelden und eine jährliche Hundeabgabe entrichten.", l:0, cat:"Hund-AT", mc:["Nichts","Anmelden und Hundeabgabe zahlen","Nur besuchen","Nur Impfpass zeigen"], c:1},
+  {q:"Warum brauchen Hunde einen Mikrochip?", a:"Zur Identifikation und Kennzeichnung eines jeden Hundes.", l:0, cat:"Hund-AT", mc:["Zur Ortung","Zur Identifikation","Für GPS","Für Spiele"], c:1},
+  {q:"Wann muss ein Hund in Österreich Beißkorb oder Leine tragen?", a:"In der Öffentlichkeit, wenn dies gesetzlich vorgeschrieben ist.", l:0, cat:"Hund-AT", mc:["Nie","In der Öffentlichkeit","Nur zu Hause","Nur beim Tierarzt"], c:1},
+  
+  // ===== ZÄHMUNG & ZUCHT (12 Fragen) =====
+  {q:"Was bedeutet Zähmung?", a:"Verhaltensänderung durch den Menschen.", l:0, cat:"Zucht", mc:["Körperveränderung","Verhaltensänderung durch den Menschen","Größenveränderung","Farbveränderung"], c:1},
+  {q:"Was bedeutet Zucht?", a:"Gezielte Auswahl bestimmter Merkmale zur Fortpflanzung.", l:0, cat:"Zucht", mc:["Zufällige Vermehrung","Gezielte Auswahl bestimmter Merkmale","Wilde Paarung","Natürliche Auslese"], c:1},
+  {q:"Was wird durch Zucht nicht verändert?", a:"Die Artzugehörigkeit.", l:0, cat:"Zucht", mc:["Die Größe","Die Farbe","Die Artzugehörigkeit","Das Verhalten"], c:2},
+  {q:"Warum konnte der Wolf gezähmt werden?", a:"Wegen seines Rudel- und Sozialverhaltens.", l:0, cat:"Zucht", mc:["Er ist klein","Wegen Rudel- und Sozialverhalten","Er ist aggressiv","Er ist schnell"], c:1},
+  {q:"Warum ist der Husky dem Wolf ähnlicher als der Pekinese?", a:"Weniger extreme Zucht.", l:0, cat:"Zucht", mc:["Größere Ohren","Weniger extreme Zucht","Gleiches Alter","Gleiche Farbe"], c:1},
+  {q:"Warum kann extreme Zucht gesundheitliche Probleme verursachen?", a:"Extreme Körpermerkmale schaden der Gesundheit (z.B. zu kurze Schnauzen, zu lange Ohren).", l:0, cat:"Zucht", mc:["Keine Probleme","Extreme Merkmale schaden","Hunde werden stärker","Bessere Gesundheit"], c:1},
+  {q:"Vor wie vielen Jahren wurde der Wolf zum Haustier?", a:"Vor ca. 35.000 Jahren.", l:0, cat:"Zucht", mc:["Vor 5.000 Jahren","Vor 10.000 Jahren","Vor 35.000 Jahren","Vor 50.000 Jahren"], c:2},
+  {q:"Wie viele Hunderassen gibt es heute ca.?", a:"Ca. 400 Hunderassen.", l:0, cat:"Zucht", mc:["Ca. 50","Ca. 150","Ca. 400","Ca. 1000"], c:2},
+  {q:"Wonach wählen Menschen bei der Züchtung aus?", a:"Nach Merkmalen wie Größe, Gestalt, Länge, Farbe.", l:0, cat:"Zucht", mc:["Nur Farbe","Nach vielen Merkmalen","Nur Größe","Zufällig"], c:1},
+  {q:"Was passiert bei der Zucht mit Tieren?", a:"Nur bestimmte Tiere mit gewünschten Eigenschaften dürfen sich fortpflanzen.", l:0, cat:"Zucht", mc:["Alle paaren sich","Nur ausgewählte Tiere","Keine Kontrolle","Nur die Größten"], c:1},
+  {q:"Können durch Zucht neue Merkmale entstehen?", a:"Ja, z.B. reinweißes Fell oder Hunde mit Zwergwuchs.", l:0, cat:"Zucht", mc:["Nein, niemals","Ja, neue Merkmale möglich","Nur bei Katzen","Nur Farben"], c:1},
+  {q:"Was sind Mischlinge?", a:"Hunde, die aus der Kreuzung verschiedener Rassen entstanden sind.", l:0, cat:"Zucht", mc:["Kranke Hunde","Kreuzung verschiedener Rassen","Wilde Hunde","Sehr alte Hunde"], c:1},
+  
+  // ===== KÖRPERSPRACHE (7 Fragen) =====
+  {q:"Was bedeutet ein eingezogener Schwanz beim Hund?", a:"Angst oder Unterwerfung.", l:0, cat:"Körpersprache", mc:["Freude","Angst oder Unterwerfung","Aggression","Neugier"], c:1},
+  {q:"Was zeigen gefletschte Zähne und aufgerichtete Ohren?", a:"Aggression oder Drohung.", l:0, cat:"Körpersprache", mc:["Freundlichkeit","Angst","Aggression","Müdigkeit"], c:2},
+  {q:"Warum ist das Erkennen von Körpersprache wichtig?", a:"Zur Vermeidung von gefährlichen Situationen.", l:0, cat:"Körpersprache"},
+  {q:"Beschreibe die Körpersprache eines ängstlich-unterwürfigen Hundes.", a:"Angelegte Ohrmuscheln, gesenkter Kopf, eingezogener Schwanz.", l:0, cat:"Körpersprache"},
+  {q:"Beschreibe die Körpersprache eines aggressiv-drohenden Hundes.", a:"Aufgerichtete Ohrmuscheln, gefletschte Zähne, aufgerichteter Schwanz.", l:0, cat:"Körpersprache", mc:["Eingezogener Schwanz","Aufgerichteter Schwanz und gefletschte Zähne","Wedelnder Schwanz","Gesenkter Kopf"], c:1},
+  {q:"Beschreibe die Körpersprache eines stolz-überlegenen Hundes.", a:"Aufrechte Ohrmuscheln, erhobener Kopf, aufrechter Schwanz.", l:0, cat:"Körpersprache"},
+  {q:"Ist die Hundesprache immer eindeutig?", a:"Meist eindeutig, aber nicht immer. Hunde können sich teilweise unberechenbar verhalten. Man sollte vorher den Besitzer fragen.", l:0, cat:"Körpersprache"},
+  
+  // ===== KATZE GRUNDLAGEN (10 Fragen) =====
+  {q:"Welche Jagdart nutzt die Katze?", a:"Schleichjagd (Überraschungsjagd).", l:0, cat:"Katze-Grund", mc:["Hetzjagd","Schleichjagd","Rudeljagd","Ausdauerjagd"], c:1},
+  {q:"Warum jagen Katzen meist allein?", a:"Überraschung ist entscheidend.", l:0, cat:"Katze-Grund", mc:["Sind faul","Überraschung ist entscheidend","Mögen keine anderen Katzen","Sind zu schnell"], c:1},
+  {q:"Welche Schritte gehören zur Katzenjagd?", a:"Anschleichen – Auflauern – Sprung (Angriff).", l:0, cat:"Katze-Grund", mc:["Hetzen – Verfolgen – Fangen","Anschleichen – Lauern – Sprung","Rufen – Warten – Angriff","Rennen – Springen – Beißen"], c:1},
+  {q:"Warum wäre Rudeljagd für Katzen ungeeignet?", a:"Überraschung geht verloren.", l:0, cat:"Katze-Grund", mc:["Katzen sind zu laut","Überraschung geht verloren","Katzen sind zu langsam","Katzen können nicht zusammenarbeiten"], c:1},
+  {q:"Hauptunterschied Wolf- vs. Katzenjagd?", a:"Ausdauerjagd (Wolf) vs. Überraschungsjagd (Katze).", l:0, cat:"Katze-Grund", mc:["Beide gleich","Ausdauerjagd vs. Überraschungsjagd","Tag vs. Nacht","Groß vs. Klein"], c:1},
+  {q:"Von welchem Tier stammt die Hauskatze ab?", a:"Von der afrikanischen Wildkatze (Falbkatze).", l:0, cat:"Katze-Grund", mc:["Vom Tiger","Von der Falbkatze","Vom Löwen","Vom Leoparden"], c:1},
+  {q:"Seit wann ist die Katze ein Haustier des Menschen?", a:"Seit ca. 15.000 bis 10.000 Jahren (sesshaft wurde, musste Katzen und Mäuse schützen).", l:0, cat:"Katze-Grund", mc:["Seit 1.000 Jahren","Seit 10.000-15.000 Jahren","Seit 30.000 Jahren","Seit 500 Jahren"], c:1},
+  {q:"Wo wurde die Hauskatze erstmals gezähmt?", a:"In Ägypten vor mehreren tausend Jahren.", l:0, cat:"Katze-Grund", mc:["In Europa","In Ägypten","In China","In Amerika"], c:1},
+  {q:"Warum sind viele Wildkatzen heute gefährdet?", a:"Durch Bejagung, Wilderei, Verlust an Lebensraum. Auch illegaler Handel mit Taschen/Gürteln aus Reptilienhaut und traditionellen Medizinprodukten.", l:0, cat:"Katze-Grund", mc:["Zu viele Katzen","Bejagung, Wilderei, Lebensraumverlust","Klimawandel","Keine Gefährdung"], c:1},
+  {q:"Ordne die Katzen-Körpersprache zu: gereizt, Gefahr, Schmusestimmung, Angespannt.", a:"Gereizt: auf den Angriff oder die Flucht vorbereitet. Gefahr: zurückgelegte Ohren und starrer Blick. Schmusestimmung: Kontaktreiben mit Kopf und Körper. Angespannt: Annäherung – wie verhält sich die andere?", l:0, cat:"Katze-Grund", mc:["Alle gleich","Verschiedene Situationen erkennbar","Nur Aggression","Nur Freude"], c:1},
+  
+  // ===== KATZE KÖRPERBAU (12 Fragen) =====
+  {q:"Wie viele Zehen haben Katzen?", a:"4+1 Zehen an den Vorderfüßen, 4 Zehen an den Hinterfüßen.", l:0, cat:"Katze-Körper", mc:["Alle 4 Zehen","Vorne 5, hinten 4 Zehen","Alle 3 Zehen","Vorne 6, hinten 4"], c:1},
+  {q:"Was ist besonders an den Krallen der Katze?", a:"Scharfe Krallen, können eingezogen werden.", l:0, cat:"Katze-Körper", mc:["Stumpfe Krallen","Scharfe, einziehbare Krallen","Keine Krallen","Krallen wie beim Hund"], c:1},
+  {q:"Welches Gebiss hat die Katze?", a:"Fleischfressergebiss mit starken Kaumuskeln.", l:0, cat:"Katze-Körper", mc:["Pflanzenfressergebiss","Fleischfressergebiss","Nagergebiss","Allesfressergebiss"], c:1},
+  {q:"Was ist besonders an der Wirbelsäule der Katze?", a:"Sehr biegsame Wirbelsäule. Katzen können sehr gut klettern und meistens auch gut schwimmen.", l:0, cat:"Katze-Körper", mc:["Steife Wirbelsäule","Sehr biegsame Wirbelsäule","Kurze Wirbelsäule","Keine Wirbelsäule"], c:1},
+  {q:"Wie landen Katzen beim Fallen?", a:"Katzen landen beim Fallen immer auf den Füßen (durch bewegliche Wirbelsäule).", l:0, cat:"Katze-Körper", mc:["Auf dem Rücken","Immer auf den Füßen","Auf der Seite","Zufällig"], c:1},
+  {q:"Welcher Sinn ist bei der Katze besonders gut?", a:"Ausgezeichneter Sehsinn, vor allem in der Dämmerung.", l:0, cat:"Katze-Körper", mc:["Geruchssinn","Sehsinn (besonders Dämmerung)","Geschmackssinn","Tastsinn"], c:1},
+  {q:"Wie können Katzen im Dunkeln so gut sehen?", a:"Die Pupillen verengen sich bei Helligkeit zu Schlitzen und öffnen sich weit im Dunkeln. Katzen haben in den Augen eine Schicht, die das Licht spiegelt. Dadurch können sie im Dunkeln besonders gut sehen.", l:0, cat:"Katze-Körper", mc:["Große Augen","Lichtspiegelnde Schicht im Auge","Leuchten selbst","Infrarotsicht"], c:1},
+  {q:"Warum haben Katzen große, bewegliche Ohrmuscheln?", a:"Die Ohrmuscheln können die Schallwellen gut auffangen und in das Ohr weiterleiten.", l:0, cat:"Katze-Körper", mc:["Zur Dekoration","Zum Auffangen von Schallwellen","Zum Kühlen","Zum Kämpfen"], c:1},
+  {q:"Wozu dienen die langen, steifen Schnurrhaare der Katze?", a:"Mit langen, steifen, sehr empfindlichen Schnurrhaaren kann die Katze feinste Luftwirbel wahrnehmen. Das hilft z.B. beim Jagen in der Nacht.", l:0, cat:"Katze-Körper", mc:["Zur Dekoration","Zum Wahrnehmen von Luftbewegungen","Zum Riechen","Zum Tasten von Oberflächen"], c:1},
+  {q:"Was bedeuten die Begriffe Kater und Katze?", a:"Kater = männliche Katze, Katze = weibliche Katze (auch rollig, wenn paarungsbereit).", l:0, cat:"Katze-Körper", mc:["Beide männlich","Kater = männlich, Katze = weiblich","Beide weiblich","Größenunterschiede"], c:1},
+  {q:"Nenne Daten zur Fortpflanzung bei Katzen.", a:"Tragzeit: 63-65 Tage. Junge: beim ersten Wurf meist 2-3, später 3-7 oder mehr (bei Geburt blind, taub, hilflos = Nesthocker).", l:0, cat:"Katze-Körper", mc:["30 Tage, 1-2 Junge","63-65 Tage, 2-7 Junge","100 Tage, 10 Junge","45 Tage, 1 Junges"], c:1},
+  {q:"Können Katzen jagen, wenn sie ihr angeborenes Jagdverhalten nicht durch das Spielen ausüben?", a:"Alle Hauskatzen können jagen. Ihren Jagdtrieb leben sie oft durch das Spielen aus (Abb. 58.1).", l:0, cat:"Katze-Körper", mc:["Nein, müssen lernen","Ja, angeborenes Jagdverhalten","Nur Wildkatzen","Nur männliche Katzen"], c:1},
+  
+  // ===== GEBISSE (18 Fragen) =====
+  {q:"Welche Zahnarten gibt es?", a:"Schneidezähne, Eckzähne, Backenzähne, Reißzähne (besondere Backenzähne).", l:0, cat:"Gebisse", mc:["Nur Schneidezähne","Vier Zahnarten","Nur Backenzähne","Zwei Zahnarten"], c:1},
+  {q:"Merkmal eines Fleischfressergebisses?", a:"Große Eck- und Reißzähne. Vier dolchartige Eckzähne (Fangzähne).", l:0, cat:"Gebisse", mc:["Breite Mahlzähne","Große Eck- und Reißzähne","Lange Schneidezähne","Keine Zähne"], c:1},
+  {q:"Funktion der Reißzähne beim Fleischfresser?", a:"Zerschneiden von Fleisch. Die zwei größten Backenzähne im Ober- und Unterkiefer sind zu Reißzähnen umgebildet. Sie haben scharfe Schneiden, die wie Scheren wirken.", l:0, cat:"Gebisse", mc:["Zermalmen von Pflanzen","Zerschneiden von Fleisch","Nagen","Kauen"], c:1},
+  {q:"Wozu dienen die Schneidezähne beim Fleischfresser?", a:"Die Schneidezähne dienen dem Abschaben des Fleisches von Knochen.", l:0, cat:"Gebisse", mc:["Zum Kauen","Zum Abschaben von Fleisch","Zum Nagen","Zum Zermalmen"], c:1},
+  {q:"Welche Tiere haben ein Fleischfressergebiss?", a:"Z.B. Hund, Wolf, Katze, Luchs, Löwe (Raubtiergebiss).", l:0, cat:"Gebisse", mc:["Rind, Pferd","Hund, Wolf, Katze, Löwe","Maus, Biber","Mensch, Schwein"], c:1},
+  {q:"Was ist ein Insektenfressergebiss?", a:"Insektenfresser haben eine große Anzahl an Zähnen. Alle sind spitz und messerscharf gebaut. Die Eckzähne sind dolchförmig, die Backenzähne messerscharf.", l:0, cat:"Gebisse", mc:["Wenige stumpfe Zähne","Viele spitze, messerscharfe Zähne","Keine Zähne","Nur Schneidezähne"], c:1},
+  {q:"Welche Tiere haben ein Insektenfressergebiss?", a:"Z.B. Igel, Spitzmaus, Maulwurf, Fledermaus.", l:0, cat:"Gebisse", mc:["Hund, Katze","Igel, Spitzmaus, Maulwurf","Rind, Pferd","Maus, Ratte"], c:1},
+  {q:"Wozu dienen die Zähne beim Insektenfresser?", a:"Die Zähne dienen vor allem dem Aufbrechen und Zermahlen harter Insektenpanzer.", l:0, cat:"Gebisse", mc:["Zum Nagen","Zum Aufbrechen von Insektenpanzern","Zum Grasen","Zum Fleischzerteilen"], c:1},
+  {q:"Warum haben Pflanzenfresser breite Mahlzähne?", a:"Zum Zerkleinern und Zermahlen pflanzlicher Nahrung.", l:0, cat:"Gebisse", mc:["Zum Fleischzerteilen","Zum Zerkleinern von Pflanzen","Zum Nagen","Zur Verteidigung"], c:1},
+  {q:"Wie rupfen Pflanzenfresser (Wiederkäuer) das Gras?", a:"Pflanzenfresser rupfen das Gras mit den Schneidezähnen des Unterkiefers, den Schneidezähnen oder Hornplatten des Oberkiefers ab.", l:0, cat:"Gebisse", mc:["Mit Eckzähnen","Mit Schneidezähnen/Hornplatten","Mit Backenzähnen","Mit der Zunge"], c:1},
+  {q:"Was haben Wiederkäuer anstelle der Schneidezähne im Oberkiefer?", a:"Bei Rindern und allen anderen Wiederkäuern sind die Schneidezähne des Oberkiefers durch eine Hornplatte ersetzt.", l:0, cat:"Gebisse", mc:["Normale Zähne","Eine Hornplatte","Eckzähne","Gar nichts"], c:1},
+  {q:"Welche Tiere haben ein Wiederkäuergebiss?", a:"Z.B. Rind, Reh.", l:0, cat:"Gebisse", mc:["Hund, Katze","Rind, Reh","Maus, Ratte","Igel, Maulwurf"], c:1},
+  {q:"Was haben die Mahlzähne bei Pflanzenfressern?", a:"Die Mahlzähne haben Schmelzfalten.", l:0, cat:"Gebisse", mc:["Spitzen","Schmelzfalten","Glatte Oberfläche","Löcher"], c:1},
+  {q:"Merkmal eines Nagergebisses?", a:"Zwei Paar große Schneidezähne (Nagezähne), die ein Leben lang nachwachsen.", l:0, cat:"Gebisse", mc:["Große Eckzähne","Lebenslang wachsende Schneidezähne","Keine Backenzähne","Kleine Mahlzähne"], c:1},
+  {q:"Warum wachsen Nagerzähne lebenslang?", a:"Starke Abnutzung durch Nagen.", l:0, cat:"Gebisse", mc:["Keine Abnutzung","Starke Abnutzung","Zum Spaß","Genetischer Fehler"], c:1},
+  {q:"Warum bleiben Nagezähne immer scharf?", a:"Die Nagezähne sind nur auf der Vorderseite mit hartem Zahnschmelz bedeckt. Daher nutzen sie sich durch das Nagen ungleichmäßig ab und bleiben immer scharf.", l:0, cat:"Gebisse", mc:["Werden geschärft","Ungleichmäßige Abnutzung","Nachwachsen","Härter als Stahl"], c:1},
+  {q:"Welche Tiere haben ein Nagergebiss?", a:"Z.B. Biber, Eichhörnchen, Maus. Auch Hasen (Hasenartige haben im Oberkiefer hinter den beiden großen Schneidezähnen noch zwei kleinere Stiftzähne).", l:0, cat:"Gebisse", mc:["Hund, Katze","Biber, Maus, Hase","Rind, Pferd","Igel, Maulwurf"], c:1},
+  {q:"Warum ist der Mensch ein Allesfresser?", a:"Mischgebiss aus verschiedenen Zahnarten. Vereint Merkmale eines Fleischfressergebisses und eines Pflanzenfressergebisses.", l:0, cat:"Gebisse", mc:["Nur Schneidezähne","Mischgebiss aus verschiedenen Zahnarten","Nur Eckzähne","Nur Mahlzähne"], c:1},
+  {q:"Welche Merkmale des Fleischfressergebisses hat der Allesfresser?", a:"Dolchartige Eckzähne, Backenzähne mit scharfen Kanten.", l:0, cat:"Gebisse", mc:["Keine","Dolchartige Eckzähne und scharfe Backenzähne","Nur Schneidezähne","Hornplatten"], c:1},
+  
+  // ===== GEBISSE VERGLEICH (Bio-Check-Box) (12 Fragen) =====
+  {q:"Vergleich Katzen- und Menschengebiss: Was haben beide gemeinsam?", a:"Beide haben Schneidezähne, Eckzähne, Backenzähne. Beide sind Säugetiergebisse.", l:0, cat:"Gebisse-Vergleich", mc:["Gar nichts","Beide haben alle Zahnarten","Nur Schneidezähne","Keine Eckzähne"], c:1},
+  {q:"Vergleich Katzen- und Menschengebiss: Was sind die Unterschiede?", a:"Katze: Fleischfressergebiss mit großen spitzen Eckzähnen und Reißzähnen. Mensch: Allesfressergebiss mit viel mehr Mahlzähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Keine Unterschiede","Katze: Fleischfresser, Mensch: Allesfresser","Beide gleich","Katze: Pflanzenfresser"], c:1},
+  {q:"Ordne die 4 Gebisse den Tiernamen zu: Katze, Fledermaus, Pferd, Nager.", a:"1. Katze = Fleischfresser, 2. Fledermaus = Insektenfresser, 3. Pferd = Pflanzenfresser, 4. Nager.", l:0, cat:"Gebisse-Vergleich", mc:["Alle gleich","Nach Gebisstyp zuordnen","Zufällig","Nur Fleischfresser"], c:1},
+  {q:"Wie erkennst du ein Fleischfressergebiss an der Abbildung?", a:"Große, spitze Eckzähne (Fangzähne) und Reißzähne zum Zerschneiden von Fleisch.", l:0, cat:"Gebisse-Vergleich", mc:["Breite Zähne","Große spitze Eckzähne und Reißzähne","Lange Schneidezähne","Keine Zähne"], c:1},
+  {q:"Wie erkennst du ein Insektenfressergebiss an der Abbildung?", a:"Viele kleine, spitze, messerscharfe Zähne zum Aufbrechen harter Insektenpanzer.", l:0, cat:"Gebisse-Vergleich", mc:["Wenige Zähne","Viele spitze messerscharfe Zähne","Breite Mahlzähne","Nur Schneidezähne"], c:1},
+  {q:"Wie erkennst du ein Pflanzenfressergebiss an der Abbildung?", a:"Breite Mahlzähne zum Zermahlen von Pflanzen. Oft Hornplatte statt Schneidezähne im Oberkiefer.", l:0, cat:"Gebisse-Vergleich", mc:["Spitze Eckzähne","Breite Mahlzähne","Lange Schneidezähne","Reißzähne"], c:1},
+  {q:"Wie erkennst du ein Nagergebiss an der Abbildung?", a:"Zwei große Schneidezähne (Nagezähne) vorne, die lebenslang nachwachsen. Oft Lücke zwischen Schneide- und Backenzähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Viele Eckzähne","Zwei große Schneidezähne","Breite Mahlzähne","Keine Zähne"], c:1},
+  {q:"Welche Ernährungsweise hat die Katze basierend auf ihrem Gebiss?", a:"Fleischfresser - erkennbar an großen Eckzähnen und Reißzähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Pflanzenfresser","Fleischfresser","Insektenfresser","Allesfresser"], c:1},
+  {q:"Welche Ernährungsweise hat die Fledermaus basierend auf ihrem Gebiss?", a:"Insektenfresser - erkennbar an vielen spitzen, messerscharfen Zähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Fleischfresser","Insektenfresser","Pflanzenfresser","Allesfresser"], c:1},
+  {q:"Welche Ernährungsweise hat das Pferd basierend auf seinem Gebiss?", a:"Pflanzenfresser (Gräser, Blätter) - erkennbar an breiten Mahlzähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Fleischfresser","Pflanzenfresser","Insektenfresser","Allesfresser"], c:1},
+  {q:"Welche Ernährungsweise hat der Nager basierend auf seinem Gebiss?", a:"Pflanzenfresser (Samen, Nüsse) - erkennbar an großen Nagezähnen.", l:0, cat:"Gebisse-Vergleich", mc:["Fleischfresser","Pflanzenfresser","Insektenfresser","Allesfresser"], c:1},
+  {q:"Was ist das zentrale fachliche Konzept (ZFK) bei dieser Aufgabe?", a:"Struktur passt zur Funktion. Die Ausbildung der Gebisse hängt mit ihrer Ernährung zusammen - die Struktur (Gebiss) ist an die Funktion (Nahrung) angepasst.", l:0, cat:"Gebisse-Vergleich", mc:["Evolution","Struktur passt zur Funktion","Vererbung","Zucht"], c:1},
+  
+  // ===== ERNÄHRUNG (20 Fragen) =====
+  {q:"Welche drei Hauptnährstoffe gibt es?", a:"Kohlenhydrate, Fette, Eiweiß.", l:0, cat:"Ernährung", mc:["Vitamine, Mineralien, Wasser","Kohlenhydrate, Fette, Eiweiß","Zucker, Salz, Öl","Brot, Fleisch, Gemüse"], c:1},
+  {q:"Welche Nahrungsbestandteile sind verwertbar?", a:"Wasser, Nährstoffe (Kohlenhydrate, Fette, Eiweiß), Vitamine und Mineralstoffe.", l:0, cat:"Ernährung", mc:["Nur Wasser","Wasser, Nährstoffe, Vitamine, Mineralstoffe","Nur Nährstoffe","Alles"], c:1},
+  {q:"Welche Nahrungsbestandteile sind nicht verwertbar?", a:"Z.B. Ballaststoffe.", l:0, cat:"Ernährung", mc:["Wasser","Ballaststoffe","Vitamine","Fette"], c:1},
+  {q:"Welcher Nährstoff liefert am meisten Energie?", a:"Fette (doppelt so viel wie Kohlenhydrate und Eiweiße).", l:0, cat:"Ernährung", mc:["Kohlenhydrate","Fette","Eiweiß","Vitamine"], c:1},
+  {q:"Wofür braucht der Körper Eiweiß?", a:"Aufbau von Zellen und Muskeln. Die wichtigsten Baustoffe für unseren Körper. Die meisten Organe bestehen vor allem aus Eiweiß.", l:0, cat:"Ernährung", mc:["Nur für Energie","Aufbau von Zellen und Muskeln","Nur für Knochen","Für die Verdauung"], c:1},
+  {q:"Wann werden Eiweiße zur Energieversorgung genutzt?", a:"Nur im Notfall, z.B. bei Hunger.", l:0, cat:"Ernährung", mc:["Immer","Nur im Notfall (Hunger)","Nie","Nur beim Sport"], c:1},
+  {q:"Aufgabe der Kohlenhydrate?", a:"Energie liefern. Kohlenhydrate liefern dem Körper vor allem Energie.", l:0, cat:"Ernährung", mc:["Zellaufbau","Energie liefern","Knochenaufbau","Verdauung"], c:1},
+  {q:"Was gehört zu den Kohlenhydraten?", a:"Stärke und Zucker.", l:0, cat:"Ernährung", mc:["Nur Stärke","Stärke und Zucker","Nur Zucker","Fette"], c:1},
+  {q:"Wo ist Stärke enthalten?", a:"Stärke ist vor allem in Kartoffeln und Getreidekörnern enthalten (Reis, Weizen, Roggen, Mais). Aus Mehl werden Nudeln, Brot und Mehlspeisen hergestellt.", l:0, cat:"Ernährung", mc:["Nur in Fleisch","In Kartoffeln und Getreide","Nur in Obst","In Milch"], c:1},
+  {q:"Wo ist Zucker enthalten?", a:"Zucker ist in Limonaden, Süßspeisen, Schokolade und süßem Obst enthalten.", l:0, cat:"Ernährung", mc:["Nur in Gemüse","In Süßspeisen, Schokolade, süßem Obst","Nur in Fleisch","In Wasser"], c:1},
+  {q:"Wofür dienen Fette im Körper?", a:"Fette dienen vor allem als Reservestoff, aber auch als Baustoff.", l:0, cat:"Ernährung", mc:["Nur Energie","Reservestoff und Baustoff","Nur Wärme","Nur Transport"], c:1},
+  {q:"Welche Arten von Fetten gibt es?", a:"Pflanzliche Fette (Öle, Margarine) und tierische Fette (Butter, Schmalz).", l:0, cat:"Ernährung", mc:["Nur pflanzliche","Pflanzliche und tierische Fette","Nur tierische","Nur synthetische"], c:1},
+  {q:"Wo sind Fette enthalten?", a:"Fette sind z.B. in fettem Fleisch, Wurst, Pommes frites und anderen in Fett gebackenen Speisen, Schokolade und Nüssen enthalten.", l:0, cat:"Ernährung", mc:["Nur in Gemüse","In Fleisch, Wurst, frittierten Speisen, Nüssen","Nur in Obst","Nur in Brot"], c:1},
+  {q:"Wo sind Eiweiße enthalten?", a:"In Fleisch, Wurst, Fisch, Milch, Milchprodukten, Eiern und Hülsenfrüchten (z.B. Erbsen, Bohnen, Soja).", l:0, cat:"Ernährung", mc:["Nur in Obst","In Fleisch, Fisch, Milch, Eiern, Hülsenfrüchten","Nur in Gemüse","Nur in Brot"], c:1},
+  {q:"Warum sind Vitamine wichtig?", a:"Vitamine regeln Körperfunktionen. Sie sind Steuerstoffe im Körper und werden nur in sehr geringen Mengen gebraucht.", l:0, cat:"Ernährung", mc:["Für Energie","Regeln Körperfunktionen","Für Muskeln","Für Knochen"], c:1},
+  {q:"Warum sind Mineralstoffe wichtig?", a:"Aufbau von Knochen und Zähnen. Stoffe, die nur in geringen Mengen im Körper gebraucht werden (z.B. als Salze wie Kochsalz).", l:0, cat:"Ernährung", mc:["Für Energie","Aufbau von Knochen und Zähnen","Für Muskeln","Für Verdauung"], c:1},
+  {q:"Warum ist Wasser lebensnotwendig?", a:"Transport- und Stoffwechselprozesse. Wasser ist der wichtigste Bestandteil.", l:0, cat:"Ernährung", mc:["Nur für Geschmack","Transport und Stoffwechsel","Nur für Kühlung","Nur für Energie"], c:1},
+  {q:"Wie viel sollte man pro Tag trinken?", a:"Ein bis zwei Liter pro Tag.", l:0, cat:"Ernährung", mc:["0,5 Liter","1-2 Liter","5 Liter","10 Liter"], c:1},
+  {q:"Warum sind Ballaststoffe wichtig?", a:"Fördern die Verdauung. Ballaststoffe sind Inhaltsstoffe der Nahrung, die kaum verdaut werden. Sie saugen im Dickdarm Wasser auf und fördern so Darmtätigkeit und Verdauung.", l:0, cat:"Ernährung", mc:["Für Energie","Fördern Verdauung","Für Muskeln","Für Knochen"], c:1},
+  {q:"Welche Bestandteile muss unsere Nahrung enthalten?", a:"Unsere Nahrung muss alle Bestandteile enthalten. Fehlen einzelne Bestandteile, einer Mangelernährung. Besonders wichtig ist es, ein bis zwei Liter pro Tag zu trinken.", l:0, cat:"Ernährung", mc:["Nur Fette","Alle Bestandteile (ausgewogen)","Nur Kohlenhydrate","Nur Eiweiß"], c:1},
+  
+  // ===== TRANSFER (5 Fragen) =====
+  {q:"Warum wäre ein Hund ohne Rudelverhalten kaum erziehbar?", a:"Keine soziale Orientierung. Der Hund würde den Menschen nicht als Leitfigur akzeptieren.", l:0, cat:"Transfer", mc:["Ist aggressiv","Keine soziale Orientierung","Ist zu dumm","Ist zu klein"], c:1},
+  {q:"Warum sind Hetzjäger ausdauernd gebaut?", a:"Lange Verfolgung der Beute erfordert Ausdauer statt Schnelligkeit.", l:0, cat:"Transfer", mc:["Für Schnelligkeit","Für Ausdauer bei langer Verfolgung","Für Kraftaufbau","Für Sprünge"], c:1},
+  {q:"Warum ist das Gebiss ein Hinweis auf die Ernährungsweise?", a:"Anpassung an Nahrung. Die Zähne sind an die jeweilige Nahrung angepasst.", l:0, cat:"Transfer", mc:["Größe des Tieres","Anpassung an Nahrung","Alter des Tieres","Geschlecht"], c:1},
+  {q:"Warum führt falsche Zucht langfristig zu Problemen?", a:"Gesundheit leidet. Extreme Körpermerkmale (z.B. zu kurze Schnauzen, zu lange Ohren) können zu gesundheitlichen Problemen führen.", l:0, cat:"Transfer", mc:["Keine Probleme","Gesundheit leidet","Tiere werden schöner","Tiere werden stärker"], c:1},
+  {q:"Was ist das zentrale fachliche Konzept (ZFK) bei Züchtung?", a:"Züchtung. Menschen wählen Tiere nach bestimmten Merkmalen aus und lassen nur diese sich fortpflanzen.", l:0, cat:"Transfer", mc:["Natürliche Auslese","Gezielte Auswahl durch Menschen","Zufällige Paarung","Evolution"], c:1}
 ];
 
-let current;
+let currentQuestion, currentMode = 'normal', activeFilter = null, mcAnswered = false;
 
-function pick() {
-  let weighted=[];
-  questions.forEach((q,i)=>{
-    let w = q.l===0?5 : q.l===1?2 : 1;
-    for(let j=0;j<w;j++) weighted.push(i);
-  });
-  current = questions[ weighted[Math.floor(Math.random()*weighted.length)] ];
-  document.getElementById("level").innerText =
-    current.l===0?"Stufe A (neu)" : current.l===1?"Stufe B (unsicher)" : "Stufe C (sitzt)";
-  document.getElementById("question").innerHTML = "<b>Frage:</b> "+current.q;
-  document.getElementById("answer").innerHTML =
-    "<details><summary>Antwort anzeigen</summary>"+current.a+"</details>";
+function loadProgress() {
+  const saved = localStorage.getItem("bioTrainer");
+  if (saved) {
+    const savedData = JSON.parse(saved);
+    questions.forEach((q, i) => { if (savedData[i]) q.l = savedData[i].l; });
+  }
+}
+
+function saveProgress() {
+  localStorage.setItem("bioTrainer", JSON.stringify(questions));
+}
+
+function getFilteredQuestions() {
+  return activeFilter ? questions.filter(q => q.cat === activeFilter) : questions;
+}
+
+function pickQuestion() {
+  const pool = getFilteredQuestions();
+  
+  if (currentMode === 'mc') {
+    const mcPool = pool.filter(q => q.mc);
+    if (mcPool.length === 0) {
+      alert("Keine Multiple-Choice-Fragen in diesem Thema verfügbar!");
+      switchMode('normal');
+      return;
+    }
+    let weighted = [];
+    mcPool.forEach(q => {
+      const weight = q.l === 0 ? 5 : q.l === 1 ? 2 : 1;
+      for (let j = 0; j < weight; j++) weighted.push(q);
+    });
+    currentQuestion = weighted[Math.floor(Math.random() * weighted.length)];
+  } else {
+    let weighted = [];
+    pool.forEach(q => {
+      const weight = q.l === 0 ? 5 : q.l === 1 ? 2 : 1;
+      for (let j = 0; j < weight; j++) weighted.push(q);
+    });
+    currentQuestion = weighted[Math.floor(Math.random() * weighted.length)];
+  }
+  
+  displayQuestion();
   updateStats();
 }
 
-function mark(ok){
-  if(ok && current.l<2) current.l++;
-  if(!ok && current.l>0) current.l--;
-  localStorage.setItem("bioTrainer", JSON.stringify(questions));
-  pick();
+function displayQuestion() {
+  const levelNames = ["Stufe A (neu)", "Stufe B (unsicher)", "Stufe C (sitzt)"];
+  const levelClasses = ["badge-a", "badge-b", "badge-c"];
+  
+  document.getElementById("levelBadge").innerHTML = 
+    `<span class="level-badge ${levelClasses[currentQuestion.l]}">${levelNames[currentQuestion.l]}</span>`;
+  document.getElementById("question").textContent = currentQuestion.q;
+  
+  if (currentMode === 'normal') {
+    document.getElementById("answerContent").textContent = currentQuestion.a;
+    const answerBox = document.getElementById("answerContent");
+    answerBox.classList.remove("show");
+    document.querySelector(".arrow").classList.remove("rotated");
+  } else {
+    displayMCOptions();
+  }
 }
 
-function updateStats(){
-  let a=questions.filter(q=>q.l===0).length;
-  let b=questions.filter(q=>q.l===1).length;
-  let c=questions.filter(q=>q.l===2).length;
-  document.getElementById("stats").innerText =
-    `A: ${a} | B: ${b} | C: ${c}  → Ziel: alles C`;
+function displayMCOptions() {
+  mcAnswered = false;
+  const optionsDiv = document.getElementById("mcOptions");
+  const feedbackDiv = document.getElementById("mcFeedback");
+  const nextBtn = document.getElementById("mcNextBtn");
+  
+  optionsDiv.innerHTML = '';
+  feedbackDiv.className = 'mc-feedback';
+  feedbackDiv.textContent = '';
+  nextBtn.classList.remove('show');
+  
+  if (!currentQuestion.mc) {
+    optionsDiv.innerHTML = '<p style="color: #7f8c8d;">Keine Multiple-Choice-Optionen verfügbar.</p>';
+    return;
+  }
+  
+  // Erstelle Array mit Optionen und ihrer ursprünglichen Position
+  const optionsWithIndex = currentQuestion.mc.map((option, index) => ({
+    text: option,
+    originalIndex: index
+  }));
+  
+  // Mische die Optionen zufällig (Fisher-Yates Shuffle)
+  for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [optionsWithIndex[i], optionsWithIndex[j]] = [optionsWithIndex[j], optionsWithIndex[i]];
+  }
+  
+  // Speichere die gemischten Optionen und finde die neue Position der richtigen Antwort
+  const shuffledOptions = optionsWithIndex.map(item => item.text);
+  const correctNewIndex = optionsWithIndex.findIndex(item => item.originalIndex === currentQuestion.c);
+  
+  // Erstelle die Antwortoptionen
+  shuffledOptions.forEach((option, index) => {
+    const optionDiv = document.createElement('div');
+    optionDiv.className = 'mc-option';
+    optionDiv.textContent = option;
+    optionDiv.onclick = () => checkMCAnswer(index, correctNewIndex, optionDiv);
+    optionsDiv.appendChild(optionDiv);
+  });
 }
 
-pick();
+function checkMCAnswer(selected, correctIndex, element) {
+  if (mcAnswered) return;
+  mcAnswered = true;
+  
+  const options = document.querySelectorAll('.mc-option');
+  const feedbackDiv = document.getElementById("mcFeedback");
+  const nextBtn = document.getElementById("mcNextBtn");
+  
+  options.forEach(opt => opt.classList.add('disabled'));
+  
+  if (selected === correctIndex) {
+    element.classList.add('correct');
+    feedbackDiv.className = 'mc-feedback correct show';
+    feedbackDiv.textContent = '✓ Richtig! ' + currentQuestion.a;
+    if (currentQuestion.l < 2) currentQuestion.l++;
+  } else {
+    element.classList.add('wrong');
+    options[correctIndex].classList.add('correct');
+    feedbackDiv.className = 'mc-feedback wrong show';
+    feedbackDiv.textContent = '✗ Leider falsch. Richtige Antwort: ' + currentQuestion.a;
+    if (currentQuestion.l > 0) currentQuestion.l--;
+  }
+  
+  saveProgress();
+  nextBtn.classList.add('show');
+  updateStats();
+}
+
+function nextMC() {
+  pickQuestion();
+}
+
+function markNormal(correct) {
+  if (correct && currentQuestion.l < 2) {
+    currentQuestion.l++;
+  } else if (!correct && currentQuestion.l > 0) {
+    currentQuestion.l--;
+  }
+  saveProgress();
+  pickQuestion();
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  
+  document.getElementById('normalModeBtn').classList.toggle('active', mode === 'normal');
+  document.getElementById('mcModeBtn').classList.toggle('active', mode === 'mc');
+  
+  document.getElementById('normalMode').style.display = mode === 'normal' ? 'block' : 'none';
+  document.getElementById('mcMode').style.display = mode === 'mc' ? 'block' : 'none';
+  
+  const hint = mode === 'mc' 
+    ? 'Im Multiple-Choice-Modus wird dein Fortschritt automatisch aktualisiert.'
+    : 'Bei richtiger Antwort steigt die Frage eine Stufe auf.';
+  document.getElementById('modeHint').textContent = hint;
+  
+  pickQuestion();
+}
+
+function updateStats() {
+  const pool = activeFilter ? getFilteredQuestions() : questions;
+  const levelA = pool.filter(q => q.l === 0).length;
+  const levelB = pool.filter(q => q.l === 1).length;
+  const levelC = pool.filter(q => q.l === 2).length;
+  const total = pool.length;
+  
+  const progressBars = document.getElementById("progressBars");
+  progressBars.innerHTML = `
+    <div class="progress-item level-a">
+      <div class="progress-label">🔴 Stufe A (neu)</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${(levelA/total)*100}%">${levelA}</div>
+      </div>
+    </div>
+    <div class="progress-item level-b">
+      <div class="progress-label">🟡 Stufe B (unsicher)</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${(levelB/total)*100}%">${levelB}</div>
+      </div>
+    </div>
+    <div class="progress-item level-c">
+      <div class="progress-label">🟢 Stufe C (sitzt)</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${(levelC/total)*100}%">${levelC}</div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById("totalQuestions").textContent = total;
+  document.getElementById("masteredCount").textContent = levelC;
+  document.getElementById("percentMastered").textContent = Math.round((levelC / total) * 100) + "%";
+}
+
+function initCategoryFilter() {
+  const filterContainer = document.getElementById("categoryFilter");
+  
+  let html = '<button class="filter-btn active" onclick="setFilter(null)">Alle Themen</button>';
+  Object.keys(categories).forEach(cat => {
+    html += `<button class="filter-btn" onclick="setFilter('${categories[cat]}')">${cat}</button>`;
+  });
+  
+  filterContainer.innerHTML = html;
+}
+
+function setFilter(category) {
+  activeFilter = category;
+  
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+  event.target.classList.add("active");
+  
+  pickQuestion();
+}
+
+function resetProgress() {
+  if (confirm("Möchtest du wirklich deinen gesamten Fortschritt zurücksetzen?")) {
+    questions.forEach(q => q.l = 0);
+    saveProgress();
+    pickQuestion();
+  }
+}
+
+document.getElementById("answerToggle").addEventListener("click", function() {
+  const content = document.getElementById("answerContent");
+  const arrow = document.querySelector(".arrow");
+  content.classList.toggle("show");
+  arrow.classList.toggle("rotated");
+});
+
+loadProgress();
+initCategoryFilter();
+pickQuestion();
 </script>
+
 </body>
 </html>
